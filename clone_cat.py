@@ -14,34 +14,39 @@ def get_random_bs_id():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
+    map_in_comments = False
     node_map = {}  # Dictionary of input IDs to output IDs
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA - Blood Angels.cat')
     tree2 = deepcopy(tree)
-    # Find all nodes in the tree with IDs and make duplicates of each node.
+
+
+    def map_tag(node, tag_name):
+        bs_id = node.attrib.get(tag_name)
+        if bs_id and bs_id in node_map.keys():
+            node.attrib[tag_name] = node_map[bs_id]
+            if map_in_comments:
+                commentNode = node.find(COMMENT_NODE_TYPE)
+                if commentNode is None:
+                    commentNode = ET.SubElement(node, COMMENT_NODE_TYPE)
+                    commentNode.text = ""
+                commentNode.text += "\n library_{}_{}".format(tag_name, bs_id)
+
+
+    # Find all nodes in the tree with IDs and add them to them map.
     for node in tree.iter():
         bs_id = node.attrib.get("id")
         if bs_id:
             node_map[bs_id] = get_random_bs_id()
-    # Update all nodes in copy 2
-    for node in tree2.iter():
-        bs_id = node.attrib.get("id")
-        if bs_id:
-            node.attrib["id"] = node_map[bs_id]
-            target_id = node.attrib.get("id")
-            if target_id and target_id in node_map.keys():
-                node.attrib["targetId"] = node_map[target_id]
-            commentNode = node.find(COMMENT_NODE_TYPE)
-            if commentNode is not None:
-                print(commentNode.text)
-            else:
-                commentNode = ET.SubElement(node, COMMENT_NODE_TYPE)
-                commentNode.text = ""
-            commentNode.text += "\n {}{}".format(ID_IDENTIFIER, bs_id)
-            if target_id:
-                commentNode.text += "\n {}{}".format(TID_IDENTIFIER, target_id)
 
-    tree2.write("/home/nsh/BattleScribe/data/horus-heresy/2022 - LA - AAAAAAA MARINES.cat")
+    for node in tree2.iter():
+        map_tag(node, "id")
+        map_tag(node, "targetId")
+        map_tag(node, 'scope')
+        map_tag(node, 'childId')
+        map_tag(node, 'field')
+
+    tree2.write("/home/nsh/BattleScribe/data/horus-heresy/2022 - LA Template.cat")
 
     print(node_map)
     print(len(node_map))
