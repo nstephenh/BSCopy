@@ -1,5 +1,5 @@
 import uuid
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 from copy import deepcopy
 
 
@@ -11,7 +11,6 @@ def get_random_bs_id():
 if __name__ == '__main__':
 
     node_map = {}  # Dictionary of input IDs to output IDs
-    ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA - Blood Angels.cat')
     tree2 = deepcopy(tree)
     # Find all nodes in the tree with IDs and make duplicates of each node.
