@@ -1,9 +1,10 @@
+import copy
 import uuid
 import xml.etree.ElementTree as ET
 
 COMMENT_NODE_TYPE = "{http://www.battlescribe.net/schema/catalogueSchema}comment"
-SELECTION_ENTRY_TYPE ='{http://www.battlescribe.net/schema/catalogueSchema}selectionEntry'
-ENTRY_LINK_TYPE ='{http://www.battlescribe.net/schema/catalogueSchema}entryLink'
+SELECTION_ENTRY_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}selectionEntry'
+ENTRY_LINK_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}entryLink'
 
 
 def get_random_bs_id():
@@ -31,12 +32,47 @@ def make_comment(node_to_modify, attribute_name, source_id):
         comment_node.text += "    {}".format(comment(attribute_name, source_id))
 
 
-def find_source_id(node):
+def find_attribute_map(node, attribute_name="id"):
     comment_node = node.find(COMMENT_NODE_TYPE)
     if comment_node is not None:
         try:
-            comment_tag = comment("id", "")
+            comment_tag = comment(attribute_name, "")
             id_start = comment_node.text.index(comment_tag) + len(comment_tag)
             return comment_node.text[id_start:id_start + 20]
         except ValueError:
             pass
+
+
+def copy_and_add_id(node_map, source_node):
+    node_copy = copy.deepcopy(source_node)
+    bs_id = node_copy.attrib.get("id")
+    if bs_id:
+        node_map[bs_id] = get_random_bs_id()
+    return node_copy
+
+
+def update_tag(node_map, node, attribute_name, generate_map_comments=True):
+    """
+    Updates tags on node based on node_map
+    :param node_map:
+    :param node:
+    :param attribute_name:
+    :param generate_map_comments:
+    :return:
+    """
+    bs_id = node.attrib.get(attribute_name)
+    if bs_id and bs_id in node_map.keys():
+        # Don't copy if map comment already exists.
+        if find_attribute_map(node, attribute_name) is None:
+            node.attrib[attribute_name] = node_map[bs_id]
+            if generate_map_comments:
+                make_comment(node, attribute_name, bs_id)
+
+
+def update_all_node_ids(nodes, node_map, generate_map_comments=True):
+    for node in nodes:
+        update_tag(node_map, node, "id", generate_map_comments)
+        update_tag(node_map, node, "targetId", generate_map_comments)
+        update_tag(node_map, node, 'scope', generate_map_comments)
+        update_tag(node_map, node, 'childId', generate_map_comments)
+        update_tag(node_map, node, 'field', generate_map_comments)
