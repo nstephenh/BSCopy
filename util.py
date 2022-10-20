@@ -28,7 +28,7 @@ def make_comment(node_to_modify, attribute_name, source_id):
         comment_node.text.index(comment(attribute_name, source_id))
     except ValueError:
         # Only append comment if comment does not already exist
-        comment_node.text += "\n {}".format(comment(attribute_name, source_id))
+        comment_node.text += "    {}".format(comment(attribute_name, source_id))
 
 
 def find_source_id(node):
