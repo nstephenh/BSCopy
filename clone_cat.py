@@ -15,7 +15,7 @@ def get_random_bs_id():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    map_in_comments = True
+    map_in_comments = False
     node_map = {}  # Dictionary of input IDs to output IDs
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA - Blood Angels.cat')
