@@ -1,7 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 
-from util import make_comment, get_identifier
+from util import make_comment, get_identifier, ENTRY_LINK_TYPE
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate')
 
     # Find the base parts of the template
-    for node in tree.iter():
+    for node in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
         bs_id = node.attrib.get("id")
         name = node.attrib.get("name")
         if name and bs_id:
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         if file_name.startswith("2022 - LA - "):
             file_path = os.path.join(base_path, file_name)
             tree2 = ET.parse(file_path)
-            for node in tree2.iter():
+            for node in tree2.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
                 bs_id = node.attrib.get("id")
                 name = node.attrib.get("name")
                 identifier = get_identifier(node)
