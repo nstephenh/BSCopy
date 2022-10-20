@@ -1,4 +1,3 @@
-import copy
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -17,7 +16,7 @@ def get_identifier(node):
 
 
 def comment(attribute_name, bs_id):
-    return "library_{}_{}".format(attribute_name, bs_id)
+    return "template_{}_{}".format(attribute_name, bs_id)
 
 
 def make_comment(node_to_modify, attribute_name, source_id):
@@ -43,12 +42,17 @@ def find_attribute_map(node, attribute_name="id"):
             pass
 
 
-def copy_and_add_id(node_map, source_node):
-    node_copy = copy.deepcopy(source_node)
-    bs_id = node_copy.attrib.get("id")
-    if bs_id:
+def add_new_id(node_map, source_node):
+    """
+    Queues up a change for a copy of this node.
+    Adds the source ID to the list of IDs to change
+    :param node_map:
+    :param source_node:
+    :return:
+    """
+    bs_id = source_node.attrib.get("id")
+    if bs_id and bs_id not in node_map.keys():
         node_map[bs_id] = get_random_bs_id()
-    return node_copy
 
 
 def update_tag(node_map, node, attribute_name, generate_map_comments=True):

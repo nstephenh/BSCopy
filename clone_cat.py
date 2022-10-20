@@ -2,10 +2,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
-from util import update_all_node_ids
-
-ID_IDENTIFIER = "COPIED_FROM_ID_"
-TID_IDENTIFIER = "COPIED_FROM_TID_"
+from util import update_all_node_ids, add_new_id
 
 
 def get_random_bs_id():
@@ -23,9 +20,7 @@ if __name__ == '__main__':
 
     # Find all nodes in the tree with IDs and add them to them map.
     for node in tree.iter():
-        bs_id = node.attrib.get("id")
-        if bs_id:
-            node_map[bs_id] = get_random_bs_id()
+        add_new_id(node)
 
     update_all_node_ids(tree2.iter(), node_map, generate_map_comments)
 
