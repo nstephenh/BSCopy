@@ -14,7 +14,6 @@ def get_random_bs_id():
 if __name__ == '__main__':
 
     generate_map_comments = False
-    assign_ids_to_mods_and_cons = True
     node_map = {}  # Dictionary of input IDs to output IDs
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA - Blood Angels.cat'))
@@ -24,7 +23,7 @@ if __name__ == '__main__':
     for node in tree.iter():
         add_new_id(node_map, node)
 
-    update_all_node_ids(tree2.iter(), node_map, assign_ids_to_mods_and_cons)
+    update_all_node_ids(tree2.iter(), node_map, assign_ids_to_mods_and_cons=True)
 
     tree2.write(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Test.cat'))
 

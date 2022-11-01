@@ -2,7 +2,7 @@ import copy
 import os
 import xml.etree.ElementTree as ET
 
-from util import find_attribute_map, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id
+from util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -24,7 +24,7 @@ if __name__ == '__main__':
             for node in destination_tree.iter():
                 target_id = node.attrib.get("id")
                 if target_id:
-                    source_id = find_attribute_map(node)
+                    source_id = find_comment_value(node)
                     if source_id:
                         node_map[source_id] = target_id
             entry_links_node = destination_tree.getroot().find("./{}s".format(ENTRY_LINK_TYPE))
