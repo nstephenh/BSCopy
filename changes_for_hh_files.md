@@ -1,5 +1,5 @@
-Run clone_cat on a cat to make a template 
-(or use an [existing template](https://github.com/BSData/horus-heresy/blob/nsh-template-test/2022%20-%20LA%20Template.cattemplate))
+Run generate_template_from_base.py to make a template 
+
 
 Run map_cats to map most of the root entries for each cat file.
 
