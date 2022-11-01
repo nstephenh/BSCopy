@@ -10,9 +10,9 @@ if __name__ == '__main__':
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
 
     overwrite = True
-    source_tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate')
+    source_tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
 
-    base_path = "/home/nsh/BattleScribe/data/horus-heresy"
+    base_path = os.path.expanduser('~/BattleScribe/data/horus-heresy')
     la_files = os.listdir(base_path)
 
     for file_name in la_files:

@@ -4,7 +4,9 @@ import xml.etree.ElementTree as ET
 COMMENT_NODE_TYPE = "{http://www.battlescribe.net/schema/catalogueSchema}comment"
 SELECTION_ENTRY_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}selectionEntry'
 ENTRY_LINK_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}entryLink'
-
+MODIFIER_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}modifier'
+CONDITION_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}condition'
+CONDITION_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}conditionGroup'
 
 def get_random_bs_id():
     return str(uuid.uuid4())[4:23]
@@ -55,6 +57,9 @@ def add_new_id(node_map, source_node):
         node_map[bs_id] = get_random_bs_id()
 
 
+
+
+
 def update_tag(node_map, node, attribute_name, generate_map_comments=True):
     """
     Updates tags on node based on node_map
@@ -73,10 +78,19 @@ def update_tag(node_map, node, attribute_name, generate_map_comments=True):
                 make_comment(node, attribute_name, bs_id)
 
 
-def update_all_node_ids(nodes, node_map, generate_map_comments=True):
+def update_all_node_ids(nodes, node_map, generate_map_comments=True, assign_ids_to_mods_and_cons=False):
     for node in nodes:
         update_tag(node_map, node, "id", generate_map_comments)
         update_tag(node_map, node, "targetId", generate_map_comments)
         update_tag(node_map, node, 'scope', generate_map_comments)
         update_tag(node_map, node, 'childId', generate_map_comments)
         update_tag(node_map, node, 'field', generate_map_comments)
+
+        # If we are assigning IDs to mods and cons, they can get random IDs
+        if assign_ids_to_mods_and_cons and \
+            node.tag in [MODIFIER_TYPE, CONDITION_TYPE, CONDITION_GROUP_TYPE]:
+            node.attrib.set("id", get_random_bs_id())
+
+
+
+

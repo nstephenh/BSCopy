@@ -8,7 +8,7 @@ if __name__ == '__main__':
 
     name_map = {}  # Dictionary of names to input_ids
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    tree = ET.parse('/home/nsh/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate')
+    tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
 
     # Find the base parts of the template
     for node in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
@@ -21,7 +21,7 @@ if __name__ == '__main__':
         if bs_id and not name:
             print("{} has ID but no Name: {}".format(node, bs_id))
 
-    base_path = "/home/nsh/BattleScribe/data/horus-heresy"
+    base_path = os.path.expanduser('~/BattleScribe/data/horus-heresy')
     la_files = os.listdir(base_path)
 
     for file_name in la_files:
