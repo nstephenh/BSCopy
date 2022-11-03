@@ -15,7 +15,8 @@ def get_random_bs_id():
 
 def get_identifier(node):
     name = node.attrib.get("name")
-    return "{}_{}".format(name, node.tag)
+    hidden = node.attrib.get("hidden")
+    return "{}_{}_hidden_{}".format(name, node.tag, hidden)
 
 
 def comment(attribute_name, bs_id):
@@ -26,13 +27,17 @@ def comment_id(bs_id):
     return "node_id_{}".format(bs_id)
 
 
-def make_comment(node_to_modify, attribute_name, source_id):
+def make_comment(node_to_modify, attribute_name, source_id, overwrite=False):
     comment_node = get_or_make_comment_node(node_to_modify)
+    new_comment_text = comment(attribute_name, source_id)
     try:
-        comment_node.text.index(comment(attribute_name, source_id))
+        comment_tag = comment(attribute_name, "")
+        id_start = comment_node.text.index(comment_tag)
+        if overwrite:  # Update existing comment if it exists
+            comment_node.text = comment_node.text[:id_start] + new_comment_text
     except ValueError:
         # Only append comment if comment does not already exist
-        comment_node.text += "    {}".format(comment(attribute_name, source_id))
+        comment_node.text += "    {}".format(new_comment_text)
 
 
 def get_or_make_comment_node(node_to_modify):

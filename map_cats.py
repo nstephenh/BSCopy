@@ -10,18 +10,15 @@ if __name__ == '__main__':
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
 
-    names_in_template = []
-
     # Find the base parts of the template
     for node in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
         bs_id = node.attrib.get("id")
         name = node.attrib.get("name")
+        node_identifier = get_identifier(node)
         if name and bs_id:
-            name_map[get_identifier(node)] = bs_id
-            if name in names_in_template:
+            if node_identifier in name_map:
                 print("{} needs manually mapped due to multiple entries".format(name))
-            else:
-                names_in_template.append(name)
+            name_map[node_identifier] = bs_id
 
     base_path = os.path.expanduser('~/BattleScribe/data/horus-heresy')
     la_files = os.listdir(base_path)
@@ -35,5 +32,5 @@ if __name__ == '__main__':
                 name = node.attrib.get("name")
                 identifier = get_identifier(node)
                 if name and bs_id and (identifier in name_map.keys()):
-                    make_comment(node, "id", name_map[identifier])
+                    make_comment(node, "id", name_map[identifier], overwrite=True)
             tree2.write(file_path)
