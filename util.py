@@ -7,6 +7,9 @@ ENTRY_LINK_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}entryLink
 MODIFIER_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}modifier'
 CONDITION_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}condition'
 CONDITION_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}conditionGroup'
+SELECTION_ENTRY_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}selectionEntryGroup'
+SHARED_SELECTION_ENTRY_GROUPS_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntryGroups'
+
 
 
 def get_random_bs_id():
