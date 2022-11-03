@@ -11,7 +11,6 @@ SELECTION_ENTRY_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchem
 SHARED_SELECTION_ENTRY_GROUPS_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntryGroups'
 
 
-
 def get_random_bs_id():
     return str(uuid.uuid4())[4:23]
 
@@ -28,7 +27,6 @@ def comment(attribute_name, bs_id):
 
 def comment_id(bs_id):
     return "node_id_{}".format(bs_id)
-
 
 def make_comment(node_to_modify, attribute_name, source_id, overwrite=False):
     comment_node = get_or_make_comment_node(node_to_modify)
@@ -124,3 +122,13 @@ def update_all_node_ids(nodes, node_map, generate_map_comments=True, assign_ids_
         if assign_ids_to_mods_and_cons and \
                 node.tag in [MODIFIER_TYPE, CONDITION_TYPE, CONDITION_GROUP_TYPE]:
             give_comment_id(node, get_random_bs_id())
+
+
+def get_mod_and_con_ids(nodes):
+    ids = []
+    for node in nodes:
+        if node.tag in [MODIFIER_TYPE, CONDITION_TYPE, CONDITION_GROUP_TYPE]:
+            node_id = find_comment_value(node, node_id=True)
+            if node_id:
+                ids.append(node_id)
+    return ids

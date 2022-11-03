@@ -4,12 +4,10 @@ import xml.etree.ElementTree as ET
 
 from util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
 
+def copy_changes_from_template(overwrite=False):
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
 
-    overwrite = True
     source_tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
 
     base_path = os.path.expanduser('~/BattleScribe/data/horus-heresy')
@@ -50,7 +48,8 @@ if __name__ == '__main__':
                         # The node is already mapped through it's ID, but we want to copy the children.
                         for child in node:
                             for fam in child:
-                                add_new_id(node_map, fam)  # Change each child and descendant ID
+                                add_new_id(node_map, fam)  # Change each child and descendant ID?
+                                # TODO: Does this actually do anything?
                             # Copy child nodes to the copy
                             node_copy.append(copy.deepcopy(child))
                         # Add new node to output file
@@ -71,3 +70,7 @@ if __name__ == '__main__':
 
             update_all_node_ids(destination_tree.iter(), node_map)
             destination_tree.write(file_path)
+
+
+if __name__ == '__main__':
+    copy_changes_from_template(overwrite=False)
