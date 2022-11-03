@@ -62,8 +62,7 @@ if __name__ == '__main__':
                 target_id = node.attrib.get("id")
                 name = node.attrib.get("name")
                 if target_id not in node_map.keys():
-                    print("Copying {} to {}".format(node, file_name))
-                    print("  ID: {} Name: {}".format(name, target_id))
+                    print("Copying {} to {}".format(name, file_name))
                     new_node = copy.deepcopy(node)
                     # Add a new ID to the map, update_all_nodes will modify the node.
                     add_new_id(node_map, node)
