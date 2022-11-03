@@ -6,6 +6,8 @@ from util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_n
     MODIFIER_TYPE, CONDITION_GROUP_TYPE, CONDITION_TYPE, COMMENT_NODE_TYPE
 
 if __name__ == '__main__':
+
+    list_legion_additions = False
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
 
     source_tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
@@ -31,8 +33,9 @@ if __name__ == '__main__':
             for destination_node in backup_tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
                 target_id = destination_node.attrib.get("id")
                 name = destination_node.attrib.get("name")
-                if target_id not in node_map.values():  # Copy over all nodes that are not mapped
-                    print("{} adds SSEG {}".format(file_name, name))
+                if target_id not in node_map.values():
+                    if list_legion_additions:
+                        print("{} adds SSEG {}".format(file_name, name))
                 else:  # Inspect existing node contents
                     index = list(node_map.values()).index(target_id)
                     bs_id = list(node_map.keys())[index]
@@ -46,11 +49,12 @@ if __name__ == '__main__':
                             print("{}'s {} needs updated with {}".format(file_name, name, node_id))
 
                     # Find all legion specific modifiers and conditions
-                    for descendant in source_node.iter():
-                        if descendant.tag in [MODIFIER_TYPE, CONDITION_TYPE, CONDITION_GROUP_TYPE]:
-                            node_id = find_comment_value(descendant, node_id=True)
-                            if node_id is None:
-                                print("{}'s {} adds {}".format(file_name, name, descendant))
+                    if list_legion_additions:
+                        for descendant in source_node.iter():
+                            if descendant.tag in [MODIFIER_TYPE, CONDITION_TYPE, CONDITION_GROUP_TYPE]:
+                                node_id = find_comment_value(descendant, node_id=True)
+                                if node_id is None:
+                                    print("{}'s {} adds {}".format(file_name, name, descendant))
 
             # List SSEGs that need copied to the target
             for destination_node in source_tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
