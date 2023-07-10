@@ -41,6 +41,17 @@ if __name__ == '__main__':
                     bs_id = list(node_map.keys())[index]
                     source_node = source_tree.find("./{}s/{}[@id='{}']".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE, bs_id))
 
+                    # legion_source_node = backup_tree.find(
+                    #     "./{}s/{}[@id='{}']".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE, target_id))
+                    #
+                    # for mod_node in legion_source_node.findall("./{}s/{}".format(MODIFIER_TYPE, MODIFIER_TYPE)):
+                    #     mod_type = mod_node.attrib.get("type")
+                    #     mod_field = mod_node.attrib.get("field")
+                    #     mod_value = mod_node.attrib.get("value")
+                    #     print(
+                    #         "{}({}) has modifier of type={} field={} value={}".format(name, bs_id, mod_type, mod_field,
+                    #                                                                   mod_value))
+
                     # List all mods and cons that need to be copied from the source to destination
                     source_mods_and_cons = get_mod_and_con_ids(source_node.iter())
                     destination_m_and_c = get_mod_and_con_ids(destination_node.iter())
