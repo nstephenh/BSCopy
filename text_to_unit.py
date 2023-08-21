@@ -1,4 +1,3 @@
-
 from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks
 from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
 
@@ -6,7 +5,7 @@ page_number = "32"
 publication_id = "89c5-118c-61fb-e6d8"
 
 raw_text = """
-SKITARIIVANGUARD COHORT
+SKITARII VANGUARD COHORT
 
 Skitarii Vanguard 7 3 4 3 3 1 3 1 7 4+
 Vanguard Alpha 7 3 4 3 3 2 3 2 8 4+
@@ -27,10 +26,8 @@ Special Rules
 ● Rad-Saturation
 """
 
-output_file = "weapon_output.xml"
+output_file = "unit_output.xml"
 final_output = ""
-
-
 
 hasError = False
 errors = ""
@@ -43,6 +40,7 @@ type_index = lines.index("Unit Type")
 wargear_index = lines.index("Wargear")
 special_rules = lines.index("Special Rules")
 
+composition_lines = lines[composition_index + 1:type_index]
 unit_type_lines = lines[type_index + 1:wargear_index]
 wargear_lines = lines[wargear_index + 1:special_rules]
 rules_lines = lines[special_rules + 1:]
@@ -72,10 +70,19 @@ for line in unit_stat_lines:
 
 models = ""
 
+number_dict = {}
+
+for line in split_at_dot(composition_lines):
+    first_space = line.index(' ')
+    default_number = line[:first_space]
+    model_name = line[first_space:].strip()
+    number_dict[model_name] = default_number
+
 for line in split_at_dot(unit_type_lines):
     model_name = line.split(":")[0].strip()
     unit_type_text = line.split(":")[1].strip()
     stats = stats_dict[model_name]
+    number = number_dict[model_name]
     model = f"""
         <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" page="{page_number}">
           <profiles>
@@ -95,6 +102,10 @@ for line in split_at_dot(unit_type_lines):
               </characteristics>
             </profile> 
           </profiles>
+          <constraints>
+            <constraint type="min" value="{number}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+            <constraint type="max" value="{number}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+          </constraints>
         </selectionEntry>"""
     models += model
 
@@ -111,7 +122,7 @@ for line in split_at_dot(wargear_lines):
 rules_links = rules_list_to_infolinks(split_at_dot(rules_lines), rules_list)
 
 output = f"""
-    <selectionEntry type="unit" import="true" name="{unit_name}" hidden="false" id="7350-f2c4-864-a165">
+    <selectionEntry type="unit" import="true" name="{unit_name}" hidden="false" id="{get_random_bs_id()}">
       <selectionEntries>{models}
       </selectionEntries>
       <categoryLinks>
@@ -127,5 +138,5 @@ if (hasError):
     print("There were one or more errors, please validate the above")
     print(errors)
 f = open(output_file, "a")
-f.write(final_output)
+f.write(output)
 f.close()
