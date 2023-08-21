@@ -4,50 +4,31 @@ from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
 page_number = "32"
 publication_id = "89c5-118c-61fb-e6d8"
 
-base_points = 110
+base_points = 140
 
 raw_text = """
-SKITARII VANGUARD COHORT
-
-Skitarii Vanguard 7 3 4 3 3 1 3 1 7 4+
-Vanguard Alpha 7 3 4 3 3 2 3 2 8 4+
+ELECTRO-PRIEST CONCLAVE
+Electro-Priest 7 4 3 3 3 1 4 2 8 -
 
 Unit Composition
-● 9 Skitarii Vanguard
-● 1 Vanguard Alpha
+● 10 Electro-Priests
 Unit Type
-● Skitarii Vanguard: Infantry
-(Skitarii, Line)
-● Vanguard Alpha: Infantry
-(Skitarii, Character, Line)
+● Infantry
 Wargear
-● Corpus Skitarii
-● Radium Carbine
+● Voltagheist Field
 ● Frag Grenades
 Special Rules
-● Rad-Saturation
+● Hatred (Everything!)
+● Feel No Pain (5+)
+● Support Squad
 
 Options:
-● A Skitarii Vanguard Cohort may include:
-- Up to 20 additional Skitarii Vanguard ....................................................... +8 points per model
-● One Skitarii Vanguard may take a:
-- Augury Scanner ...............................................................................................................+10 points
-● One Skitarii Vanguard may take a:
-- Nuncio Vox.......................................................................................................................+10 points
-● One Skitarii Vanguard may take a:
-- Omnispex ...........................................................................................................................+5 points
-● One Skitarii Vanguard may take a:
-- Enhanced Data-Tether .....................................................................................................+5 points
-● The Vanguard Alpha may take one of the following:
-- Taser Goad..........................................................................................................................+5 points
-- Arc Maul..............................................................................................................................+5 points
-- Power Weapon.................................................................................................................+10 points
-- Transonic Razor...............................................................................................................+10 points
-- Power Fist......................................................................................................................... +15 points
-● The Vanguard Alpha may take one of the following:
-- Radium Pistol.....................................................................................................................+2 points
-- Phosphor Blast Pistol......................................................................................................+10 points
-- Arc Pistol...........................................................................................................................+10 points
+● An Electro-Priest Conclave may include:
+- Up to 10 additional Electro-Priests............................................................+14 points per model
+● The entire squad must select one of the following options
+(all models in the unit must take the same option):
+- Electrostatic Gauntlets & Corpuscarii Electoo..................................................................... Free
+- Electroleech Stave & Fulgurite Electoo.................................................................................. Free
 """
 
 output_file = "unit_output.xml"
@@ -88,6 +69,12 @@ def split_at_dot(lines):
 def split_at_dash(line):
     bullet_entries = line.split("- ")
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
+
+
+def remove_plural(model_name):
+    if model_name.endswith('s'):
+        model_name = model_name[:-1]
+    return model_name
 
 
 name_synonyms = {
@@ -133,11 +120,15 @@ def option_get_link(line):
     """
     global cost_per_model, model_max
     name = line[:line.index('.')].strip()
-    pts_string = line[line.index('+') + 1:]
-    pts = int(pts_string[:pts_string.index(' ')])
+    pts = 0
+    try:
+        pts_string = line[line.index('+') + 1:]
+        pts = int(pts_string[:pts_string.index(' ')])
+    except ValueError:
+        pass  # Free
     if name.startswith("Up to"):
         additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
-        model_name = name.split('additional ')[1]
+        model_name = remove_plural(name.split('additional ')[1])
         print(f"{model_name} x{additional_models} at {pts} each")
         cost_per_model[model_name] = pts
         model_max[model_name] = additional_models
@@ -199,7 +190,7 @@ for line in split_at_dot(options_lines):
 for line in split_at_dot(composition_lines):
     first_space = line.index(' ')
     default_number = int(line[:first_space])
-    model_name = line[first_space:].strip()
+    model_name = remove_plural(line[first_space:].strip())
     model_min[model_name] = default_number
     if model_name not in model_max:
         model_max[model_name] = default_number
@@ -217,7 +208,6 @@ if remaining_points > 0 and len(cost_per_model) < len(model_min):
         if model_max[model_name] == 1:
             cost_per_model[model_name] = remaining_points
             break
-
 
 for line in split_at_dot(unit_type_lines):
     model_name = line.split(":")[0].strip()
