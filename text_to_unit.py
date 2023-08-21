@@ -90,12 +90,22 @@ def split_at_dash(line):
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
-def get_entrylink(name, only_option=False, pts=None):
+def get_entrylink(name, pts=None):
     global hasError, errors, wargear_list
     if name in wargear_list:
         wargear_id = wargear_list[name]
-        return f"""
-        <entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"/>"""
+        link_text = f'entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
+        if pts:
+            return f"""        <{link_text}>
+          <constraints>
+            <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+          </constraints>
+          <costs>
+            <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
+          </costs>
+        </entryLink>"""
+        else:
+            return f"<{link_text} />"
     else:
         hasError = True
         errors = errors + f"Could not find wargear for: {name}\n"
@@ -139,14 +149,41 @@ cost_per_model = {}
 model_min = {}
 model_max = {}
 
+# Getting all the options also gets us the points per model we wil use later.
+options_output = ""
 for line in split_at_dot(options_lines):
     this_option_lines = split_at_dash(line)
     option_title = this_option_lines[0]
     options = this_option_lines[1:]
     print(option_title)
+    if "may include" in option_title:
+        for option in options:
+            print("\t", option)
+            option_get_link(option)  # set points, don't do anything with entries
+        continue  # this is only for links.
+
+    if "may take a" in option_title:
+        pass
+        # min 0 max 1
+    if "may take one of" in option_title:
+        pass
+        # min 0 max 1
+
+    links = ""
     for option in options:
         print("\t", option)
-        print(option_get_link(option))
+        links = links + option_get_link(option)
+    print(links)
+    print("find me")
+    seg = f"""            <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
+              <entryLinks>{links}
+              </entryLinks>
+              <constraints>
+                <constraint type="min" value="{0}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+                <constraint type="max" value="{1}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+              </constraints>
+            </selectionEntryGroup>"""
+    options_output = options_output + seg
 
 for line in split_at_dot(composition_lines):
     first_space = line.index(' ')
@@ -221,6 +258,8 @@ output = f"""
       </categoryLinks>
       <entryLinks>{wargear_links}
       </entryLinks>
+      <selectionEntryGroups>{options_output}
+      </selectionEntryGroups>
       {rules_links}
     </selectionEntry>
 """
