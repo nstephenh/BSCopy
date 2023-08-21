@@ -108,7 +108,7 @@ for line in raw_text.split("\n"):
         weapon_name, range, str, ap, weapon_type
     ))
 
-    type_and_srs = line[line.index(weapon_type):]
+    type_and_srs = format_quote_alikes(line[line.index(weapon_type):])
 
     weapon_rules = type_and_srs.split(',')[1:]
     rules_output = ""
