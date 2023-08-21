@@ -7,6 +7,8 @@ page_number = "96"
 publication_id = "89c5-118c-61fb-e6d8"
 raw_text = """
 Three Word Name 12-96“ 7 5 Heavy 5, Barrage, Blast (3”), Pinning, Rending (5+)
+Regular Name 24“ 5 4 Rapid Fire, Ignores Cover
+Regular Name 24“ 5 4 Rapid Fire 2, Ignores Cover
 shortname - +3 - Melee, Overload (6+), Sudden Strike (3)
 """
 
@@ -77,29 +79,37 @@ for line in raw_text.split("\n"):
         continue
     first_half = line.split(",")[0].split(" ")
     type_or_num = first_half[-1]
-    try:
-        num = int(type_or_num)  # Type is not melee
-        offset = 0
-        weapon_type = first_half[-2] + ' ' + first_half[-1]
-        ap = first_half[-3]
-        str = first_half[-4]
-        range = first_half[-5]
-        weapon_name = get_name(first_half[:-5])
-    except Exception:
-        # Type is melee
-        weapon_type = first_half[-1]
-        ap = first_half[-2]
-        str = first_half[-3]
-        range = first_half[-4]
-        weapon_name = get_name(first_half[:-4])
+    offset = 0
 
-    type_and_srs = line[line.index(weapon_type):]
+    try:
+        num = int(type_or_num)  # Type is not melee or rapid fire
+        weapon_type = " ".join(first_half[-2:])
+        offset = 1
+    except Exception:
+        weapon_type = first_half[-1]
+
+    if first_half[-1] == "Fire":
+        weapon_type = "Rapid Fire"
+        offset = 1
+
+    if first_half[-2] == "Fire":  # "Rapid Fire 2"
+        weapon_type = "Rapid " + weapon_type
+        offset = 2
+
+    # Type is melee
+    ap = first_half[-2 - offset]
+    str = first_half[-3 - offset]
+    range = first_half[-4 - offset]
+    weapon_name = get_name(first_half[:-4 - offset])
     range = format_quote_alikes(range)
 
     print(line)
     print("\t", "w: {} r: {} s: {} ap: {} type: {}".format(
         weapon_name, range, str, ap, weapon_type
     ))
+
+    type_and_srs = line[line.index(weapon_type):]
+
     weapon_rules = type_and_srs.split(',')[1:]
     rules_output = ""
     if weapon_rules:
