@@ -90,10 +90,23 @@ def split_at_dash(line):
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
+name_synonyms = {
+    "Corpus Skitarii": "The Corpus Skitarii",
+    "Nuncio Vox": "Nuncio-Vox"
+}
+
+
+def check_alt_names(name):
+    if name in name_synonyms:
+        return name_synonyms[name]
+    return name
+
+
 def get_entrylink(name, pts=None):
     global hasError, errors, wargear_list
-    if name in wargear_list:
-        wargear_id = wargear_list[name]
+    lookup_name = check_alt_names(name)
+    if lookup_name in wargear_list:
+        wargear_id = wargear_list[lookup_name]
         link_text = f'entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
         if pts:
             return f"""        <{link_text}>
@@ -173,8 +186,6 @@ for line in split_at_dot(options_lines):
     for option in options:
         print("\t", option)
         links = links + option_get_link(option)
-    print(links)
-    print("find me")
     seg = f"""            <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
               <entryLinks>{links}
               </entryLinks>
@@ -207,7 +218,6 @@ if remaining_points > 0 and len(cost_per_model) < len(model_min):
             cost_per_model[model_name] = remaining_points
             break
 
-print(cost_per_model)  # for our test case of 110 - 8*9 , should be 38 for the sgt
 
 for line in split_at_dot(unit_type_lines):
     model_name = line.split(":")[0].strip()
