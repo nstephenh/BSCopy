@@ -4,6 +4,8 @@ from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
 page_number = "32"
 publication_id = "89c5-118c-61fb-e6d8"
 
+base_points = 110
+
 raw_text = """
 SKITARII VANGUARD COHORT
 
@@ -24,6 +26,28 @@ Wargear
 ● Frag Grenades
 Special Rules
 ● Rad-Saturation
+
+Options:
+● A Skitarii Vanguard Cohort may include:
+- Up to 20 additional Skitarii Vanguard ....................................................... +8 points per model
+● One Skitarii Vanguard may take a:
+- Augury Scanner ...............................................................................................................+10 points
+● One Skitarii Vanguard may take a:
+- Nuncio Vox.......................................................................................................................+10 points
+● One Skitarii Vanguard may take a:
+- Omnispex ...........................................................................................................................+5 points
+● One Skitarii Vanguard may take a:
+- Enhanced Data-Tether .....................................................................................................+5 points
+● The Vanguard Alpha may take one of the following:
+- Taser Goad..........................................................................................................................+5 points
+- Arc Maul..............................................................................................................................+5 points
+- Power Weapon.................................................................................................................+10 points
+- Transonic Razor...............................................................................................................+10 points
+- Power Fist......................................................................................................................... +15 points
+● The Vanguard Alpha may take one of the following:
+- Radium Pistol.....................................................................................................................+2 points
+- Phosphor Blast Pistol......................................................................................................+10 points
+- Arc Pistol...........................................................................................................................+10 points
 """
 
 output_file = "unit_output.xml"
@@ -38,12 +62,14 @@ lines = [entry.strip() for entry in raw_text.split("\n") if entry.strip() != ""]
 composition_index = lines.index("Unit Composition")
 type_index = lines.index("Unit Type")
 wargear_index = lines.index("Wargear")
-special_rules = lines.index("Special Rules")
+special_rules_index = lines.index("Special Rules")
+options_index = lines.index("Options:")
 
 composition_lines = lines[composition_index + 1:type_index]
 unit_type_lines = lines[type_index + 1:wargear_index]
-wargear_lines = lines[wargear_index + 1:special_rules]
-rules_lines = lines[special_rules + 1:]
+wargear_lines = lines[wargear_index + 1:special_rules_index]
+rules_lines = lines[special_rules_index + 1:options_index]
+options_lines = lines[options_index + 1:]
 
 unit_name = lines[0].title()
 
@@ -59,6 +85,44 @@ def split_at_dot(lines):
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
+def split_at_dash(line):
+    bullet_entries = line.split("- ")
+    return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
+
+
+def get_entrylink(name, only_option=False, pts=None):
+    global hasError, errors, wargear_list
+    if name in wargear_list:
+        wargear_id = wargear_list[name]
+        return f"""
+        <entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"/>"""
+    else:
+        hasError = True
+        errors = errors + f"Could not find wargear for: {name}\n"
+    return ""
+
+
+def option_get_link(line):
+    """
+    Call before models on unit are set.
+    :param line:
+    :return:
+    """
+    global cost_per_model, model_max
+    name = line[:line.index('.')].strip()
+    pts_string = line[line.index('+') + 1:]
+    pts = int(pts_string[:pts_string.index(' ')])
+    if name.startswith("Up to"):
+        additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
+        model_name = name.split('additional ')[1]
+        print(f"{model_name} x{additional_models} at {pts} each")
+        cost_per_model[model_name] = pts
+        model_max[model_name] = additional_models
+        pass
+    else:
+        return get_entrylink(name, pts=pts)
+
+
 unit_stat_lines = lines[1:composition_index]
 
 stats_dict = {}
@@ -70,19 +134,48 @@ for line in unit_stat_lines:
 
 models = ""
 
-number_dict = {}
+cost_per_model = {}
+
+model_min = {}
+model_max = {}
+
+for line in split_at_dot(options_lines):
+    this_option_lines = split_at_dash(line)
+    option_title = this_option_lines[0]
+    options = this_option_lines[1:]
+    print(option_title)
+    for option in options:
+        print("\t", option)
+        print(option_get_link(option))
 
 for line in split_at_dot(composition_lines):
     first_space = line.index(' ')
-    default_number = line[:first_space]
+    default_number = int(line[:first_space])
     model_name = line[first_space:].strip()
-    number_dict[model_name] = default_number
+    model_min[model_name] = default_number
+    if model_name not in model_max:
+        model_max[model_name] = default_number
+    else:
+        model_max[model_name] = model_max[model_name] + default_number
+
+# Calculate the cost per the unit if there were none of the models that cost x pts per
+remaining_points = base_points
+for model_name in cost_per_model:
+    remaining_points = remaining_points - (model_min[model_name] * cost_per_model[model_name])
+
+# Put those points on the first singular model in the unit.
+if remaining_points > 0 and len(cost_per_model) < len(model_min):
+    for model_name in model_max:
+        if model_max[model_name] == 1:
+            cost_per_model[model_name] = remaining_points
+            break
+
+print(cost_per_model)  # for our test case of 110 - 8*9 , should be 38 for the sgt
 
 for line in split_at_dot(unit_type_lines):
     model_name = line.split(":")[0].strip()
     unit_type_text = line.split(":")[1].strip()
     stats = stats_dict[model_name]
-    number = number_dict[model_name]
     model = f"""
         <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" page="{page_number}">
           <profiles>
@@ -103,21 +196,19 @@ for line in split_at_dot(unit_type_lines):
             </profile> 
           </profiles>
           <constraints>
-            <constraint type="min" value="{number}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-            <constraint type="max" value="{number}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+            <constraint type="min" value="{model_min[model_name]}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+            <constraint type="max" value="{model_max[model_name]}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
           </constraints>
+          <costs>
+            <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{cost_per_model[model_name]}"/>
+          </costs>
         </selectionEntry>"""
     models += model
 
 wargear_links = ""
+
 for line in split_at_dot(wargear_lines):
-    if line in wargear_list:
-        wargear_id = wargear_list[line]
-        wargear_links += f"""
-        <entryLink import="true" name="{line}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"/>"""
-    else:
-        hasError = True
-        errors = errors + f"Could not find wargear for: {line}\n"
+    wargear_links += get_entrylink(line)
 
 rules_links = rules_list_to_infolinks(split_at_dot(rules_lines), rules_list)
 
