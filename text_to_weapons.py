@@ -58,12 +58,13 @@ rules_list = read_rules_from_system()
 
 def get_generic_rule_name(rule_name):
     # Special handling for some rules:
-    if rule_name.startswith('Blast (') or rule_name.startswith('Large Blast ('):
+    if rule_name.startswith('Blast (') or rule_name.startswith('Large Blast (') \
+            or rule_name.startswith('Massive Blast ('):
         return "Blast"
-    if rule_name == "Twin-Linked":
-        return "Twin-linked"
-    if rule_name == "Two-Handed":
-        return "Two-handed"
+    if '-' in rule_name:  # for Twin-linked, Two-handed, and Master-crafted
+        components = rule_name.split('-')
+        return components[0] + "-" + components[1].lower()
+
     if '(' in rule_name:
         return rule_name.split('(')[0] + '(X)'
     return rule_name
