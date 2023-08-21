@@ -142,8 +142,13 @@ unit_stat_lines = lines[1:composition_index]
 stats_dict = {}
 
 for line in unit_stat_lines:
-    model_name = line[:-21]
-    stats = line[-21:].strip().split(" ")
+    if not "+" in line:
+        stats_length = 20
+    else:
+        stats_length = 21
+    model_name = line[:-stats_length]
+
+    stats = line[-stats_length:].strip().split(" ")
     stats_dict[model_name] = stats
 
 models = ""
@@ -210,8 +215,14 @@ if remaining_points > 0 and len(cost_per_model) < len(model_min):
             break
 
 for line in split_at_dot(unit_type_lines):
-    model_name = line.split(":")[0].strip()
-    unit_type_text = line.split(":")[1].strip()
+    if ":" in line:
+        model_name = line.split(":")[0].strip()
+        unit_type_text = line.split(":")[1].strip()
+    else:
+        # Should be only one model
+
+        model_name = list(stats_dict.keys())[0]
+        unit_type_text = line.strip()
     stats = stats_dict[model_name]
     model = f"""
         <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" page="{page_number}">
