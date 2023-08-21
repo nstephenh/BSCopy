@@ -134,7 +134,17 @@ def option_get_link(line):
         model_max[model_name] = additional_models
         pass
     else:
-        return get_entrylink(name, pts=pts)
+        if "&" in name:
+            suboptions = ""
+            for sub_option in name.split("&"):
+                print(sub_option)
+                suboptions = suboptions + get_entrylink(sub_option.strip())
+            return f"""            <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
+                     <entryLinks>{suboptions}
+                     </entryLinks>
+                   </selectionEntry>"""
+        else:
+            return get_entrylink(name, pts=pts)
 
 
 unit_stat_lines = lines[1:composition_index]
