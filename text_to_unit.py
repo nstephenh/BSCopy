@@ -1,7 +1,7 @@
 from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks
 from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
 
-page_number = "32"
+page_number = "35"
 publication_id = "89c5-118c-61fb-e6d8"
 
 base_points = 140
@@ -67,8 +67,9 @@ def split_at_dot(lines):
 
 
 def split_at_dash(line):
-    bullet_entries = line.split("- ")
-    return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
+    print("Split at dash this: ", line)
+    dash_entries = line.split("- ")
+    return [entry.strip() for entry in dash_entries if entry.strip() != ""]
 
 
 def remove_plural(model_name):
@@ -89,14 +90,15 @@ def check_alt_names(name):
     return name
 
 
-def get_entrylink(name, pts=None):
+def get_entrylink(name, pts=None, only=False):
     global hasError, errors, wargear_list
     lookup_name = check_alt_names(name)
     if lookup_name in wargear_list:
         wargear_id = wargear_list[lookup_name]
         link_text = f'entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
         if pts:
-            return f"""        <{link_text}>
+            return f"""
+        <{link_text}>
           <constraints>
             <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
           </constraints>
@@ -104,20 +106,41 @@ def get_entrylink(name, pts=None):
             <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
           </costs>
         </entryLink>"""
+        elif only:  # If the only/default option (wargear), then set it as min 1 max 1
+            return f"""
+        <{link_text}>
+          <constraints>
+            <constraint type="min" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+            <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+          </constraints>
+        </entryLink>"""
         else:
-            return f"<{link_text} />"
+            return f"\n<{link_text} />"
+
     else:
         hasError = True
         errors = errors + f"Could not find wargear for: {name}\n"
     return ""
 
 
-def option_get_link(line):
-    """
-    Call before models on unit are set.
-    :param line:
-    :return:
-    """
+def option_get_se(name, pts):
+    # When an option is a group of options and needs a SE containing multiple entry links.
+    suboptions = ""
+    for sub_option in name.split("&"):
+        print(sub_option)
+        suboptions = suboptions + get_entrylink(sub_option.strip(), only=True)
+    return f"""
+                      <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
+                        <entryLinks>{suboptions}
+                        </entryLinks>
+                      </selectionEntry>"""
+
+
+def option_get_link(name, pts):
+    return get_entrylink(name, pts=pts)
+
+
+def option_process_line(line):
     global cost_per_model, model_max
     name = line[:line.index('.')].strip()
     pts = 0
@@ -132,19 +155,8 @@ def option_get_link(line):
         print(f"{model_name} x{additional_models} at {pts} each")
         cost_per_model[model_name] = pts
         model_max[model_name] = additional_models
-        pass
     else:
-        if "&" in name:
-            suboptions = ""
-            for sub_option in name.split("&"):
-                print(sub_option)
-                suboptions = suboptions + get_entrylink(sub_option.strip())
-            return f"""            <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
-                     <entryLinks>{suboptions}
-                     </entryLinks>
-                   </selectionEntry>"""
-        else:
-            return get_entrylink(name, pts=pts)
+        return name, pts
 
 
 unit_stat_lines = lines[1:composition_index]
@@ -178,23 +190,25 @@ for line in split_at_dot(options_lines):
     if "may include" in option_title:
         for option in options:
             print("\t", option)
-            option_get_link(option)  # set points, don't do anything with entries
-        continue  # this is only for links.
-
-    if "may take a" in option_title:
-        pass
-        # min 0 max 1
-    if "may take one of" in option_title:
-        pass
-        # min 0 max 1
+            option_process_line(option)  # set points, don't do anything with entries
+        continue  # this is only for points per model options, skip processing options for this option group.
 
     links = ""
+    selection_entries = ""
     for option in options:
         print("\t", option)
-        links = links + option_get_link(option)
-    seg = f"""            <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
+        name, pts = option_process_line(option)
+        if name:  # If name isn't returned, it's instead getting points per model
+            if "&" in name:
+                selection_entries = selection_entries + option_get_se(name, pts)
+            else:
+                links = links + option_get_link(name, pts)
+    seg = f"""
+            <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
               <entryLinks>{links}
               </entryLinks>
+              <selectionEntries>{selection_entries}
+              </selectionEntries>
               <constraints>
                 <constraint type="min" value="{0}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
                 <constraint type="max" value="{1}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
@@ -235,9 +249,9 @@ for line in split_at_dot(unit_type_lines):
         unit_type_text = line.strip()
     stats = stats_dict[model_name]
     model = f"""
-        <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" page="{page_number}">
+        <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
           <profiles>
-            <profile name="{model_name}" typeId="4bb2-cb95-e6c8-5a21" typeName="Unit" hidden="false" id="{get_random_bs_id()}">
+            <profile name="{model_name}" typeId="4bb2-cb95-e6c8-5a21" typeName="Unit" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
               <characteristics>
                 <characteristic name="Unit Type" typeId="ddd7-6f5c-a939-b69e">{unit_type_text}</characteristic>
                 <characteristic name="Move" typeId="893e-2d76-8f04-44e5">{stats[0]}</characteristic>
@@ -266,12 +280,12 @@ for line in split_at_dot(unit_type_lines):
 wargear_links = ""
 
 for line in split_at_dot(wargear_lines):
-    wargear_links += get_entrylink(line)
+    wargear_links += get_entrylink(line, only=True)
 
 rules_links = rules_list_to_infolinks(split_at_dot(rules_lines), rules_list)
 
 output = f"""
-    <selectionEntry type="unit" import="true" name="{unit_name}" hidden="false" id="{get_random_bs_id()}">
+    <selectionEntry type="unit" import="true" name="{unit_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
       <selectionEntries>{models}
       </selectionEntries>
       <categoryLinks>
@@ -284,7 +298,6 @@ output = f"""
       {rules_links}
     </selectionEntry>
 """
-print(output)
 if (hasError):
     print("There were one or more errors, please validate the above")
     print(errors)
