@@ -1,34 +1,63 @@
-from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks
+import re
+
+from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks, \
+    read_categories_from_system
 from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
 
-page_number = "35"
+page_number = "57"
 publication_id = "89c5-118c-61fb-e6d8"
 
-base_points = 140
+force_org = f"""<categoryLink name="Fast Attack:" targetId="20ef-cd01-a8da-376e" id="{get_random_bs_id()}" primary="true" />"""
+
+base_points = 75
 
 raw_text = """
-ELECTRO-PRIEST CONCLAVE
-Electro-Priest 7 4 3 3 3 1 4 2 8 -
-
+SKITARII CENTURIUS
+Skitarii Centurius 7 5 5 4 4 3 4 3 9 3+
 Unit Composition
-● 10 Electro-Priests
+● 1 Skitarii Centurius
 Unit Type
-● Infantry
+● Infantry (Character, Skitarii)
 Wargear
-● Voltagheist Field
+● Phaeton-Pattern Power Armour
+● Refractor Field
+● Taser Goad
+● Radium Pistol
 ● Frag Grenades
+● Krak Grenades
 Special Rules
-● Hatred (Everything!)
+● Independent Character
+● Stubborn
+● Precision Shots (6+)
 ● Feel No Pain (5+)
-● Support Squad
-
+● Command Node
+● Command Protocols (Skitarius)
 Options:
-● An Electro-Priest Conclave may include:
-- Up to 10 additional Electro-Priests............................................................+14 points per model
-● The entire squad must select one of the following options
-(all models in the unit must take the same option):
-- Electrostatic Gauntlets & Corpuscarii Electoo..................................................................... Free
-- Electroleech Stave & Fulgurite Electoo.................................................................................. Free
+● The Skitarii Centurius may exchange their Taser Goad for one of the following:
+- Arc Maul...................................................................................................................................... Free
+- Corposant Stave.................................................................................................................+5 points
+- Power Weapon...................................................................................................................+5 points
+- Transonic Razor...............................................................................................................+10 points
+- Power Fist .........................................................................................................................+10 points
+● The Skitarii Centurius may exchange their Radium Pistol for one of the following:
+- Volkite Serpenta......................................................................................................................... Free
+- Archaeotech Pistol ............................................................................................................+5 points
+- Arc Pistol.............................................................................................................................+5 points
+- Phosphor Blast Pistol......................................................................................................+10 points
+- Photon Gauntlet.............................................................................................................. +15 points
+- Archaeotech Revolver ..................................................................................................... +15 points
+● The Skitarii Centurius may take one of the following:
+- Galvanic Rifle ...................................................................................................................+10 points
+- Radium Carbine...............................................................................................................+10 points
+- Flechette Carbine ............................................................................................................+10 points
+- Galvanic Carbine ............................................................................................................. +15 points
+● The Skitarii Centurius may exchange their Refractor Field for a:
+- Conversion Field............................................................................................................. +20 points
+● The Skitarii Centurius may take any of the following:
+- Augury Scanner .................................................................................................................+5 points
+- Omnispex .........................................................................................................................+10 points
+- Rad Grenades ...................................................................................................................+10 points
+
 """
 
 output_file = "unit_output.xml"
@@ -38,6 +67,7 @@ hasError = False
 errors = ""
 rules_list = read_rules_from_system()
 wargear_list = read_wargear_from_system()
+category_list = read_categories_from_system()
 
 lines = [entry.strip() for entry in raw_text.split("\n") if entry.strip() != ""]
 composition_index = lines.index("Unit Composition")
@@ -164,13 +194,15 @@ unit_stat_lines = lines[1:composition_index]
 stats_dict = {}
 
 for line in unit_stat_lines:
-    if not "+" in line:
-        stats_length = 20
+    first_digit = re.search('\d', line)
+    if first_digit:
+        stats_start = first_digit.start()
     else:
-        stats_length = 21
-    model_name = line[:-stats_length]
+        raise Exception("Could not find first digit")
 
-    stats = line[-stats_length:].strip().split(" ")
+    model_name = line[:stats_start].strip()
+
+    stats = line[stats_start:].strip().split(" ")
     stats_dict[model_name] = stats
 
 models = ""
@@ -247,6 +279,18 @@ for line in split_at_dot(unit_type_lines):
 
         model_name = list(stats_dict.keys())[0]
         unit_type_text = line.strip()
+    unit_subtypes = []
+    print(unit_type_text)
+    if "(" in unit_type_text:
+        unit_type = unit_type_text.split("(")[0].strip()
+        unit_subtypes = unit_type_text.split("(")[1][:-1].strip().split(",")
+    else:
+        unit_type = unit_type_text
+    category_links = ""
+    for category in [unit_type] + unit_subtypes:
+        category = category.strip()
+        category_links += f"""
+            <categoryLink targetId="{category_list[category]}" id="{get_random_bs_id()}" primary="false" />"""  # Not setting tne name node, will be set when bs saves
     stats = stats_dict[model_name]
     model = f"""
         <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
@@ -274,6 +318,8 @@ for line in split_at_dot(unit_type_lines):
           <costs>
             <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{cost_per_model[model_name]}"/>
           </costs>
+          <categoryLinks>{category_links}
+          </categoryLinks>
         </selectionEntry>"""
     models += model
 
@@ -289,7 +335,8 @@ output = f"""
       <selectionEntries>{models}
       </selectionEntries>
       <categoryLinks>
-        <categoryLink targetId="9b5d-fac7-799b-d7e7" id="{get_random_bs_id()}" primary="true" name="Troops:"/>
+        <categoryLink id="98ca-4c49-4f7e-b8a7" name="Unit:" hidden="false" targetId="36c3-e85e-97cc-c503" primary="false" />
+        {force_org}
       </categoryLinks>
       <entryLinks>{wargear_links}
       </entryLinks>
