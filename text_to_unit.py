@@ -2,62 +2,62 @@ import re
 
 from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks, \
     read_categories_from_system
-from util import get_random_bs_id, SHARED_RULES_TYPE, SELECTION_ENTRY_TYPE
+from util import get_random_bs_id
 
-page_number = "57"
+page_number = "23"
 publication_id = "89c5-118c-61fb-e6d8"
 
-force_org = f"""<categoryLink name="Fast Attack:" targetId="20ef-cd01-a8da-376e" id="{get_random_bs_id()}" primary="true" />"""
+force_org = f"""<categoryLink name="Heavy Support:" targetId="7031-469a-1aeb-eab0" id="{get_random_bs_id()}" primary="true"/>"""
 
-base_points = 75
+base_points = 175
 
 raw_text = """
-SKITARII CENTURIUS
-Skitarii Centurius 7 5 5 4 4 3 4 3 9 3+
-Unit Composition
-● 1 Skitarii Centurius
-Unit Type
-● Infantry (Character, Skitarii)
-Wargear
-● Phaeton-Pattern Power Armour
-● Refractor Field
-● Taser Goad
-● Radium Pistol
-● Frag Grenades
-● Krak Grenades
-Special Rules
-● Independent Character
-● Stubborn
-● Precision Shots (6+)
-● Feel No Pain (5+)
-● Command Node
-● Command Protocols (Skitarius)
-Options:
-● The Skitarii Centurius may exchange their Taser Goad for one of the following:
-- Arc Maul...................................................................................................................................... Free
-- Corposant Stave.................................................................................................................+5 points
-- Power Weapon...................................................................................................................+5 points
-- Transonic Razor...............................................................................................................+10 points
-- Power Fist .........................................................................................................................+10 points
-● The Skitarii Centurius may exchange their Radium Pistol for one of the following:
-- Volkite Serpenta......................................................................................................................... Free
-- Archaeotech Pistol ............................................................................................................+5 points
-- Arc Pistol.............................................................................................................................+5 points
-- Phosphor Blast Pistol......................................................................................................+10 points
-- Photon Gauntlet.............................................................................................................. +15 points
-- Archaeotech Revolver ..................................................................................................... +15 points
-● The Skitarii Centurius may take one of the following:
-- Galvanic Rifle ...................................................................................................................+10 points
-- Radium Carbine...............................................................................................................+10 points
-- Flechette Carbine ............................................................................................................+10 points
-- Galvanic Carbine ............................................................................................................. +15 points
-● The Skitarii Centurius may exchange their Refractor Field for a:
-- Conversion Field............................................................................................................. +20 points
-● The Skitarii Centurius may take any of the following:
-- Augury Scanner .................................................................................................................+5 points
-- Omnispex .........................................................................................................................+10 points
-- Rad Grenades ...................................................................................................................+10 points
+SICARIAN KILL-CLADE
+Sicarian Stalker 9 4 4 4 4 2 4 2 8 4+
+Sicarian Alpha 9 4 4 4 4 2 4 3 8 4+
 
+Unit Composition
+● 1 Sicarian Alpha
+● 4 Sicarian Stalkers
+Unit Type
+● Sicarian Stalker: Infantry (Skitarii)
+● Sicarian Alpha:
+Infantry (Skitarii, Character)
+Wargear
+● Sicarian Battle Armour
+● Taser Goad
+● Stubcarbine
+● Frag Grenades
+Special Rules
+● Bulky (2)
+● Feel No Pain (5+)
+● Neurostatic Aura
+
+Options:
+● A Sicarian Kill-Clade may include:
+- Up to 10 additional Sicarian Stalkers........................................................ +30 points per model
+● The Kill-Clade must select one of the following upgrades:
+- Stealth Suite Module............................................................................................................... Free
+- Aggression Stim-Injectors ........................................................................................................ Free
+● One Sicarian Stalker may take a:
+- Augury Scanner ...............................................................................................................+10 points
+● One Sicarian Stalker may take a:
+- Nuncio Vox.......................................................................................................................+10 points
+● Any model may exchange their Taser Goad for one of the following:
+- Power Weapon...................................................................................................................+5 points
+- Transonic Razor.................................................................................................................+5 points
+- Transonic Blade ...............................................................................................................+10 points
+● Any model may exchange their Stubcarbine for one of the following:
+- Flechette Blaster........................................................................................................................ Free
+- Chordclaw ........................................................................................................................+10 points
+● Any model may exchange their Taser Goad and Stubcarbine for:
+- Transonic Blade .................................................................................................... +15 points
+● The Sicarian Alpha may exchange their Stubcarbine for:
+- Arc Pistol..................................................................................................................................... Free
+● The Sicarian Alpha may take any of the following:
+- Chordclaw ..........................................................................................................................+5 points
+- Prehensile Dataspike.......................................................................................................+10 points
+- Refractor Field .................................................................................................................+10 points
 """
 
 output_file = "unit_output.xml"
@@ -335,7 +335,7 @@ output = f"""
       <selectionEntries>{models}
       </selectionEntries>
       <categoryLinks>
-        <categoryLink id="98ca-4c49-4f7e-b8a7" name="Unit:" hidden="false" targetId="36c3-e85e-97cc-c503" primary="false" />
+        <categoryLink id="98ca-4c49-4f7e-b8a7" name="Unit:" hidden="false" targetId="36c3-e85e-97cc-c503" primary="false"/>
         {force_org}
       </categoryLinks>
       <entryLinks>{wargear_links}

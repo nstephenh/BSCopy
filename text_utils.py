@@ -3,6 +3,8 @@ import xml.etree.ElementTree as ET
 
 from util import SHARED_RULES_TYPE, get_random_bs_id
 
+errors = ""
+
 
 def rules_list_to_infolinks(rules_for_entry, rules_list):
     global hasError, errors
