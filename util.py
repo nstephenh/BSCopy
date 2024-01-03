@@ -1,3 +1,4 @@
+import re
 import uuid
 import xml.etree.ElementTree as ET
 
@@ -10,7 +11,6 @@ CONDITION_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}cond
 SELECTION_ENTRY_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}selectionEntryGroup'
 SHARED_SELECTION_ENTRY_GROUPS_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntryGroups'
 SHARED_RULES_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedRules'
-
 
 
 def get_random_bs_id():
@@ -29,6 +29,7 @@ def comment(attribute_name, bs_id):
 
 def comment_id(bs_id):
     return "node_id_{}".format(bs_id)
+
 
 def make_comment(node_to_modify, attribute_name, source_id, overwrite=False):
     comment_node = get_or_make_comment_node(node_to_modify)
@@ -134,3 +135,34 @@ def get_mod_and_con_ids(nodes):
             if node_id:
                 ids.append(node_id)
     return ids
+
+
+def cleanup_file_match_bs_whitespace(filepath):
+    content = ""
+    in_tag = False
+    with open(filepath, 'r', encoding="utf-8") as f:
+        content = f.read()
+        content = re.sub(' />', '/>', content)  # BS leaves out this space, so we need to replace them all
+        # The XML parser leaves apostrophes and quotes, see issue: https://github.com/python/cpython/issues/72086
+        # We have to handle them ourselves
+        # We could use beautiful soup for this, but I'm attempting to avoid imports.
+        # That is also the reason we're not mocking _escape_cdata
+        content = re.sub("'", "&apos;", content)
+        # Go through and find all the quotes not inside of tags.
+        new_content = ""
+        for char in content:
+            if char == "<" and not in_tag:
+                in_tag = True
+            elif char == ">" and in_tag:
+                in_tag = False
+            elif char in ["<", ">"]:
+                raise Exception("This method didn't work, a < or > was encountered unexpectedly")
+            if not in_tag and char == '"':
+                char = "&quot;"
+            new_content += char
+        content = new_content
+
+    with open(filepath, 'w', encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')  # Files start with this line always
+        f.write(content)
+        f.write('\n')  # Newline at end of file
