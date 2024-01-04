@@ -12,53 +12,33 @@ force_org = fast_attack_force_org
 
 base_points = 175
 
+access_points = ""  # Not adding automatic handling for this.
+
 raw_text = """
-SICARIAN KILL-CLADE
-Sicarian Stalker 9 4 4 4 4 2 4 2 8 4+
-Sicarian Alpha 9 4 4 4 4 2 4 3 8 4+
+ONAGER DUNECRAWLER SQUADRON
+Onager Dunecrawler 8 4 13 12 12 3
 
 Unit Composition
-● 1 Sicarian Alpha
-● 4 Sicarian Stalkers
+● 1 Onager Dunecrawler
 Unit Type
-● Sicarian Stalker: Infantry (Skitarii)
-● Sicarian Alpha:
-Infantry (Skitarii, Character)
+● Vehicle (Reinforced, Crawler, Skitarii)
 Wargear
-● Sicarian Battle Armour
-● Taser Goad
-● Stubcarbine
-● Frag Grenades
-Special Rules
-● Bulky (2)
-● Feel No Pain (5+)
-● Neurostatic Aura
+● Broad Spectrum Data-Tether
+● Searchlights
+● Emanatus Forcefield
+● Hull (Front) Mounted Phosphor Cannon Array
 
 Options:
-● A Sicarian Kill-Clade may include:
-- Up to 10 additional Sicarian Stalkers........................................................ +30 points per model
-● The Kill-Clade must select one of the following upgrades:
-- Stealth Suite Module............................................................................................................... Free
-- Aggression Stim-Injectors ........................................................................................................ Free
-● One Sicarian Stalker may take a:
-- Augury Scanner ...............................................................................................................+10 points
-● One Sicarian Stalker may take a:
-- Nuncio Vox.......................................................................................................................+10 points
-● Any model may exchange their Taser Goad for one of the following:
-- Power Weapon...................................................................................................................+5 points
-- Transonic Razor.................................................................................................................+5 points
-- Transonic Blade ...............................................................................................................+10 points
-● Any model may exchange their Stubcarbine for one of the following:
-- Flechette Blaster........................................................................................................................ Free
-- Chordclaw ........................................................................................................................+10 points
-● Any model may exchange their Taser Goad and Stubcarbine for:
-- Transonic Blade .................................................................................................... +15 points
-● The Sicarian Alpha may exchange their Stubcarbine for:
-- Arc Pistol..................................................................................................................................... Free
-● The Sicarian Alpha may take any of the following:
-- Chordclaw ..........................................................................................................................+5 points
-- Prehensile Dataspike.......................................................................................................+10 points
-- Refractor Field .................................................................................................................+10 points
+● An Onager Dunecrawler Squadron may include:
+- Up to 2 additional Onager Dunecrawlers.............................................. +160 points per model
+● Any Onager Dunecrawler may exchange their Hull (Front) Mounted Twin-Linked Phosphor Cannon for:
+- Hull (Front) Mounted Eradication Beam Cannon.................................................... +20 points
+- Hull (Front) Mounted Icarus Array ..............................................................................+30 points
+- Hull (Front) Mounted Neutron Spear (with co-axial Heavy Stubber) .................... +35 points
+● Any model in the unit may purchase:
+- Pintle Mounted Auto-Repeater Carbine........................................................................+5 points
+- Servo-Rig........................................................................................................................... +15 points
+
 """
 
 output_file = "unit_output.xml"
@@ -74,13 +54,21 @@ lines = [entry.strip() for entry in raw_text.split("\n") if entry.strip() != ""]
 composition_index = lines.index("Unit Composition")
 type_index = lines.index("Unit Type")
 wargear_index = lines.index("Wargear")
-special_rules_index = lines.index("Special Rules")
+try:
+    special_rules_index = lines.index("Special Rules")
+except Exception:
+    special_rules_index = -1
 options_index = lines.index("Options:")
 
 composition_lines = lines[composition_index + 1:type_index]
 unit_type_lines = lines[type_index + 1:wargear_index]
-wargear_lines = lines[wargear_index + 1:special_rules_index]
-rules_lines = lines[special_rules_index + 1:options_index]
+if special_rules_index != -1:
+    wargear_lines = lines[wargear_index + 1:special_rules_index]
+    rules_lines = lines[special_rules_index + 1:options_index]
+
+else:
+    wargear_lines = lines[wargear_index + 1:options_index]
+    rules_lines = []
 options_lines = lines[options_index + 1:]
 
 unit_name = lines[0].title()
@@ -98,7 +86,7 @@ def split_at_dot(lines):
 
 
 def split_at_dash(line):
-    print("Split at dash this: ", line)
+    # print("Split at dash this: ", line)
     dash_entries = line.split("- ")
     return [entry.strip() for entry in dash_entries if entry.strip() != ""]
 
@@ -124,6 +112,8 @@ def check_alt_names(name):
 def get_entrylink(name, pts=None, only=False):
     global hasError, errors, wargear_list
     lookup_name = check_alt_names(name)
+    if "Mounted" in lookup_name:
+        lookup_name = lookup_name.split("Mounted")[1].strip()
     if lookup_name in wargear_list:
         wargear_id = wargear_list[lookup_name]
         link_text = f'entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
@@ -151,6 +141,9 @@ def get_entrylink(name, pts=None, only=False):
     else:
         hasError = True
         errors = errors + f"Could not find wargear for: {name}\n"
+        if lookup_name != name:
+            errors = errors + f"\t Checked under {lookup_name} \n"
+
     return ""
 
 
@@ -293,9 +286,8 @@ for line in split_at_dot(unit_type_lines):
         category_links += f"""
             <categoryLink targetId="{category_list[category]}" id="{get_random_bs_id()}" primary="false" />"""  # Not setting tne name node, will be set when bs saves
     stats = stats_dict[model_name]
-    model = f"""
-        <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
-          <profiles>
+    if len(stats) > 8:
+        profile = f"""
             <profile name="{model_name}" typeId="4bb2-cb95-e6c8-5a21" typeName="Unit" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
               <characteristics>
                 <characteristic name="Unit Type" typeId="ddd7-6f5c-a939-b69e">{unit_type_text}</characteristic>
@@ -310,7 +302,30 @@ for line in split_at_dot(unit_type_lines):
                 <characteristic name="Ld" typeId="e8a6-1da9-d384-8727">{stats[8]}</characteristic>
                 <characteristic name="Save" typeId="e593-6b3c-f169-04f0">{stats[9]}</characteristic>
               </characteristics>
-            </profile> 
+            </profile>
+"""
+    else:
+        if len(stats) == 6:
+            stats.append("-")  # Empty Transport capacity got stripped out, so add it back in
+        profile = f"""
+            <profile name="{model_name}" typeId="2fae-b053-3f78-e7b2" typeName="Vehicle" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
+              <characteristics>
+                <characteristic name="Unit Type" typeId="e555-4aed-dfcc-c0b4">{unit_type_text}</characteristic>
+                <characteristic name="Move" typeId="3614-4a2d-bffb-90e4">{stats[0]}</characteristic>
+                <characteristic name="BS" typeId="51fb-b7d9-aa59-863d">{stats[1]}</characteristic>
+                <characteristic name="Front" typeId="0ef8-a648-01d0-08ee">{stats[2]}</characteristic>
+                <characteristic name="Side" typeId="f150-c0dc-c192-9cb3">{stats[3]}</characteristic>
+                <characteristic name="Rear" typeId="8d4e-2aea-fffc-d556">{stats[4]}</characteristic>
+                <characteristic name="HP" typeId="a76c-83b1-602f-9e62">{stats[5]}</characteristic>
+                <characteristic name="Transport Capacity" typeId="0c90-79e2-f768-e547">{stats[6]}</characteristic>
+                <characteristic name="Access Points" typeId="e217-1b1e-9494-3e3e">{access_points}</characteristic>
+              </characteristics>
+            </profile>
+"""
+    model = f"""
+        <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
+          <profiles>
+             {profile}
           </profiles>
           <constraints>
             <constraint type="min" value="{model_min[model_name]}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>

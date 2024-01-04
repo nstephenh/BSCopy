@@ -64,7 +64,7 @@ def format_quote_alikes(in_str):
 
 def read_rules_from_system():
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/panoptica-heresy/')
+    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
     game_files = os.listdir(game_system_location)
     rules_list = {}
@@ -88,7 +88,7 @@ def read_rules_from_system():
 
 def read_wargear_from_system():
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/panoptica-heresy/')
+    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
     game_files = os.listdir(game_system_location)
     wargear_list = {}
@@ -112,7 +112,7 @@ def read_wargear_from_system():
 
 def read_categories_from_system():
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/panoptica-heresy/')
+    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
     game_files = os.listdir(game_system_location)
     category_list = {}
