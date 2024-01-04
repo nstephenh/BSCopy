@@ -1,5 +1,6 @@
 import re
 
+from hh_constants import fast_attack_force_org
 from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks, \
     read_categories_from_system
 from util import get_random_bs_id
@@ -7,7 +8,7 @@ from util import get_random_bs_id
 page_number = "23"
 publication_id = "89c5-118c-61fb-e6d8"
 
-force_org = f"""<categoryLink name="Heavy Support:" targetId="7031-469a-1aeb-eab0" id="{get_random_bs_id()}" primary="true"/>"""
+force_org = fast_attack_force_org
 
 base_points = 175
 
