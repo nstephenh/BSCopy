@@ -1,5 +1,4 @@
-from system_util import rules_list
-from text_gen_utils import rules_list_to_infolinks
+from text_gen_utils import rules_list_to_infolinks, errors
 from util import get_random_bs_id
 
 page_number = "96"
@@ -62,7 +61,7 @@ for line in raw_text.split("\n"):
     type_and_srs = line[line.index(weapon_type):]
 
     weapon_rules = type_and_srs.split(',')[1:]
-    rules_output = rules_list_to_infolinks(weapon_rules, rules_list)
+    rules_output = rules_list_to_infolinks(weapon_rules)
 
     root_id = get_random_bs_id()
     output = f""" <selectionEntry type="upgrade" import="true" name="{weapon_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
@@ -80,8 +79,10 @@ for line in raw_text.split("\n"):
     </selectionEntry>"""
     final_output += "\n" + output
 
-if (hasError):
-    print("There were one or more errors, please validate the above")
+if len(errors) > 1:
+    print("There were one or more errors, please validate the output")
+    print(errors)
+
 f = open(output_file, "a")
 f.write(final_output)
 f.close()

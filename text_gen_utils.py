@@ -64,7 +64,7 @@ def get_entrylink(name, pts=None, only=False, default=False, max_amount=1):
 
 
 def rules_list_to_infolinks(rules_for_entry):
-    global hasError, errors
+    global errors
     rules_output = ""
     if rules_for_entry:
         rules_output = "<infoLinks>\n"
@@ -80,8 +80,7 @@ def rules_list_to_infolinks(rules_for_entry):
                     rule_id = rules_list[rule_name]
                 else:
                     print(f"Could not find rule: {rule_name}")
-                    hasError = True
-                    errors = errors + f"Could not find rule: {rule_name}\n"
+                    errors += f"Could not find rule: {rule_name}\n"
                     continue
             infolink = f'''infoLink name="{rule_name}" hidden="false" type="rule" id="{get_random_bs_id()}" targetId="{rule_id}"'''
             if rule_full_name != rule_name:
