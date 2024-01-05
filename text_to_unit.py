@@ -180,13 +180,23 @@ def get_entrylink(name, pts=None, only=False):
 def option_get_se(name, pts):
     # When an option is a group of options and needs a SE containing multiple entry links.
     suboptions = ""
-    for sub_option in name.split("&"):
-        print(sub_option)
-        suboptions = suboptions + get_entrylink(sub_option.strip(), only=True)
+    and_delims = ["&", "and"]
+    for and_delim in and_delims:
+        if and_delim in name:
+            for sub_option in name.split(and_delim):
+                print(sub_option)
+                suboptions = suboptions + get_entrylink(sub_option.strip(), only=True)
+
     return f"""
                       <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
                         <entryLinks>{suboptions}
                         </entryLinks>
+                        <constraints>
+                        <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+                      </constraints>
+                      <costs>
+                        <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
+                      </costs>
                       </selectionEntry>"""
 
 
@@ -255,7 +265,7 @@ for line in split_at_dot(options_lines):
         print("\t", option)
         name, pts = option_process_line(option)
         if name:  # If name isn't returned, it's instead getting points per model
-            if "&" in name:
+            if "&" in name or "and" in name:
                 selection_entries = selection_entries + option_get_se(name, pts)
             else:
                 links = links + option_get_link(name, pts)
