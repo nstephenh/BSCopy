@@ -1,4 +1,5 @@
-from text_utils import read_rules_from_system, format_quote_alikes, rules_list_to_infolinks
+from system_util import rules_list
+from text_gen_utils import rules_list_to_infolinks
 from util import get_random_bs_id
 
 page_number = "96"
@@ -20,7 +21,6 @@ def get_name(component_list):
     return " ".join(component_list)
 
 
-rules_list = read_rules_from_system()
 
 hasError = False
 
@@ -52,14 +52,14 @@ for line in raw_text.split("\n"):
     str = first_half[-3 - offset]
     range = first_half[-4 - offset]
     weapon_name = get_name(first_half[:-4 - offset])
-    range = format_quote_alikes(range)
+    range = range
 
     print(line)
     print("\t", "w: {} r: {} s: {} ap: {} type: {}".format(
         weapon_name, range, str, ap, weapon_type
     ))
 
-    type_and_srs = format_quote_alikes(line[line.index(weapon_type):])
+    type_and_srs = line[line.index(weapon_type):]
 
     weapon_rules = type_and_srs.split(',')[1:]
     rules_output = rules_list_to_infolinks(weapon_rules, rules_list)

@@ -1,11 +1,16 @@
 import os
 import xml.etree.ElementTree as ET
 
+from text_utils import cleanup_disallowed_bs_characters
 from util import SHARED_RULES_TYPE
 
+rules_list = {}
+wargear_list = {}
+category_list = {}
 
 
 def read_rules_from_system():
+    global rules_list
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
@@ -23,13 +28,12 @@ def read_rules_from_system():
             if not rules_node:
                 continue
         for node in rules_node:
-            name = node.get('name')
-            id = node.get('id')
-            rules_list[name] = id
-    return rules_list
+            name = cleanup_disallowed_bs_characters(node.get('name'))
+            rules_list[name] = node.get('id')
 
 
 def read_wargear_from_system():
+    global wargear_list
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
@@ -50,10 +54,10 @@ def read_wargear_from_system():
             name = node.get('name')
             id = node.get('id')
             wargear_list[name] = id
-    return wargear_list
 
 
 def read_categories_from_system():
+    global category_list
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
     game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 
@@ -82,8 +86,8 @@ def read_categories_from_system():
                 name = name[:-len(" unit-type")]
             id = node.get('id')
             category_list[name] = id
-    return category_list
 
-rules_list = read_rules_from_system()
-wargear_list = read_wargear_from_system()
-category_list = read_categories_from_system()
+
+read_rules_from_system()
+read_wargear_from_system()
+read_categories_from_system()

@@ -1,6 +1,6 @@
 from system_constants import name_synonyms
 from system_util import rules_list, wargear_list
-from text_utils import format_quote_alikes, get_generic_rule_name, remove_plural, split_at_dot
+from text_utils import get_generic_rule_name, remove_plural
 from util import get_random_bs_id
 
 errors = ""
@@ -69,7 +69,7 @@ def rules_list_to_infolinks(rules_for_entry):
     if rules_for_entry:
         rules_output = "<infoLinks>\n"
         for rule_name in rules_for_entry:
-            rule_name = format_quote_alikes(rule_name.strip())
+            rule_name = rule_name.strip()
             rule_full_name = rule_name
             rule_name = get_generic_rule_name(rule_name)
             if rule_name in rules_list:

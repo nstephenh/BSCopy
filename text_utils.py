@@ -1,5 +1,3 @@
-from util import SHARED_RULES_TYPE, get_random_bs_id
-
 errors = ""
 
 
@@ -40,17 +38,18 @@ def get_generic_rule_name(rule_name, after_dash=False):
     return rule_name
 
 
-def format_quote_alikes(in_str):
+def cleanup_disallowed_bs_characters(in_str):
     '''
-    Converts double quote and it's right and left variations to &quot
+    Converts double quote, it's right and left variations to &quot,
+    along with handling &amp
     :param in_str:
     :return:
     '''
-    return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;')
+    return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;')\
+        .replace('&', '&amp;').replace("'", '&apos;')
 
 
 def option_process_line(line):
-    global cost_per_model, model_max, errors
     name = line[:line.index('.')].strip()
     pts = 0
     try:

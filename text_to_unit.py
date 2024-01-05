@@ -3,7 +3,7 @@ import re
 from system_constants import fast_attack_force_org
 from system_util import category_list
 from text_gen_utils import option_group_gen_se, rules_list_to_infolinks, get_entrylink, errors
-from text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line
+from text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line, cleanup_disallowed_bs_characters
 from util import get_random_bs_id
 
 page_number = "23"
@@ -64,6 +64,8 @@ output_file = "unit_output.xml"
 
 final_output = ""
 
+raw_text = cleanup_disallowed_bs_characters(raw_text)
+
 lines = [entry.strip() for entry in raw_text.split("\n") if entry.strip() != ""]
 composition_index = lines.index("Unit Composition")
 type_index = lines.index("Unit Type")
@@ -95,6 +97,8 @@ cost_per_model = {}
 model_min = {}
 model_max = {}
 
+UNIT = "UNIT"  # constant used for per-model dictionaries, options that apply to the unit.
+
 for line in unit_stat_lines:
     first_digit = re.search('\d', line)
     if first_digit:
@@ -116,18 +120,19 @@ for line in split_at_dot(composition_lines):
 
 models = stats_dict.keys()
 
+options_by_model = {UNIT: ""}  # model_name: string of SEGs
+
 original_wargear_by_model = {}  # dictionary of option text
 default_wargear_by_model = {}  # dictionary of option text
 for model in models:
     original_wargear_by_model[model] = []
     default_wargear_by_model[model] = []
+    options_by_model[model] = ""
     for line in split_at_dot(wargear_lines):
         original_wargear_by_model[model].append(line)
         default_wargear_by_model[model].append(line)
 
-options_by_model = {}  # model_name: string of SEGs
-# Getting all the options also gets us the points per model we wil use later.
-options_output = ""
+# Going through all the options also gets us the points per model we wil use later.
 for line in split_at_dot(options_lines):
     this_option_lines = split_at_dash(line)
     option_title = this_option_lines[0]
@@ -172,56 +177,64 @@ for line in split_at_dot(options_lines):
                 if wargear in option_title:
                     wargear_removed_by_this_option.append(wargear)
             for wargear in wargear_removed_by_this_option:
-                if wargear not in default_wargear_by_model:
+                if wargear not in default_wargear_by_model[model]:
                     errors += f"{wargear} is in two option lists for {model}, you will need to combine them by hand \n"
                     continue  # We can't remove it from the list because we already have
                 default_wargear_by_model[model].remove(wargear)
-                if wargear not in add_to_options_list:
+                if wargear not in add_to_options_list:  # To ensure we don't add it to our shared list twice.
                     add_to_options_list.append(wargear)
         for option in add_to_options_list:
             options = [option + " ... "] + options  # It'll be listed as free in the options list for that dropdown
             from_wargear_list = True  # use this to set the default
 
-    links = ""
-    selection_entries = ""
+    option_tuples = []
+    defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
+
+    # Read name and points from the source text
     for option in options:
         name, pts = option_process_line(option)
         if line.endswith(" each"):
             errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
-        defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
         print(f"\t{name} for {pts} pts{defaulted_message}")
-        if "&" in name or "and" in name:
-            selection_entries = selection_entries + option_group_gen_se(name, pts,
-                                                                        default=from_wargear_list,
-                                                                        max_amount=max_amount)
-        else:
-            links = links + get_entrylink(name, pts, default=from_wargear_list, max_amount=max_amount)
-        if from_wargear_list:
-            from_wargear_list = False  # we've set the default now
-    seg = f"""
-            <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
-              <entryLinks>{links}
-              </entryLinks>
-              <selectionEntries>{selection_entries}
-              </selectionEntries>
-              <constraints>
-                <constraint type="min" value="{0}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-                <constraint type="max" value="{1}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-              </constraints>
-            </selectionEntryGroup>"""
+        defaulted_message = ""  # Clear our defaulted message now that we've shown it.
+        option_tuples.append((name, pts))
+
     if len(option_models) == 0:
-        options_output += seg
-    else:
-        for model in option_models:
-            if model not in options_by_model:
-                options_by_model[model] = ""
-            options_by_model[model] += seg
+        option_models.append(UNIT)  # options for the unit to ensure the per model loop runs.
+    # per-model loop is needed to ensure each entry gets a unique ID
+    for model in option_models:
+        default_per_model = from_wargear_list
+        selection_entries = ""
+        links = ""
+        for name, pts in option_tuples:
+            if "&" in name or "and" in name:
+                selection_entries += option_group_gen_se(name, pts,
+                                                         default=default_per_model,
+                                                         max_amount=max_amount)
+            else:
+                links += get_entrylink(name, pts, default=default_per_model, max_amount=max_amount)
+            if default_per_model:
+                default_per_model = False  # we've set the default now
+        seg = f"""
+                <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
+                  <entryLinks>{links}
+                  </entryLinks>
+                  <selectionEntries>{selection_entries}
+                  </selectionEntries>
+                  <constraints>
+                    <constraint type="min" value="0" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+                    <constraint type="max" value="{max_amount}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
+                  </constraints>
+                </selectionEntryGroup>"""
+        options_by_model[model] += seg
 
 wargear_by_model = {}  # model_name: string of SEGs
 for model in models:
     wargear_by_model[model] = ""
     # Add remaining wargear that hasn't been moved to an options group.
+    print(f"Default wargear for {model}")
     for wargear in default_wargear_by_model[model]:
+        print(f"\t{wargear}")
         wargear_by_model[model] += get_entrylink(wargear, only=True)
 
 # Calculate the cost per the unit if there were none of the models that cost x pts per
@@ -333,7 +346,7 @@ output = f"""
         {force_org}
       </categoryLinks>
       <selectionEntryGroups>
-        {options_output}
+        {options_by_model[UNIT]}
       </selectionEntryGroups>
       {rules_links}
     </selectionEntry>
