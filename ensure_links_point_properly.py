@@ -1,11 +1,10 @@
 #
-# In order to make a merge go more smoothly, given two repos, one that mirrors another,
-# ensure the revision numbers are the same. This allows a git merge to run more smoothly.
+# If you've forked a repo, then you need to change the IDs for the gst and each cat file.
+# This script can be run to notify you if any of the cat files ID's need to be changed
+# and updates any catalogue links referencing the old IDs.
 import os.path
 import re
 import xml.etree.ElementTree as ET
-
-from util import cleanup_file_match_bs_whitespace
 
 bsdata_source = os.path.expanduser('~/BattleScribe/data/')
 upstream_game = "horus-heresy"
