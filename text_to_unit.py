@@ -1,8 +1,9 @@
 import re
 
-from hh_constants import fast_attack_force_org
-from text_utils import read_rules_from_system, read_wargear_from_system, rules_list_to_infolinks, \
-    read_categories_from_system
+from system_constants import fast_attack_force_org
+from system_util import category_list
+from text_gen_utils import option_group_gen_se, rules_list_to_infolinks, get_entrylink, errors
+from text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line
 from util import get_random_bs_id
 
 page_number = "23"
@@ -60,12 +61,8 @@ Options:
 """
 
 output_file = "unit_output.xml"
-final_output = ""
 
-errors = ""
-rules_list = read_rules_from_system()
-wargear_list = read_wargear_from_system()
-category_list = read_categories_from_system()
+final_output = ""
 
 lines = [entry.strip() for entry in raw_text.split("\n") if entry.strip() != ""]
 composition_index = lines.index("Unit Composition")
@@ -90,141 +87,13 @@ options_lines = lines[options_index + 1:]
 
 unit_name = lines[0].title()
 
-
-def split_at_dot(lines):
-    """
-    Given an entry split at line breaks containing bullet points, combine and split at bullet points
-    :param lines:
-    :return:
-    """
-    space_string = " ".join(lines)
-    bullet_entries = space_string.split("● ")
-    return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
-
-
-def split_at_dash(line):
-    # print("Split at dash this: ", line)
-    dash_entries = line.split("- ")
-    return [entry.strip() for entry in dash_entries if entry.strip() != ""]
-
-
-def remove_plural(model_name):
-    if model_name.endswith('s'):
-        model_name = model_name[:-1]
-    return model_name
-
-
-name_synonyms = {
-    "Corpus Skitarii": "The Corpus Skitarii",
-    "Nuncio Vox": "Nuncio-Vox"
-}
-
-
-def check_alt_names(name):
-    if name in name_synonyms:
-        return name_synonyms[name]
-    return name
-
-
-def get_entrylink(name, pts=None, only=False):
-    global errors, wargear_list
-    modifiers = ""
-    lookup_name = check_alt_names(name)
-    if "Two" in lookup_name:
-        lookup_name = lookup_name.split("Two")[1].strip()
-        lookup_name = remove_plural(lookup_name)
-    if "Mounted" in lookup_name:
-        lookup_name = lookup_name.split("Mounted")[1].strip()
-    if lookup_name in wargear_list:
-        wargear_id = wargear_list[lookup_name]
-        if lookup_name != name:
-            modifiers = f"""
-          <modifiers>
-            <modifier type="set" value="{lookup_name}" field="name"/>
-          </modifiers>
-"""
-
-        link_text = f'entryLink import="true" name="{lookup_name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
-        if pts:
-            return f"""
-        <{link_text}>
-          <constraints>
-            <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-          </constraints>
-          <costs>
-            <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
-          </costs>
-          {modifiers}
-        </entryLink>"""
-        elif only:  # If the only/default option (wargear), then set it as min 1 max 1
-            return f"""
-        <{link_text}>
-          <constraints>
-            <constraint type="min" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-            <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-          </constraints>
-        </entryLink>"""
-        else:
-            return f"\n<{link_text} />"
-
-    else:
-        errors = errors + f"Could not find wargear for: {name}\n"
-        if lookup_name != name:
-            errors = errors + f"\t Checked under {lookup_name} \n"
-
-    return ""
-
-
-def option_get_se(name, pts):
-    # When an option is a group of options and needs a SE containing multiple entry links.
-    suboptions = ""
-    and_delims = ["&", "and"]
-    for and_delim in and_delims:
-        if and_delim in name:
-            for sub_option in name.split(and_delim):
-                suboptions += get_entrylink(sub_option.strip(), only=True)
-
-    return f"""
-                      <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
-                        <entryLinks>{suboptions}
-                        </entryLinks>
-                        <constraints>
-                        <constraint type="max" value="1" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
-                      </constraints>
-                      <costs>
-                        <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
-                      </costs>
-                      </selectionEntry>"""
-
-
-def option_get_link(name, pts):
-    return get_entrylink(name, pts=pts)
-
-
-def option_process_line(line):
-    global cost_per_model, model_max, errors
-    name = line[:line.index('.')].strip()
-    pts = 0
-    try:
-        pts_string = line[line.index('+') + 1:]
-        pts = int(pts_string[:pts_string.index(' ')])
-    except ValueError:
-        pass  # Free
-    if name.startswith("Up to"):
-        additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
-        model_name = remove_plural(name.split('additional ')[1])
-        print(f"{model_name} x{additional_models} at {pts} each")
-        cost_per_model[model_name] = pts
-        model_max[model_name] = model_max[model_name] + additional_models
-    else:
-        if pts_string.endswith(" each"):
-            errors += f"The option '{name}' needs a 'multiply by number of models' modifier"
-        return name, pts
-
-
 unit_stat_lines = lines[1:composition_index]
 
 stats_dict = {}
+cost_per_model = {}
+
+model_min = {}
+model_max = {}
 
 for line in unit_stat_lines:
     first_digit = re.search('\d', line)
@@ -238,13 +107,6 @@ for line in unit_stat_lines:
     stats = line[stats_start:].strip().split(" ")
     stats_dict[model_name] = stats
 
-models = ""
-
-cost_per_model = {}
-
-model_min = {}
-model_max = {}
-
 for line in split_at_dot(composition_lines):
     first_space = line.index(' ')
     default_number = int(line[:first_space])
@@ -252,9 +114,18 @@ for line in split_at_dot(composition_lines):
     model_min[model_name] = default_number
     model_max[model_name] = default_number
 
+models = stats_dict.keys()
 
+original_wargear_by_model = {}  # dictionary of option text
+default_wargear_by_model = {}  # dictionary of option text
+for model in models:
+    original_wargear_by_model[model] = []
+    default_wargear_by_model[model] = []
+    for line in split_at_dot(wargear_lines):
+        original_wargear_by_model[model].append(line)
+        default_wargear_by_model[model].append(line)
 
-options_by_model = {}
+options_by_model = {}  # model_name: string of SEGs
 # Getting all the options also gets us the points per model we wil use later.
 options_output = ""
 for line in split_at_dot(options_lines):
@@ -266,26 +137,67 @@ for line in split_at_dot(options_lines):
     if "may include" in option_title:  # This is an "additional models" line
         for option in options:
             print("\t", option)
-            option_process_line(option)  # set points, don't do anything with entries
-        continue  # this is only for points per model options, skip processing options for this option group.
+            name, pts = option_process_line(option)  # set points, don't do anything with entries
+            if name.startswith("Up to"):
+                additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
+                model_name = remove_plural(name.split('additional ')[1])
+                print(f"{model_name} x{additional_models} at {pts} each")
+                cost_per_model[model_name] = pts
+                model_max[model_name] = model_max[model_name] + additional_models
+        continue  # this section was points per model options, so we don't need to generate an options group.
+
+    max_amount = 1
+    if "and/or" in option_title:
+        max_amount = 2
+
     option_models = []
 
-    for model in model_min.keys():
+    for model in models:
         if "Any model" in option_title or \
                 (not option_title.startswith("One") and model in option_title):
             # If the option is a "One model may" we leave this on the
             option_models.append(model)
+    if len(option_models) > 0:
+        print(f"\t\tApplies to {', '.join(option_models)}")
+
+    from_wargear_list = False  # If the first entry is from the wargear list, and thus the default
+
+    if "exchange" in option_title:
+        # For wargear that gets exchanged, remove it from the default wargear, and add it to this list.
+        add_to_options_list = []
+        for model in option_models:
+            wargear_removed_by_this_option = []
+            for wargear in original_wargear_by_model[model]:
+                # Default wargear shouldn't have and in it, so we can pull straight from the list.
+                if wargear in option_title:
+                    wargear_removed_by_this_option.append(wargear)
+            for wargear in wargear_removed_by_this_option:
+                if wargear not in default_wargear_by_model:
+                    errors += f"{wargear} is in two option lists for {model}, you will need to combine them by hand \n"
+                    continue  # We can't remove it from the list because we already have
+                default_wargear_by_model[model].remove(wargear)
+                if wargear not in add_to_options_list:
+                    add_to_options_list.append(wargear)
+        for option in add_to_options_list:
+            options = [option + " ... "] + options  # It'll be listed as free in the options list for that dropdown
+            from_wargear_list = True  # use this to set the default
 
     links = ""
     selection_entries = ""
     for option in options:
         name, pts = option_process_line(option)
-        print(f"\t{name} for {pts} pts")
-        if name:  # If name isn't returned, it's instead getting points per model
-            if "&" in name or "and" in name:
-                selection_entries = selection_entries + option_get_se(name, pts)
-            else:
-                links = links + option_get_link(name, pts)
+        if line.endswith(" each"):
+            errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
+        defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
+        print(f"\t{name} for {pts} pts{defaulted_message}")
+        if "&" in name or "and" in name:
+            selection_entries = selection_entries + option_group_gen_se(name, pts,
+                                                                        default=from_wargear_list,
+                                                                        max_amount=max_amount)
+        else:
+            links = links + get_entrylink(name, pts, default=from_wargear_list, max_amount=max_amount)
+        if from_wargear_list:
+            from_wargear_list = False  # we've set the default now
     seg = f"""
             <selectionEntryGroup name="{option_title}" hidden="false" id="{get_random_bs_id()}">
               <entryLinks>{links}
@@ -300,11 +212,17 @@ for line in split_at_dot(options_lines):
     if len(option_models) == 0:
         options_output += seg
     else:
-        print(f"\t\tApplies to {', '.join(option_models)}\n")
         for model in option_models:
             if model not in options_by_model:
                 options_by_model[model] = ""
             options_by_model[model] += seg
+
+wargear_by_model = {}  # model_name: string of SEGs
+for model in models:
+    wargear_by_model[model] = ""
+    # Add remaining wargear that hasn't been moved to an options group.
+    for wargear in default_wargear_by_model[model]:
+        wargear_by_model[model] += get_entrylink(wargear, only=True)
 
 # Calculate the cost per the unit if there were none of the models that cost x pts per
 remaining_points = base_points
@@ -318,6 +236,7 @@ if remaining_points > 0 and len(cost_per_model) < len(model_min):
             cost_per_model[model_name] = remaining_points
             break
 
+model_entries = ""
 for line in split_at_dot(unit_type_lines):
     if ":" in line:
         model_name = line.split(":")[0].strip()
@@ -378,9 +297,10 @@ for line in split_at_dot(unit_type_lines):
 """
     model_options = ""
     if model_name in options_by_model:
+        options_and_wargear = wargear_by_model[model_name] + options_by_model[model_name]
         model_options = f"""
       <selectionEntryGroups>
-        {options_by_model[model_name]}
+        {options_and_wargear}
       </selectionEntryGroups>
         """
     model = f"""
@@ -399,26 +319,21 @@ for line in split_at_dot(unit_type_lines):
           </categoryLinks>
           {model_options}
         </selectionEntry>"""
-    models += model
+    model_entries += model
 
-wargear_links = ""
-
-for line in split_at_dot(wargear_lines):
-    wargear_links += get_entrylink(line, only=True)
-
-rules_links = rules_list_to_infolinks(split_at_dot(rules_lines), rules_list)
+rules_links = rules_list_to_infolinks(split_at_dot(rules_lines))
 
 output = f"""
     <selectionEntry type="unit" import="true" name="{unit_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
-      <selectionEntries>{models}
+      <selectionEntries>
+        {model_entries}
       </selectionEntries>
       <categoryLinks>
         <categoryLink id="98ca-4c49-4f7e-b8a7" name="Unit:" hidden="false" targetId="36c3-e85e-97cc-c503" primary="false"/>
         {force_org}
       </categoryLinks>
-      <entryLinks>{wargear_links}
-      </entryLinks>
-      <selectionEntryGroups>{options_output}
+      <selectionEntryGroups>
+        {options_output}
       </selectionEntryGroups>
       {rules_links}
     </selectionEntry>

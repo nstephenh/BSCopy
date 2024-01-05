@@ -17,3 +17,8 @@ lords_of_war_force_org = \
     f"""<categoryLink targetId="c658-dc6b-727b-c488" id="{get_random_bs_id()}" primary="true" name="Lords of War:"/>"""
 primarch_force_org = \
     f"""<categoryLink targetId="ad5f-31db-8bc7-5c46" id="{get_random_bs_id()}" primary="true" name="Primarch:"/>"""
+
+name_synonyms = {
+    "Corpus Skitarii": "The Corpus Skitarii",
+    "Nuncio Vox": "Nuncio-Vox"
+}

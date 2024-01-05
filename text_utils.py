@@ -1,42 +1,29 @@
-import os
-import xml.etree.ElementTree as ET
-
 from util import SHARED_RULES_TYPE, get_random_bs_id
 
 errors = ""
 
 
-def rules_list_to_infolinks(rules_for_entry, rules_list):
-    global hasError, errors
-    rules_output = ""
-    if rules_for_entry:
-        rules_output = "<infoLinks>\n"
-        for rule_name in rules_for_entry:
-            rule_name = format_quote_alikes(rule_name.strip())
-            rule_full_name = rule_name
-            rule_name = get_generic_rule_name(rule_name)
-            if rule_name in rules_list:
-                rule_id = rules_list[rule_name]
-            else:
-                rule_name = get_generic_rule_name(rule_name, True)
-                if rule_name in rules_list:
-                    rule_id = rules_list[rule_name]
-                else:
-                    print(f"Could not find rule: {rule_name}")
-                    hasError = True
-                    errors = errors + f"Could not find rule: {rule_name}\n"
-                    continue
-            infolink = f'''infoLink name="{rule_name}" hidden="false" type="rule" id="{get_random_bs_id()}" targetId="{rule_id}"'''
-            if rule_full_name != rule_name:
-                rules_output += f"""        <{infolink}>
-                <modifiers>
-                    <modifier type="set" value="{rule_full_name}" field="name"/>
-                </modifiers>
-            </infoLink>\n"""
-            else:
-                rules_output += f"        <{infolink}/>\n"
-        rules_output += "      </infoLinks>"
-    return rules_output
+def split_at_dot(lines):
+    """
+    Given an entry split at line breaks containing bullet points, combine and split at bullet points
+    :param lines:
+    :return:
+    """
+    space_string = " ".join(lines)
+    bullet_entries = space_string.split("● ")
+    return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
+
+
+def split_at_dash(line):
+    # print("Split at dash this: ", line)
+    dash_entries = line.split("- ")
+    return [entry.strip() for entry in dash_entries if entry.strip() != ""]
+
+
+def remove_plural(model_name):
+    if model_name.endswith('s'):
+        model_name = model_name[:-1]
+    return model_name
 
 
 def get_generic_rule_name(rule_name, after_dash=False):
@@ -62,81 +49,14 @@ def format_quote_alikes(in_str):
     return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;')
 
 
-def read_rules_from_system():
-    ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
+def option_process_line(line):
+    global cost_per_model, model_max, errors
+    name = line[:line.index('.')].strip()
+    pts = 0
+    try:
+        pts_string = line[line.index('+') + 1:]
+        pts = int(pts_string[:pts_string.index(' ')])
+    except ValueError:
+        pass  # Free
 
-    game_files = os.listdir(game_system_location)
-    rules_list = {}
-
-    for file_name in game_files:
-        filepath = os.path.join(game_system_location, file_name)
-        if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
-            continue  # Skip this iteration
-        source_tree = ET.parse(os.path.join(filepath))
-        rules_node = source_tree.find(SHARED_RULES_TYPE)
-        if not rules_node:
-            rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}sharedRules")
-            if not rules_node:
-                continue
-        for node in rules_node:
-            name = node.get('name')
-            id = node.get('id')
-            rules_list[name] = id
-    return rules_list
-
-
-def read_wargear_from_system():
-    ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
-
-    game_files = os.listdir(game_system_location)
-    wargear_list = {}
-
-    for file_name in game_files:
-        filepath = os.path.join(game_system_location, file_name)
-        if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
-            continue  # Skip this iteration
-        source_tree = ET.parse(os.path.join(filepath))
-        sse_node = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntries")
-        if not sse_node:
-            sse_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}sharedSelectionEntries")
-            if not sse_node:
-                continue
-        for node in sse_node:
-            name = node.get('name')
-            id = node.get('id')
-            wargear_list[name] = id
-    return wargear_list
-
-
-def read_categories_from_system():
-    ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
-
-    game_files = os.listdir(game_system_location)
-    category_list = {}
-
-    for file_name in game_files:
-        filepath = os.path.join(game_system_location, file_name)
-        if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
-            continue  # Skip this iteration
-        source_tree = ET.parse(os.path.join(filepath))
-        rules_node = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}categoryEntries")
-        if not rules_node:
-            rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}categoryEntries")
-            if not rules_node:
-                continue
-        for node in rules_node:
-            name = node.get('name')
-            if name.endswith(":"):
-                name = name[:-1]
-            if name.lower().endswith(" sub-type"):
-                name = name[:-len(" sub-type")]
-                if name.lower().endswith(" unit"):
-                    name = name[:-len(" unit")]
-            elif name.lower().endswith(" unit-type"):
-                name = name[:-len(" unit-type")]
-            id = node.get('id')
-            category_list[name] = id
-    return category_list
+    return name, pts
