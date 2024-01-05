@@ -15,7 +15,7 @@ base_points = 160
 access_points = ""  # Not adding automatic handling for this.
 
 raw_text = """
-PTERAXII SKYHUNTERCOHORT
+PTERAXII SKYHUNTER COHORT
 Pteraxii Skyhunter 7 4 4 4 4 2 4 2 7 4+
 Pteraxii Alpha 7 4 4 4 4 2 4 3 8 4+
 
@@ -62,7 +62,6 @@ Options:
 output_file = "unit_output.xml"
 final_output = ""
 
-hasError = False
 errors = ""
 rules_list = read_rules_from_system()
 wargear_list = read_wargear_from_system()
@@ -128,7 +127,7 @@ def check_alt_names(name):
 
 
 def get_entrylink(name, pts=None, only=False):
-    global hasError, errors, wargear_list
+    global errors, wargear_list
     modifiers = ""
     lookup_name = check_alt_names(name)
     if "Two" in lookup_name:
@@ -169,7 +168,6 @@ def get_entrylink(name, pts=None, only=False):
             return f"\n<{link_text} />"
 
     else:
-        hasError = True
         errors = errors + f"Could not find wargear for: {name}\n"
         if lookup_name != name:
             errors = errors + f"\t Checked under {lookup_name} \n"
@@ -184,8 +182,7 @@ def option_get_se(name, pts):
     for and_delim in and_delims:
         if and_delim in name:
             for sub_option in name.split(and_delim):
-                print(sub_option)
-                suboptions = suboptions + get_entrylink(sub_option.strip(), only=True)
+                suboptions += get_entrylink(sub_option.strip(), only=True)
 
     return f"""
                       <selectionEntry type="upgrade" name="{name}" hidden="false" id="{get_random_bs_id()}">
@@ -205,7 +202,7 @@ def option_get_link(name, pts):
 
 
 def option_process_line(line):
-    global cost_per_model, model_max
+    global cost_per_model, model_max, errors
     name = line[:line.index('.')].strip()
     pts = 0
     try:
@@ -218,8 +215,10 @@ def option_process_line(line):
         model_name = remove_plural(name.split('additional ')[1])
         print(f"{model_name} x{additional_models} at {pts} each")
         cost_per_model[model_name] = pts
-        model_max[model_name] = additional_models
+        model_max[model_name] = model_max[model_name] + additional_models
     else:
+        if pts_string.endswith(" each"):
+            errors += f"The option '{name}' needs a 'multiply by number of models' modifier"
         return name, pts
 
 
@@ -246,6 +245,16 @@ cost_per_model = {}
 model_min = {}
 model_max = {}
 
+for line in split_at_dot(composition_lines):
+    first_space = line.index(' ')
+    default_number = int(line[:first_space])
+    model_name = remove_plural(line[first_space:].strip())
+    model_min[model_name] = default_number
+    model_max[model_name] = default_number
+
+
+
+options_by_model = {}
 # Getting all the options also gets us the points per model we wil use later.
 options_output = ""
 for line in split_at_dot(options_lines):
@@ -253,17 +262,25 @@ for line in split_at_dot(options_lines):
     option_title = this_option_lines[0]
     options = this_option_lines[1:]
     print(option_title)
-    if "may include" in option_title:
+
+    if "may include" in option_title:  # This is an "additional models" line
         for option in options:
             print("\t", option)
             option_process_line(option)  # set points, don't do anything with entries
         continue  # this is only for points per model options, skip processing options for this option group.
+    option_models = []
+
+    for model in model_min.keys():
+        if "Any model" in option_title or \
+                (not option_title.startswith("One") and model in option_title):
+            # If the option is a "One model may" we leave this on the
+            option_models.append(model)
 
     links = ""
     selection_entries = ""
     for option in options:
-        print("\t", option)
         name, pts = option_process_line(option)
+        print(f"\t{name} for {pts} pts")
         if name:  # If name isn't returned, it's instead getting points per model
             if "&" in name or "and" in name:
                 selection_entries = selection_entries + option_get_se(name, pts)
@@ -280,17 +297,14 @@ for line in split_at_dot(options_lines):
                 <constraint type="max" value="{1}" field="selections" scope="parent" shared="true" id="{get_random_bs_id()}"/>
               </constraints>
             </selectionEntryGroup>"""
-    options_output = options_output + seg
-
-for line in split_at_dot(composition_lines):
-    first_space = line.index(' ')
-    default_number = int(line[:first_space])
-    model_name = remove_plural(line[first_space:].strip())
-    model_min[model_name] = default_number
-    if model_name not in model_max:
-        model_max[model_name] = default_number
+    if len(option_models) == 0:
+        options_output += seg
     else:
-        model_max[model_name] = model_max[model_name] + default_number
+        print(f"\t\tApplies to {', '.join(option_models)}\n")
+        for model in option_models:
+            if model not in options_by_model:
+                options_by_model[model] = ""
+            options_by_model[model] += seg
 
 # Calculate the cost per the unit if there were none of the models that cost x pts per
 remaining_points = base_points
@@ -362,6 +376,13 @@ for line in split_at_dot(unit_type_lines):
               </characteristics>
             </profile>
 """
+    model_options = ""
+    if model_name in options_by_model:
+        model_options = f"""
+      <selectionEntryGroups>
+        {options_by_model[model_name]}
+      </selectionEntryGroups>
+        """
     model = f"""
         <selectionEntry type="model" import="true" name="{model_name}" hidden="false" id="{get_random_bs_id()}" publicationId="{publication_id}" page="{page_number}">
           <profiles>
@@ -376,6 +397,7 @@ for line in split_at_dot(unit_type_lines):
           </costs>
           <categoryLinks>{category_links}
           </categoryLinks>
+          {model_options}
         </selectionEntry>"""
     models += model
 
@@ -401,8 +423,8 @@ output = f"""
       {rules_links}
     </selectionEntry>
 """
-if (hasError):
-    print("There were one or more errors, please validate the above")
+if len(errors) > 1:
+    print("There were one or more errors, please validate output")
     print(errors)
 f = open(output_file, "a")
 f.write(output)
