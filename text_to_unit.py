@@ -10,35 +10,53 @@ publication_id = "89c5-118c-61fb-e6d8"
 
 force_org = fast_attack_force_org
 
-base_points = 175
+base_points = 160
 
 access_points = ""  # Not adding automatic handling for this.
 
 raw_text = """
-ONAGER DUNECRAWLER SQUADRON
-Onager Dunecrawler 8 4 13 12 12 3
+PTERAXII SKYHUNTERCOHORT
+Pteraxii Skyhunter 7 4 4 4 4 2 4 2 7 4+
+Pteraxii Alpha 7 4 4 4 4 2 4 3 8 4+
 
 Unit Composition
-● 1 Onager Dunecrawler
+● 4 Pteraxii Skyhunter
+● 1 Pteraxii Alpha
 Unit Type
-● Vehicle (Reinforced, Crawler, Skitarii)
+● Pteraxii Skyhunter: Infantry (Skitarii)
+● Pteraxii Alpha: Infantry
+(Skitarii, Character)
 Wargear
-● Broad Spectrum Data-Tether
-● Searchlights
-● Emanatus Forcefield
-● Hull (Front) Mounted Phosphor Cannon Array
-
+● Sicarian Battle Armour
+● Scapuli-Pattern Thruster Pack
+● Flechette Carbine
+● Frag Grenades
+Special Rules
+● Relentless
+● Deep Strike
+● Hit & Run
+● Thermal Riders
 Options:
-● An Onager Dunecrawler Squadron may include:
-- Up to 2 additional Onager Dunecrawlers.............................................. +160 points per model
-● Any Onager Dunecrawler may exchange their Hull (Front) Mounted Twin-Linked Phosphor Cannon for:
-- Hull (Front) Mounted Eradication Beam Cannon.................................................... +20 points
-- Hull (Front) Mounted Icarus Array ..............................................................................+30 points
-- Hull (Front) Mounted Neutron Spear (with co-axial Heavy Stubber) .................... +35 points
-● Any model in the unit may purchase:
-- Pintle Mounted Auto-Repeater Carbine........................................................................+5 points
-- Servo-Rig........................................................................................................................... +15 points
-
+● A Pteraxii Skyhunter Cohort may include:
+- Up to 5 additional Pteraxii Skyhunters.....................................................+25 points per model
+● One Pteraxii Skyhunter may take a:
+- Omnispex ...........................................................................................................................+5 points
+● One Pteraxii Skyhunter may take a:
+- Enhanced Data-Tether .....................................................................................................+5 points
+● The unit may be equipped with any of the following:
+- Arc Grenades ....................................................................................................................+30 points
+- Pteraxii Talons .................................................................................................................+30 points
+● Any model in the unit may exchange their Flechette Carbine for one of the following:
+- Taser Goad and Flechette Blaster ...................................................................................+5 points
+- Phosphor Torch .................................................................................................................+5 points
+- Power Sword and Flechette Blaster.............................................................................. +15 points
+- Transonic Blade and Flechette Blaster........................................................................ +20 points
+- Two Transonic Blades .................................................................................................... +25 points
+● The Pteraxii Alpha may take one of the following:
+- Radium Pistol.....................................................................................................................+2 points
+- Taser Goad..........................................................................................................................+5 points
+- Phosphor Blast Pistol......................................................................................................+10 points
+- Arc Pistol...........................................................................................................................+10 points
 """
 
 output_file = "unit_output.xml"
@@ -111,12 +129,23 @@ def check_alt_names(name):
 
 def get_entrylink(name, pts=None, only=False):
     global hasError, errors, wargear_list
+    modifiers = ""
     lookup_name = check_alt_names(name)
+    if "Two" in lookup_name:
+        lookup_name = lookup_name.split("Two")[1].strip()
+        lookup_name = remove_plural(lookup_name)
     if "Mounted" in lookup_name:
         lookup_name = lookup_name.split("Mounted")[1].strip()
     if lookup_name in wargear_list:
         wargear_id = wargear_list[lookup_name]
-        link_text = f'entryLink import="true" name="{name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
+        if lookup_name != name:
+            modifiers = f"""
+          <modifiers>
+            <modifier type="set" value="{lookup_name}" field="name"/>
+          </modifiers>
+"""
+
+        link_text = f'entryLink import="true" name="{lookup_name}" hidden="false" type="selectionEntry" id="{get_random_bs_id()}" targetId="{wargear_id}"'
         if pts:
             return f"""
         <{link_text}>
@@ -126,6 +155,7 @@ def get_entrylink(name, pts=None, only=False):
           <costs>
             <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
           </costs>
+          {modifiers}
         </entryLink>"""
         elif only:  # If the only/default option (wargear), then set it as min 1 max 1
             return f"""
