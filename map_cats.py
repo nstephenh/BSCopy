@@ -1,7 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 
-from util import make_comment, get_identifier, ENTRY_LINK_TYPE, SELECTION_ENTRY_GROUP_TYPE, \
+from util.generate_util import make_comment, get_identifier, ENTRY_LINK_TYPE, SELECTION_ENTRY_GROUP_TYPE, \
     SHARED_SELECTION_ENTRY_GROUPS_TYPE
 
 

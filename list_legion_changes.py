@@ -2,7 +2,7 @@ import copy
 import os
 import xml.etree.ElementTree as ET
 
-from util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id, get_mod_and_con_ids, \
+from util.generate_util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id, get_mod_and_con_ids, \
     MODIFIER_TYPE, CONDITION_GROUP_TYPE, CONDITION_TYPE, COMMENT_NODE_TYPE
 
 if __name__ == '__main__':

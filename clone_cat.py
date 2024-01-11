@@ -3,7 +3,7 @@ import uuid
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
-from util import update_all_node_ids, add_new_id
+from util.generate_util import update_all_node_ids, add_new_id
 
 
 # Press the green button in the gutter to run the script.

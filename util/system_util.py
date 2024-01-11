@@ -1,8 +1,8 @@
 import os
 import xml.etree.ElementTree as ET
 
-from text_utils import cleanup_disallowed_bs_characters
-from util import SHARED_RULES_TYPE
+from util.text_utils import cleanup_disallowed_bs_characters
+from util.generate_util import SHARED_RULES_TYPE
 
 rules_list = {}
 wargear_list = {}
@@ -30,6 +30,22 @@ def read_rules_from_system():
         for node in rules_node:
             name = cleanup_disallowed_bs_characters(node.get('name'))
             rules_list[name] = node.get('id')
+
+
+def get_node_from_system(node_id):
+    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
+
+    game_files = os.listdir(game_system_location)
+    for file_name in game_files:
+        filepath = os.path.join(game_system_location, file_name)
+        if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
+            continue  # Skip this iteration
+        source_tree = ET.parse(os.path.join(filepath))
+        node = source_tree.find(f".//*[@id='{node_id}']")
+        if node:
+            return node
+
+
 
 
 def read_wargear_from_system():

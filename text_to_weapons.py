@@ -1,5 +1,5 @@
-from text_gen_utils import rules_list_to_infolinks, errors
-from util import get_random_bs_id
+from util.text_gen_utils import rules_list_to_infolinks, errors
+from util.generate_util import get_random_bs_id
 
 page_number = "96"
 publication_id = "89c5-118c-61fb-e6d8"

@@ -2,7 +2,7 @@ import copy
 import os
 import xml.etree.ElementTree as ET
 
-from util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id
+from util.generate_util import find_comment_value, ENTRY_LINK_TYPE, update_all_node_ids, add_new_id
 
 
 def copy_changes_from_template(overwrite=False):

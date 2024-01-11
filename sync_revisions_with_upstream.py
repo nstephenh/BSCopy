@@ -4,7 +4,7 @@
 import os.path
 import xml.etree.ElementTree as ET
 
-from util import cleanup_file_match_bs_whitespace
+from util.generate_util import cleanup_file_match_bs_whitespace
 
 bsdata_source = os.path.expanduser('~/BattleScribe/data/')
 upstream_game = "horus-heresy"

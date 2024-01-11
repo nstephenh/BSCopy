@@ -1,4 +1,4 @@
-from util import get_random_bs_id
+from util.generate_util import get_random_bs_id
 
 # These force org links should only be used once per entry. Not the cleanest way of doing this but it works.
 hq_force_org = \

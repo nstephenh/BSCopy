@@ -1,10 +1,10 @@
 import re
 
 from system_constants import fast_attack_force_org
-from system_util import category_list
-from text_gen_utils import option_group_gen_se, rules_list_to_infolinks, get_entrylink, errors
-from text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line, cleanup_disallowed_bs_characters
-from util import get_random_bs_id
+from util.system_util import category_list
+from util.text_gen_utils import option_group_gen_se, rules_list_to_infolinks, get_entrylink, errors
+from util.text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line, cleanup_disallowed_bs_characters
+from util.generate_util import get_random_bs_id
 
 page_number = "23"
 publication_id = "89c5-118c-61fb-e6d8"
