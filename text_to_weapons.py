@@ -1,3 +1,4 @@
+from util.system_util import read_system
 from util.text_gen_utils import rules_list_to_infolinks, errors
 from util.generate_util import get_random_bs_id
 
@@ -20,7 +21,7 @@ def get_name(component_list):
     return " ".join(component_list)
 
 
-
+read_system()
 hasError = False
 
 for line in raw_text.split("\n"):

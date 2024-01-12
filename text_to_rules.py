@@ -1,7 +1,7 @@
 from util.log_util import STYLES, print_styled, get_diff
 from util.node_util import get_description
 from util.text_gen_utils import errors
-from util.system_util import rules_list, get_node_from_system
+from util.system_util import rules_list, get_node_from_system, read_system
 
 page_number = "96"
 publication_id = "89c5-118c-61fb-e6d8"
@@ -108,7 +108,7 @@ upgrade to the model themselves from any such sources.
 output_file = "weapon_output.xml"
 final_output = ""
 if __name__ == '__main__':
-
+    read_system()
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
@@ -144,11 +144,14 @@ if __name__ == '__main__':
         if rule in rules_list.keys():
             print(f"Rule exists in data files: {rules_list[rule]}")
             node = get_node_from_system(rules_list[rule])
-            existing_rules_text = get_description(node)
-            diff = get_diff(existing_rules_text, rule_text, 2)
+            description = get_description(node)
+            diff = get_diff(description.text, rule_text, 2)
             if diff:
                 print_styled("\tText Differs!", STYLES.PURPLE)
                 print(diff)
+                description.text = rule_text
+                print(description)
+                exit()
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
             print(rule_text)

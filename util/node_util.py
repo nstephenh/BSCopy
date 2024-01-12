@@ -3,5 +3,5 @@ def get_description(node):
         return ""
     for child in node:
         if child.tag.endswith('description'):
-            return child.text
+            return child
     return ""
