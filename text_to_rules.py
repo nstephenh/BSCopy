@@ -1,7 +1,7 @@
 from util.log_util import STYLES, print_styled, get_diff
 from util.node_util import get_description
 from util.text_gen_utils import errors
-from util.system_util import rules_list, get_node_from_system, read_system
+from util.system_util import rules_list, get_node_from_system, read_system, save_system
 
 page_number = "96"
 publication_id = "89c5-118c-61fb-e6d8"
@@ -151,7 +151,6 @@ if __name__ == '__main__':
                 print(diff)
                 description.text = rule_text
                 print(description)
-                exit()
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
             print(rule_text)
@@ -160,6 +159,4 @@ if __name__ == '__main__':
         print("There were one or more errors, please validate the output")
         print(errors)
 
-    f = open(output_file, "a")
-    f.write(final_output)
-    f.close()
+    save_system()

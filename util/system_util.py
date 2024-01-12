@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from xml.etree import ElementTree as ET
 
 from util.text_utils import cleanup_disallowed_bs_characters
-from util.generate_util import SHARED_RULES_TYPE
+from util.generate_util import SHARED_RULES_TYPE, cleanup_file_match_bs_whitespace
 
 files_in_system = {}  # filename: ET  # Dict of trees accessed this session. If we need to update the trees, save these.
 
@@ -31,7 +31,7 @@ def read_system():
         set_namespace_for_file(file_name)
         source_tree = ET.parse(os.path.join(filepath))
 
-        files_in_system[file_name] = source_tree
+        files_in_system[filepath] = source_tree
         read_rules_from_system(source_tree)
         read_wargear_from_system(source_tree)
         read_categories_from_system(source_tree)
@@ -89,3 +89,16 @@ def get_node_from_system(node_id):
         node = source_tree.find(f".//*[@id='{node_id}']")
         if node:
             return node
+
+
+def save_system():
+    print("Saving system")
+    count = len(files_in_system)
+    i = 0
+    for filepath, source_tree in files_in_system.items():
+        i += 1
+        print('\r', end="")
+        print(f"Saving file ({i}/{count}): {filepath}", end="")
+        set_namespace_for_file(filepath)
+        source_tree.write(filepath, encoding="utf-8")  # utf-8 to keep special characters un-escaped.
+        cleanup_file_match_bs_whitespace(filepath)
