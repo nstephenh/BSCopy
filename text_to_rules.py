@@ -110,17 +110,8 @@ this does not confer any of the benefits normally gained from that
 upgrade to the model themselves from any such sources.
     """
 
-if __name__ == '__main__':
-    read_system()
-    tree_to_update = ""
-    for filepath in files_in_system.keys():
-        if file_to_save_to in filepath:
-            tree_to_update = files_in_system[filepath]
-            break
-    if tree_to_update == "":
-        print("No file to update found!")
-    root_rules_node = get_root_rules_node(tree_to_update)
 
+def text_to_rules(rules_node):
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
@@ -149,7 +140,6 @@ if __name__ == '__main__':
         else:
             if new_rules[current_rule]:
                 new_rules[current_rule] += " "  # Space instead of a line break.
-
     for rule, rule_text in new_rules.items():
         print(f'\033[1m {rule}\033[0m')
 
@@ -164,8 +154,22 @@ if __name__ == '__main__':
                 description.text = rule_text
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
-            create_rule_node(root_rules_node, rule, rule_text, publication_id, page_number)
+            create_rule_node(rules_node, rule, rule_text, publication_id, page_number)
             print(rule_text)
+
+
+if __name__ == '__main__':
+    read_system()
+    tree_to_update = ""
+    for filepath in files_in_system.keys():
+        if file_to_save_to in filepath:
+            tree_to_update = files_in_system[filepath]
+            break
+    if tree_to_update == "":
+        print("No file to update found!")
+    root_rules_node = get_root_rules_node(tree_to_update)
+
+    text_to_rules(root_rules_node)
 
     if len(errors) > 1:
         print("There were one or more errors, please validate the output")
