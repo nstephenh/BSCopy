@@ -37,14 +37,19 @@ def read_system():
         read_categories_from_system(source_tree)
 
 
+def get_root_rules_node(source_tree):
+    rules_node = source_tree.find(SHARED_RULES_TYPE)
+    if rules_node:
+        return
+    rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}sharedRules")
+    return rules_node
+
+
 def read_rules_from_system(source_tree):
     global rules_list
-
-    rules_node = source_tree.find(SHARED_RULES_TYPE)
+    rules_node = get_root_rules_node(source_tree)
     if not rules_node:
-        rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}sharedRules")
-        if not rules_node:
-            return
+        return
     for node in rules_node:
         name = cleanup_disallowed_bs_characters(node.get('name'))
         rules_list[name] = node.get('id')

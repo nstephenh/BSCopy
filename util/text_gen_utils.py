@@ -2,6 +2,7 @@ from system_constants import name_synonyms
 from util.system_util import rules_list, wargear_list
 from util.text_utils import get_generic_rule_name, remove_plural
 from util.generate_util import get_random_bs_id
+import xml.etree.ElementTree as ET
 
 errors = ""
 
@@ -118,3 +119,11 @@ def option_group_gen_se(name, pts, default=False, max_amount=1):
                         <cost name="Pts" typeId="d2ee-04cb-5f8a-2642" value="{pts}"/>
                       </costs>
                       </selectionEntry>"""
+
+
+def create_rule_node(rules_root, name, text, pub, page):
+    rule_node = ET.SubElement(rules_root, 'rule', attrib={'name': name, 'hidden': "false",
+                                                          'id': get_random_bs_id(), 'page': page,
+                                                          'publicationId': pub})
+    description_node = ET.SubElement(rule_node, 'description')
+    description_node.text = text

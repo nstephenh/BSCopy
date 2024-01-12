@@ -1,11 +1,15 @@
 from util.log_util import STYLES, print_styled, get_diff
 from util.node_util import get_description
-from util.text_gen_utils import errors
-from util.system_util import rules_list, get_node_from_system, read_system, save_system
+from util.text_gen_utils import errors, create_rule_node
+from util.system_util import rules_list, get_node_from_system, read_system, save_system, get_root_rules_node, \
+    files_in_system
 
-page_number = "96"
-publication_id = "89c5-118c-61fb-e6d8"
-first_paragraph_is_flavor = True
+page_number = "164"
+publication_id = "d9b2-e711-f717-0c45"
+first_paragraph_is_flavor = True  # If true, skip the first block of text that ends in ".\n"
+
+file_to_save_to = ".gst"  # first file with this in its name.
+
 raw_text = """
 Afterburner
 Colossal secondary combustors attached to the main engines of a flyer
@@ -105,10 +109,18 @@ to be one to be present in a detachment, or prevent it. Note that
 this does not confer any of the benefits normally gained from that
 upgrade to the model themselves from any such sources.
     """
-output_file = "weapon_output.xml"
-final_output = ""
+
 if __name__ == '__main__':
     read_system()
+    tree_to_update = ""
+    for filepath in files_in_system.keys():
+        if file_to_save_to in filepath:
+            tree_to_update = files_in_system[filepath]
+            break
+    if tree_to_update == "":
+        print("No file to update found!")
+    root_rules_node = get_root_rules_node(tree_to_update)
+
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
@@ -150,9 +162,9 @@ if __name__ == '__main__':
                 print_styled("\tText Differs!", STYLES.PURPLE)
                 print(diff)
                 description.text = rule_text
-                print(description)
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
+            create_rule_node(root_rules_node, rule, rule_text, publication_id, page_number)
             print(rule_text)
 
     if len(errors) > 1:
