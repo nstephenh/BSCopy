@@ -5,6 +5,7 @@ import os.path
 import xml.etree.ElementTree as ET
 
 from util.generate_util import cleanup_file_match_bs_whitespace
+from util.system_util import set_namespace_for_file
 
 bsdata_source = os.path.expanduser('~/BattleScribe/data/')
 upstream_game = "horus-heresy"
@@ -12,15 +13,6 @@ downstream_game = "moreus-heresy"
 
 upstream_dir = os.path.join(bsdata_source, upstream_game)
 downstream_dir = os.path.join(bsdata_source, downstream_game)
-
-
-def set_namespace_for_file(filename):
-    extension = os.path.splitext(filename)[1]
-    if extension == ".cat":
-        ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    elif extension == ".gst":
-        ET.register_namespace("", "http://www.battlescribe.net/schema/gameSystemSchema")
-
 
 revision_map = {}  # Filename; revision
 # First iterate through the upstream directory and get the revision number of each file

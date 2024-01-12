@@ -1,5 +1,6 @@
 import os
 import xml.etree.ElementTree as ET
+from xml.etree import ElementTree as ET
 
 from util.text_utils import cleanup_disallowed_bs_characters
 from util.generate_util import SHARED_RULES_TYPE
@@ -40,12 +41,11 @@ def get_node_from_system(node_id):
         filepath = os.path.join(game_system_location, file_name)
         if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
             continue  # Skip this iteration
+        set_namespace_for_file(file_name)
         source_tree = ET.parse(os.path.join(filepath))
         node = source_tree.find(f".//*[@id='{node_id}']")
         if node:
             return node
-
-
 
 
 def read_wargear_from_system():
@@ -107,3 +107,11 @@ def read_categories_from_system():
 read_rules_from_system()
 read_wargear_from_system()
 read_categories_from_system()
+
+
+def set_namespace_for_file(filename):
+    extension = os.path.splitext(filename)[1]
+    if extension == ".cat":
+        ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
+    elif extension == ".gst":
+        ET.register_namespace("", "http://www.battlescribe.net/schema/gameSystemSchema")
