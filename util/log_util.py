@@ -24,6 +24,8 @@ def print_styled(text, style=STYLES.BOLD):
 
 
 def clean_lines(in_str: str):
+    if not in_str:
+        return []
     lines = []
     for line in in_str.splitlines():
         line = re.sub(r" ", " ", line)  # Pull out nbsp
