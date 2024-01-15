@@ -19,11 +19,11 @@ Will add a newline if an input line ends in a period.
     """
 
 
-def text_to_rules(rules_node):
+def text_to_rules(rules_node, text, page, pub_id):
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
-    for line in raw_text.split("\n"):
+    for line in text.split("\n"):
         line = line.strip()
         if not line:
             continue
@@ -65,7 +65,7 @@ def text_to_rules(rules_node):
                 description.text = rule_text
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
-            create_rule_node(rules_node, rule, rule_text, publication_id, page_number)
+            create_rule_node(rules_node, rule, rule_text, pub_id, page)
             print(rule_text)
 
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         print("No file to update found!")
     root_rules_node = get_root_rules_node(tree_to_update)
 
-    text_to_rules(root_rules_node)
+    text_to_rules(root_rules_node, raw_text, page_number, publication_id)
 
     if len(errors) > 1:
         print("There were one or more errors, please validate the output")

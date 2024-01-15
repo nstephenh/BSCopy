@@ -1,0 +1,42 @@
+# What's a .pydict?
+# It's a python dict literal used to store data instead of json.
+# Why? So we can have multiline blocks with triple quotes.
+# It's interpreted with literal_eval, and should be safe from code injection.
+# Comments will be stripped on saving (besides this header).
+
+# noinspection PyStatementEffect
+{
+    "document": {
+        "name": "Publication name with no version number",
+        "version": "5.2",
+        "bsPubID": "d9b2-e711-f717-0c45",
+        "pages": [
+            {
+                "pageNumber": "112",
+                "changes": [
+                    {
+                        "Change Specification TBD": "<how the change happens somehow>",
+                        "affected nodes": [
+                            {
+                                "ID": "BS ID array, possibly auto-populated?"
+                            }
+                        ]
+                    }
+                ],
+            },
+            {
+                "pageNumber": "164",
+                "additions": [
+                    {
+                        "type": "Special Rules",
+                        "format": "Block",
+                        "content": """
+Multiline block          
+Another line in the block              
+                        """
+                    }
+                ]
+            }
+        ]
+    }
+}
