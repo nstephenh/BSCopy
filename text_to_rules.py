@@ -55,7 +55,7 @@ def text_to_rules(rules_node, text, page, pub_id):
             continue
 
         if rule in rules_list.keys():
-            print(f"Rule exists in data files: {rules_list[rule]}")
+            print(f"\tRule exists in data files: {rules_list[rule]}")
             node = get_node_from_system(rules_list[rule])
             description = get_description(node)
             diff = get_diff(description.text, rule_text, 2)
@@ -63,6 +63,12 @@ def text_to_rules(rules_node, text, page, pub_id):
                 print_styled("\tText Differs!", STYLES.PURPLE)
                 print(diff)
                 description.text = rule_text
+            if 'page' not in node.attrib or node.attrib['page'] != page:
+                print_styled("\tUpdated page number")
+                node.attrib['page'] = page
+            if 'publicationId' not in node.attrib or node.attrib['publicationId'] != publication_id:
+                print_styled("\tUpdated publication ID")
+                node.attrib['publicationId'] = publication_id
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
             create_rule_node(rules_node, rule, rule_text, pub_id, page)
