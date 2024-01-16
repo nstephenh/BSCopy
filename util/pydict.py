@@ -17,13 +17,15 @@ def dump_dict(dict_to_dump):
         if "\\n" not in line:  # literal "\n" not a newline character.
             dict_str += line + '\n'
             continue
-        subline_1 = line.split("\\n")[0]
         # might not start with a newline:
-        quote_index = subline_1.rindex('"')
-        # add two quotes to make it a multiline block
-        dict_str += subline_1[:quote_index] + '""' + subline_1[quote_index:] + '\n'
+        dict_str += quote_to_block_quote(line.split("\\n")[0])
         for subline in line.split("\\n")[1:-1]:
             dict_str += subline + '\n'
-        dict_str += line.split("\\n")[
-                        -1] + '""' + '\n'  # finish the multiline block, adding two quotes to the existing one
+        dict_str += quote_to_block_quote(line.split("\\n")[-1])
     return dict_str
+
+
+def quote_to_block_quote(line):
+    quote_index = line.rindex('"')
+    # add two quotes to make it a multiline block
+    return line[:quote_index] + '""' + line[quote_index:] + '\n'

@@ -28,7 +28,7 @@ def text_to_rules(rules_node, text, page, pub_id):
         if not line:
             continue
         if len(line) < 50 and not (line.endswith('.') or line.endswith("…")):
-            print(f"{line} is likely a special rule")
+            # print(f"{line} is likely a special rule")
             current_rule = line
             new_rules[current_rule] = ""
             paragraph_count = 0 if first_paragraph_is_flavor else 1
@@ -36,7 +36,7 @@ def text_to_rules(rules_node, text, page, pub_id):
         # We now know we are inside a rule.
 
         # Skip this line if it's flavor text.
-        print(f"{line} is part of {current_rule}, paragraph {paragraph_count}")
+        # print(f"{line} is part of {current_rule}, paragraph {paragraph_count}")
         if paragraph_count >= 1:
             new_rules[current_rule] += line.strip()
 
@@ -48,6 +48,8 @@ def text_to_rules(rules_node, text, page, pub_id):
         else:
             if new_rules[current_rule]:
                 new_rules[current_rule] += " "  # Space instead of a line break.
+
+    rules_ids = []
     for rule, rule_text in new_rules.items():
         print(f'\033[1m {rule}\033[0m')
         if rule_text.strip() == "":
@@ -69,10 +71,13 @@ def text_to_rules(rules_node, text, page, pub_id):
             if 'publicationId' not in node.attrib or node.attrib['publicationId'] != publication_id:
                 print_styled("\tUpdated publication ID")
                 node.attrib['publicationId'] = publication_id
+            rules_ids.append(rules_list[rule])
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
-            create_rule_node(rules_node, rule, rule_text, pub_id, page)
+            new_node = create_rule_node(rules_node, rule, rule_text, pub_id, page)
             print(rule_text)
+            rules_ids.append(new_node.attrib['id'])
+    return rules_ids
 
 
 if __name__ == '__main__':

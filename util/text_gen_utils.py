@@ -127,3 +127,4 @@ def create_rule_node(rules_root, name, text, pub, page):
                                                           'publicationId': pub})
     description_node = ET.SubElement(rule_node, 'description')
     description_node.text = text
+    return rule_node

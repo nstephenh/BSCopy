@@ -40,11 +40,19 @@ if __name__ == '__main__':
             for addition in page['additions']:
                 if addition['type'] == "Special Rules":
                     # As of now this assumes format=block
-                    text_block = addition['content']
-                    text_to_rules(root_rules_node, text_block, page_number, pub_id)
+                    expected_ids = addition['associated_nodes']
 
-    save_system() # Save updates to system file
+                    text_block = addition['content']
+                    rules_ids = text_to_rules(root_rules_node, text_block, page_number, pub_id)
+                    addition['associated_nodes'] = rules_ids
+                    # Check if an existing ID is not found / created.
+                    for rule_id in expected_ids:
+                        if rule_id not in rules_ids:
+                            pass
+                            # TODO:  If not, delete it.
+
+    save_system()  # Save updates to system file
 
     # If we make any changes to data, we can write them back to the file
-    # with open(file_path, "w", encoding="utf-8") as f:
-    #     f.write(pydict.dump_dict(d))
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(pydict.dump_dict(d))
