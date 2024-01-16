@@ -45,7 +45,7 @@ def cleanup_disallowed_bs_characters(in_str):
     :param in_str:
     :return:
     '''
-    return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;')\
+    return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;') \
         .replace('&', '&amp;').replace("'", '&apos;')
 
 
@@ -59,3 +59,20 @@ def option_process_line(line):
         pass  # Free
 
     return name, pts
+
+
+def column_text_to_paragraph_text(text, force_single_paragraph=False):
+    # Simpler version of text_to_rules's processing that converts text into a set of paragraphs.
+    # Will interpret a line that happens to end in a period as the end of a paragraph (minor bug).
+    text_out = ""
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        text_out += line
+        if not force_single_paragraph and line[-1] in [".", "…"]:
+            # add linebreaks between paragraphs:
+            text_out += "\n"
+        else:
+            text_out += " "  # Space instead of a line break.
+    return text_out
