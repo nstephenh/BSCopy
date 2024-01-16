@@ -54,7 +54,7 @@ likely a special rule was not found. Ensure the special rule is in the game's fi
 ### [text_to_unit.py](text_to_unit.py)
 This script takes a unit entry in the following format, and a couple additional options:
 ```python
-from system_constants import fast_attack_force_org
+from settings import fast_attack_force_org
 
 force_org = fast_attack_force_org # whatever force_org slot you need, just ensure it's imported properly.
 

@@ -12,7 +12,9 @@ SELECTION_ENTRY_GROUP_TYPE = '{http://www.battlescribe.net/schema/catalogueSchem
 SHARED_SELECTION_ENTRY_GROUPS_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntryGroups'
 SHARED_RULES_TYPE = '{http://www.battlescribe.net/schema/catalogueSchema}sharedRules'
 
-BS_NAMESPACES= ['{http://www.battlescribe.net/schema/catalogueSchema}','{http://www.battlescribe.net/schema/gameSystemSchema}']
+BS_NAMESPACES = ['{http://www.battlescribe.net/schema/catalogueSchema}',
+                 '{http://www.battlescribe.net/schema/gameSystemSchema}']
+
 
 def get_random_bs_id():
     return str(uuid.uuid4())[4:23]

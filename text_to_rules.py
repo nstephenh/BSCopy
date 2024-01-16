@@ -1,8 +1,8 @@
 from util.log_util import STYLES, print_styled, get_diff
 from util.node_util import get_description, update_page_and_pub
 from util.text_gen_utils import errors, create_rule_node
-from util.system_util import rules_list, get_node_from_system, read_system, save_system, get_root_rules_node, \
-    files_in_system
+from util.system_util import get_node_from_system, read_system, save_system, get_root_rules_node
+from util.system_globals import rules_list, files_in_system
 
 page_number = "165"
 publication_id = "d9b2-e711-f717-0c45"

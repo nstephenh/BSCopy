@@ -2,35 +2,25 @@ import os
 import re
 from xml.etree import ElementTree as ET
 
+import util.system_globals
+from settings import default_system, default_data_directory
+from system.system_file import set_namespace_from_file
 from util.log_util import style_text, STYLES
+from util.system_globals import files_in_system
 from util.text_utils import cleanup_disallowed_bs_characters
 from util.generate_util import SHARED_RULES_TYPE, cleanup_file_match_bs_whitespace, BS_NAMESPACES
 
-files_in_system: dict[str, ET.ElementTree] = {}
 
-rules_list: dict[str, str] = {}
-wargear_list: dict[str, str] = {}
-category_list: dict[str, str] = {}
-
-
-def set_namespace_for_file(filename):
-    extension = os.path.splitext(filename)[1]
-    if extension == ".cat":
-        ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    elif extension == ".gst":
-        ET.register_namespace("", "http://www.battlescribe.net/schema/gameSystemSchema")
-
-
-def read_system():
-    game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
+def read_system(system_name=default_system):
+    game_system_location = os.path.join(default_data_directory, system_name)
     game_files = os.listdir(game_system_location)
     for file_name in game_files:
         filepath = os.path.join(game_system_location, file_name)
         if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
             continue  # Skip this iteration
 
-        set_namespace_for_file(file_name)
-        source_tree = ET.parse(os.path.join(filepath))
+        set_namespace_from_file(file_name)
+        source_tree = ET.parse(filepath)
 
         files_in_system[filepath] = source_tree
         read_rules_from_system(source_tree)
@@ -47,15 +37,21 @@ def get_root_rules_node(source_tree):
 
 
 def read_rules_from_system(source_tree):
-    global rules_list
-    for namespace in BS_NAMESPACES:
-        for node in source_tree.iter(f"{namespace}rule"):  # Attempt to find all rules in tree
-            name = cleanup_disallowed_bs_characters(node.get('name'))
-            rules_list[name] = node.get('id')
+    """
+    Shared and non-shared rules.
+    :param source_tree:
+    :return:
+    """
+    for name, node in all_nodes_for_tree(source_tree, 'rule').items():  # Attempt to find all rules in tree
+        util.system_globals.rules_list[name] = node.get('id')
 
 
 def read_wargear_from_system(source_tree):
-    global wargear_list
+    """
+    Currently only shared selection entries.
+    :param source_tree:
+    :return:
+    """
     sse_node = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}sharedSelectionEntries")
     if not sse_node:
         sse_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}sharedSelectionEntries")
@@ -64,11 +60,10 @@ def read_wargear_from_system(source_tree):
     for node in sse_node:
         name = node.get('name')
         id = node.get('id')
-        wargear_list[name] = id
+        util.system_globals.wargear_list[name] = id
 
 
 def read_categories_from_system(source_tree):
-    global category_list
     rules_node = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}categoryEntries")
     if not rules_node:
         rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}categoryEntries")
@@ -85,7 +80,16 @@ def read_categories_from_system(source_tree):
         elif name.lower().endswith(" unit-type"):
             name = name[:-len(" unit-type")]
         id = node.get('id')
-        category_list[name] = id
+        util.system_globals.category_list[name] = id
+
+
+def all_nodes_for_tree(source_tree: ET.ElementTree, tag=''):
+    nodes: dict[str, ET.Element] = {}
+    for namespace in BS_NAMESPACES:
+        for node in source_tree.iter(f"{namespace}{tag}"):  # Attempt to find all rules in tree
+            name = cleanup_disallowed_bs_characters(node.get('name'))
+            nodes[name] = node
+    return nodes
 
 
 def get_node_from_system(node_id):
@@ -93,6 +97,12 @@ def get_node_from_system(node_id):
         node = source_tree.find(f".//*[@id='{node_id}']")
         if node:
             return node
+
+
+def update_links(old_node_id, new_node_id):
+    for source_tree in files_in_system.values():
+        for node in source_tree.iter(f".//*[@target_id='{old_node_id}']"):
+            node.attrib['target_id'] = new_node_id
 
 
 def remove_node(node_id):
@@ -113,7 +123,7 @@ def save_system():
         i += 1
         print('\r', end="")
         print(f"Saving file ({i}/{count}): {filepath}", end="")
-        set_namespace_for_file(filepath)
+        set_namespace_from_file(filepath)
         source_tree.write(filepath, encoding="utf-8")  # utf-8 to keep special characters un-escaped.
         cleanup_file_match_bs_whitespace(filepath)
 

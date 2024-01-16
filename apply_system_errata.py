@@ -7,7 +7,8 @@ from util import pydict
 from util.errata_util import handle_special_rules_errata, handle_node_change
 from util.pydict import get_associated_nodes
 
-from util.system_util import read_system, files_in_system, get_root_rules_node, save_system
+from util.system_util import read_system, get_root_rules_node, save_system
+from util.system_globals import files_in_system
 
 game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
 

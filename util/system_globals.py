@@ -1,0 +1,12 @@
+from xml.etree import ElementTree as ET
+
+from system.system import System
+from settings import default_system, default_data_directory
+
+
+system = System(default_system, default_data_directory)
+files_in_system: dict[str, ET.ElementTree] = {sf.path: sf.source_tree for sf in system.files}
+
+rules_list: dict[str, str] = {}
+wargear_list: dict[str, str] = {}
+category_list: dict[str, str] = {}

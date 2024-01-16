@@ -1,7 +1,8 @@
 import re
 
-from system_constants import fast_attack_force_org
-from util.system_util import category_list, read_system
+from settings import fast_attack_force_org
+from util.system_util import read_system
+from util.system_globals import category_list
 from util.text_gen_utils import option_group_gen_se, rules_list_to_infolinks, get_entrylink, errors
 from util.text_utils import remove_plural, split_at_dot, split_at_dash, option_process_line, cleanup_disallowed_bs_characters
 from util.generate_util import get_random_bs_id

@@ -5,7 +5,7 @@ import os.path
 import xml.etree.ElementTree as ET
 
 from util.generate_util import cleanup_file_match_bs_whitespace
-from util.system_util import set_namespace_for_file
+from system.system_file import set_namespace_from_file
 
 bsdata_source = os.path.expanduser('~/BattleScribe/data/')
 upstream_game = "horus-heresy"
@@ -38,7 +38,7 @@ for file_name in os.listdir(downstream_dir):
         file_name = "GST"  # Since the GST name may have changed, get from the "GST" node in the map.
     if file_name not in revision_map.keys():
         continue
-    set_namespace_for_file(file_to_update)
+    set_namespace_from_file(file_to_update)
     tree = ET.parse(file_to_update)
     tree.getroot().attrib['revision'] = revision_map[file_name]
     if file_name != "GST":

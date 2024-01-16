@@ -1,4 +1,14 @@
+import os
+
 from util.generate_util import get_random_bs_id
+
+default_system = 'moreus-heresy'
+default_data_directory = os.path.expanduser("~/BattleScribe/data/")
+
+name_synonyms = {
+    "Corpus Skitarii": "The Corpus Skitarii",
+    "Nuncio Vox": "Nuncio-Vox"
+}
 
 # These force org links should only be used once per entry. Not the cleanest way of doing this but it works.
 hq_force_org = \
@@ -18,7 +28,4 @@ lords_of_war_force_org = \
 primarch_force_org = \
     f"""<categoryLink targetId="ad5f-31db-8bc7-5c46" id="{get_random_bs_id()}" primary="true" name="Primarch:"/>"""
 
-name_synonyms = {
-    "Corpus Skitarii": "The Corpus Skitarii",
-    "Nuncio Vox": "Nuncio-Vox"
-}
+
