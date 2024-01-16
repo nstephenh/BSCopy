@@ -1,5 +1,5 @@
 from util.log_util import STYLES, print_styled, get_diff
-from util.node_util import get_description
+from util.node_util import get_description, update_page_and_pub
 from util.text_gen_utils import errors, create_rule_node
 from util.system_util import rules_list, get_node_from_system, read_system, save_system, get_root_rules_node, \
     files_in_system
@@ -65,12 +65,7 @@ def text_to_rules(rules_node, text, page, pub_id):
                 print_styled("\tText Differs!", STYLES.PURPLE)
                 print(diff)
                 description.text = rule_text
-            if 'page' not in node.attrib or node.attrib['page'] != page:
-                print_styled("\tUpdated page number")
-                node.attrib['page'] = page
-            if 'publicationId' not in node.attrib or node.attrib['publicationId'] != publication_id:
-                print_styled("\tUpdated publication ID")
-                node.attrib['publicationId'] = publication_id
+            update_page_and_pub(node, page, publication_id)
             rules_ids.append(rules_list[rule])
         else:
             print_styled("\tNew Rule!", STYLES.GREEN)
@@ -78,6 +73,8 @@ def text_to_rules(rules_node, text, page, pub_id):
             print(rule_text)
             rules_ids.append(new_node.attrib['id'])
     return rules_ids
+
+
 
 
 if __name__ == '__main__':

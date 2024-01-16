@@ -16,6 +16,9 @@ class STYLES:
 
 
 def style_text(text, style=STYLES.BOLD):
+    if style is list:
+        for s in style:
+            text = style_text(text, s)
     return style + text + STYLES.END
 
 
