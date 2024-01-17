@@ -23,7 +23,8 @@ class SystemFile:
         self.namespace = set_namespace_from_file(path)
         self.source_tree = ET.parse(path)
         self.library = self.source_tree.getroot().get('library') == "true"
-
+        self.id = self.source_tree.getroot().get('id')
+        self.import_ids = [c.get('targetId') for c in self.source_tree.findall(f'.//{self.get_namespace_tag()}catalogueLink')]
         self.nodes_by_id = {}
         self.parent_map = {c: p for p in self.source_tree.iter() for c in p}
 

@@ -39,10 +39,12 @@ if __name__ == '__main__':
         for node in nodes:
             if node != best_option:
                 total_count += 1
-                if (node.system_file != best_option.system_file) and not best_option.system_file.is_gst:
+                if not (node.system_file == best_option.system_file
+                        or best_option.system_file.is_gst
+                        or (best_option.system_file.id in node.system_file.import_ids)):
                     print_styled(
                         f"\tCould not replace {node.tag} {node.element.attrib['id']} "
-                        f"because we're not sure it's imported in the target",
+                        f"because {best_option.system_file.name} is not imported by {node.system_file.name}",
                         STYLES.RED)
                     continue
                 addressed_count += 1
