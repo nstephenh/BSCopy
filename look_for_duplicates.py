@@ -69,9 +69,13 @@ if __name__ == '__main__':
         print_styled(f"{group_name} has {len(nodes) - 1} confirmed duplicates", STYLES.GREEN)
         best_option = nodes[0]  # First node
         for node in nodes:
-            if ((node.shared and not best_option.shared)
-                    or (node.system_file.library and not best_option.system_file.library)
-                    or (node.system_file.is_gst and not best_option.system_file.is_gst)):
+            if node.system_file.is_gst:
+                best_option = node
+            # Factoring out is_gst and checking it first simplifies our best check below
+            if best_option.system_file.is_gst:
+                break  # Since there's only one GST, it'll always be the best option.
+            if (node.shared and not (best_option.shared or best_option.system_file.library)
+                    or (node.system_file.library and not best_option.system_file.library)):
                 best_option = node
         for node in nodes:
             is_best_option = "*" if node == best_option else " "
