@@ -13,15 +13,20 @@ class SystemFile:
     def __init__(self, system: 'System', path):
         self.system = system  # Link to parent
         self.name = os.path.split(path)[1]
-        print(f"Initializing {self.name}")
+        self.path = path
 
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
         self.nodes_by_name: dict[str, list[Node]] = {}
+        self.is_gst = os.path.splitext(path)[1] == ".gst"
 
         self.namespace = set_namespace_from_file(path)
         self.source_tree = ET.parse(path)
+        self.library = self.source_tree.getroot().get('library') == "true"
+
         self.nodes_by_id = {}
+        self.parent_map = {c: p for p in self.source_tree.iter() for c in p}
+
         for element in self.source_tree.findall('.//*[@id]'):
             node = Node(self, element)
             self.nodes_by_id.update({node.id: node})
@@ -32,6 +37,9 @@ class SystemFile:
             if node.name not in self.nodes_by_name.keys():
                 self.nodes_by_name[node.name] = []
             self.nodes_by_name[node.name].append(node)
+
+    def get_namespace_tag(self) -> str:
+        return "{" + self.namespace + "}"
 
 
 def get_namespace_from_file(filename: str):

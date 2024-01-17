@@ -6,7 +6,7 @@ import util.system_globals
 from settings import default_system, default_data_directory
 from system.system_file import set_namespace_from_file
 from util.log_util import style_text, STYLES
-from util.system_globals import files_in_system
+from util.system_globals import files_in_system, system
 from util.text_utils import cleanup_disallowed_bs_characters
 from util.generate_util import SHARED_RULES_TYPE, cleanup_file_match_bs_whitespace, BS_NAMESPACES
 
@@ -116,16 +116,7 @@ def remove_node(node_id):
 
 
 def save_system():
-    print("Saving system")
-    count = len(files_in_system)
-    i = 0
-    for filepath, source_tree in files_in_system.items():
-        i += 1
-        print('\r', end="")
-        print(f"Saving file ({i}/{count}): {filepath}", end="")
-        set_namespace_from_file(filepath)
-        source_tree.write(filepath, encoding="utf-8")  # utf-8 to keep special characters un-escaped.
-        cleanup_file_match_bs_whitespace(filepath)
+    system.save_system()
 
 
 def find_similar_items(list_to_check: list[str], target, similarity_threshold=0):
