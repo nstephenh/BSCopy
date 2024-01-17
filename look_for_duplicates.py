@@ -1,24 +1,65 @@
+import argparse
+
 from system.system import System
 from xml.etree import ElementTree as ET
 
-from util.log_util import print_styled, STYLES
+from util.element_util import get_description
+from util.log_util import print_styled, STYLES, get_diff, prompt_y_n
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(description="Check system for duplicates and replace them with links")
+    parser.add_argument("--interactive", '-i', action='store_true',
+                        help="Prompt of special rules are identical")
+    args = parser.parse_args()
     system = System('horus-heresy')
     duplicate_groups = system.get_duplicates()
     confirmed_duplicates = {}
+
+
+    def add_to_confirmed_duplicates(group_name, new_node, match):
+        """
+
+        :param group_name:
+        :param new_node: The node we just confirmed
+        :param match: The node we confirmed against.
+            If the confirmed duplicates group is being created, we need to add it as the first entry.
+        :return:
+        """
+        if group_name not in confirmed_duplicates.keys():
+            confirmed_duplicates[group_name] = [match]
+        confirmed_duplicates[group_name].append(new_node)
+
+
     for group_name, nodes in duplicate_groups.items():
         print(f"{group_name} has {len(nodes) - 1} duplicates")
+        rules_texts = {}
         hashes = {}
         for node in nodes:
             inside_text = "".join([ET.tostring(child, encoding='unicode') for child in node.element])
             fingerprint = hash(inside_text)
+            rules_text = None
+            if node.tag == 'rule':
+                rules_text = get_description(node.element).text
+                fingerprint = hash(rules_text)
+
             print(f"\t{node.tag} {node.element.attrib['id']} in {node.system_file.name} with hash {fingerprint}")
+
             if fingerprint in hashes.keys():
-                print(f"\t\tMatches with {node.element.attrib['id']} in {node.system_file.name}")
-                if group_name not in confirmed_duplicates.keys():
-                    confirmed_duplicates[group_name] = [hashes[fingerprint]]
-                confirmed_duplicates[group_name].append(node)
+                print(f"\t\tContents match exactly with {node.element.attrib['id']} in {node.system_file.name}")
+                add_to_confirmed_duplicates(group_name, node, hashes[fingerprint])
+            elif node.tag == 'rule':
+                for comparison_text, comparison_node in rules_texts.items():
+                    diff = get_diff(comparison_text, rules_text, 2)
+                    if diff:
+                        print_styled("\tText Differs!", STYLES.PURPLE)
+                        print(diff)
+                        if args.interactive and prompt_y_n("Do the above rules match?"):
+                            add_to_confirmed_duplicates(group_name, node, comparison_node)
+                    else:
+                        print_styled("\tText close enough whitespace differences", STYLES.CYAN)
+                        add_to_confirmed_duplicates(group_name, node, comparison_node)
+                rules_texts[rules_text] = node
             hashes[fingerprint] = node
 
     addressed_count = 0

@@ -67,3 +67,8 @@ def get_diff(a, b, indent=0):
                           style_text(diff_line, style) + '\n')
 
     return diff_text
+
+
+def prompt_y_n(question, default="no"):
+    response = input(f"{question} (y/n, default={default}):")
+    return response.lower().startswith("y")
