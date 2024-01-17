@@ -1,5 +1,5 @@
 from util.log_util import STYLES, print_styled, get_diff
-from util.node_util import get_description, update_page_and_pub
+from util.element_util import get_description, update_page_and_pub
 from util.text_gen_utils import errors, create_rule_node
 from util.system_util import get_node_from_system, read_system, save_system, get_root_rules_node
 from util.system_globals import rules_list, files_in_system

@@ -1,5 +1,5 @@
 from util.log_util import print_styled, STYLES, get_diff, style_text
-from util.node_util import get_description, update_page_and_pub
+from util.element_util import get_description, update_page_and_pub
 from util.system_util import find_similar_items, get_node_from_system, remove_node
 from util.system_globals import rules_list
 from util.text_utils import get_bullet_type, column_text_to_paragraph_text
