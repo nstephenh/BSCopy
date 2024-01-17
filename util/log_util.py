@@ -15,10 +15,12 @@ class STYLES:
     END = '\033[0m'
 
 
-def style_text(text, style=STYLES.BOLD):
-    if style is list:
+def style_text(text, style: str or list[str] = STYLES.BOLD):
+    if type(style) is list:
+        # apply all styles with recursion.
         for s in style:
             text = style_text(text, s)
+        return text
     return style + text + STYLES.END
 
 
