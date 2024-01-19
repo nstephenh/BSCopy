@@ -111,10 +111,11 @@ if __name__ == '__main__':
                     style=STYLES.PURPLE)
                 grandparent = node.get_grandparent()
                 node.delete()
-                links = grandparent.find(f"./{node.system_file.get_namespace_tag()}infoLinks")
-                if not links:
-                    links = ET.SubElement(grandparent, f"{node.system_file.get_namespace_tag()}infoLinks", {})
-                ET.SubElement(links, f"{node.system_file.get_namespace_tag()}infoLink", {
+                info_link_section = grandparent.find(f"./{node.system_file.get_namespace_tag()}infoLinks")
+                if not info_link_section:
+                    info_link_section = ET.SubElement(grandparent,
+                                                      f"{node.system_file.get_namespace_tag()}infoLinks")
+                ET.SubElement(info_link_section, f"{node.system_file.get_namespace_tag()}infoLink", {
                     'id': node.id,
                     'name': best_option.name,
                     'targetId': best_option.id,
