@@ -1,5 +1,6 @@
 import argparse
 
+from system.node import Node
 from system.system import System
 from xml.etree import ElementTree as ET
 
@@ -90,6 +91,18 @@ if __name__ == '__main__':
                     print_styled(
                         f"\tCould not replace {node.tag} {node.element.attrib['id']} "
                         f"because {best_option.system_file.name} is not imported by {node.system_file.name}",
+                        STYLES.RED)
+                    continue
+                children = []
+                for child in node.element:
+                    for tag in ['constraint', 'modifier']:
+                        if tag in child.tag:
+                            children.append(child)
+                if len(children) > 0:
+                    print_styled(
+                        f"\tCould not replace {node.tag} {node.element.attrib['id']} "
+                        f"because it would orphan the following: "
+                        f"{[child.tag.split('}')[1] for child in children]}",
                         STYLES.RED)
                     continue
                 addressed_count += 1
