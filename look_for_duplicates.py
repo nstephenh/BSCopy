@@ -112,7 +112,7 @@ if __name__ == '__main__':
                     style=STYLES.PURPLE)
 
                 # Update all nodes pointing to this node.
-                if node.id in system.nodes_by_target_id :
+                if node.id in system.nodes_by_target_id:
                     for link_node in system.nodes_by_target_id[node.id]:
                         link_node.set_target_id(best_option.id)
                         link_update_count += 1

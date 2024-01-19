@@ -35,7 +35,10 @@ class Node:
         self.element.attrib['targetId'] = new_target_id
 
     def delete(self):
-        self.get_parent_element().remove(self.element)
+        try:
+            self.get_parent_element().remove(self.element)
+        except ValueError:
+            pass  # The target many have already been removed
         self.deleted = True
         # Difficult to go through all the lists and clean up, so doing this as a temporary measure
 
