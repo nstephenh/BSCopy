@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
     addressed_count = 0
     total_count = 0
+    link_update_count = 0
 
     for group_name, nodes in confirmed_duplicates.items():
         print_styled(f"{group_name} has {len(nodes) - 1} confirmed duplicates", STYLES.GREEN)
@@ -109,8 +110,14 @@ if __name__ == '__main__':
                 print_styled(
                     f"\tReplacing {node.tag} {node.element.attrib['id']} with an entrylink to {best_option.id}",
                     style=STYLES.PURPLE)
-                grandparent = node.get_grandparent()
+
+                # Update all nodes pointing to this node.
+                if node.id in system.nodes_by_target_id :
+                    for link_node in system.nodes_by_target_id[node.id]:
+                        link_node.set_target_id(best_option.id)
+                        link_update_count += 1
                 node.delete()
+                grandparent = node.get_grandparent()
                 info_link_section = grandparent.find(f"./{node.system_file.get_namespace_tag()}infoLinks")
                 if not info_link_section:
                     info_link_section = ET.SubElement(grandparent,
@@ -125,5 +132,6 @@ if __name__ == '__main__':
     print(f"There are {len(duplicate_groups)} groups of duplicates")
     print(f"There were {len(confirmed_duplicates)} confirmed duplicate groups with {total_count} duplicates")
     print(f"{addressed_count} of which were addressed")
+    print(f"{link_update_count} links were updated to point at the new best option")
 
     system.save_system()

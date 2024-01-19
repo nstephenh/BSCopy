@@ -17,6 +17,8 @@ class Node:
         if not self.id:
             raise Exception("Node initialization attempted on element with no ID")
 
+        self.target_id = element.attrib.get('targetId')
+
         self.tag = element.tag.split('}')[1]
         if not self.is_link():
             self.name = element.attrib.get('name')
@@ -26,7 +28,11 @@ class Node:
             self.shared = self.parent.tag.split('}')[1].startswith('shared')
 
     def is_link(self):
-        return self.element.attrib.get('targetId') is not None
+        return self.target_id is not None
+
+    def set_target_id(self, new_target_id):
+        self.target_id = new_target_id
+        self.element.attrib['targetId'] = new_target_id
 
     def delete(self):
         self.get_parent_element().remove(self.element)

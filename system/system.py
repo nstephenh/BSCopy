@@ -18,6 +18,7 @@ class System:
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
         self.nodes_by_name: dict[str, list[Node]] = {}
+        self.nodes_by_target_id: dict[str, list[Node]] = {}
 
         self.system_name = system_name
         self.game_system_location = os.path.join(data_directory, system_name)
@@ -38,6 +39,7 @@ class System:
         print()  # Newline after progress bar
         for file in self.files:
             self.nodes_by_id.update(file.nodes_by_id)
+
             for tag, nodes in file.nodes_by_type.items():
                 if tag not in self.nodes_by_type.keys():
                     self.nodes_by_type[tag] = []
@@ -48,6 +50,11 @@ class System:
                 if name not in self.nodes_by_name.keys():
                     self.nodes_by_name[name] = []
                 self.nodes_by_name[name].extend(nodes)
+
+            for target_id, nodes in file.nodes_by_target_id.items():
+                if target_id not in self.nodes_by_target_id.keys():
+                    self.nodes_by_target_id[target_id] = []
+                self.nodes_by_target_id[target_id].extend(nodes)
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 
