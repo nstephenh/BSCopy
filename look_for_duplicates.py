@@ -76,6 +76,11 @@ if __name__ == '__main__':
             # Factoring out is_gst and checking it first simplifies our best check below
             if best_option.system_file.is_gst:
                 break  # Since there's only one GST, it'll always be the best option.
+            if (best_option.system_file.library and node.system_file.library and
+                    node.system_file.id in best_option.system_file.import_ids):
+                best_option = node
+                continue  # If both are libraries,
+                # but best option is importing node, then node should be the best option.
             if (node.shared and not (best_option.shared or best_option.system_file.library)
                     or (node.system_file.library and not best_option.system_file.library)):
                 best_option = node
