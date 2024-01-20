@@ -28,6 +28,8 @@ class SystemFile:
         self.id = self.source_tree.getroot().get('id')
         self.import_ids = [c.get('targetId') for c in
                            self.source_tree.findall(f'.//{self.get_namespace_tag()}catalogueLink')]
+        self.revision = self.source_tree.getroot().get('revision')
+        self.game_system_revision = self.source_tree.getroot().get('gameSystemRevision')
         self.parent_map = {c: p for p in self.source_tree.iter() for c in p}
 
         for element in self.source_tree.findall('.//*[@id]'):

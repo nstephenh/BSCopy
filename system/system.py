@@ -14,6 +14,7 @@ class System:
     def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory):
         print(f"Initializing {system_name}")
 
+        self.gst = None
         self.files: [SystemFile] = []
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
@@ -35,7 +36,10 @@ class System:
             i += 1
             print('\r', end="")
             print(f"Loading file ({i}/{count}): {filepath}", end="")
-            self.files.append(SystemFile(self, filepath))
+            file = SystemFile(self, filepath)
+            self.files.append(file)
+            if file.is_gst:
+                self.gst = file
         print()  # Newline after progress bar
         for file in self.files:
             self.nodes_by_id.update(file.nodes_by_id)
@@ -74,7 +78,7 @@ class System:
         return nodes_with_duplicates
 
     def save_system(self):
-        print("Saving system")
+        print(f"Saving {self.system_name}")
         count = len(self.files)
         i = 0
         for system_file in self.files:
@@ -85,3 +89,4 @@ class System:
             # utf-8 to keep special characters un-escaped.
             system_file.source_tree.write(system_file.path, encoding="utf-8")
             cleanup_file_match_bs_whitespace(system_file.path)
+        print()  # newline to clean up
