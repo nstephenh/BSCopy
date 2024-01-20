@@ -9,4 +9,8 @@ if __name__ == '__main__':
             epub_path = file
             break
     print(epub_path)
-    Book(epub_path)
+    book = Book(epub_path, settings={
+        'first_paragraph_is_flavor': True
+    })
+    for page in book.pages:
+        pass
