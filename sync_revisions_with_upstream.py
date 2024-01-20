@@ -17,6 +17,8 @@ downstream_dir = os.path.join(bsdata_source, downstream_game)
 revision_map = {}  # Filename; revision
 gsrevision_map = {}  # Filename; revision
 
+new_files = []
+
 # First iterate through the upstream directory and get the revision number of each file
 print("Getting revision numbers from upstream")
 
@@ -37,6 +39,7 @@ for file_name in os.listdir(downstream_dir):
     if os.path.splitext(file_name)[1] == ".gst":
         file_name = "GST"  # Since the GST name may have changed, get from the "GST" node in the map.
     if file_name not in revision_map.keys():
+        new_files.append(file_name)
         continue
     set_namespace_from_file(file_to_update)
     tree = ET.parse(file_to_update)
