@@ -22,7 +22,7 @@ class Page:
 
             page_number = int(page_range_start) + int(page_name_components[-1]) - 1
         except ValueError:
-            print(f"Could not get page number for {page_name}")
+            # print(f"Could not get page number for {page_name}")
             return
 
         self.page_number = page_number

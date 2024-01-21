@@ -75,13 +75,22 @@ class System:
             self.init_raw_game(raw_import_settings)
 
     def init_raw_game(self, raw_import_settings):
+        books_to_read = []
         for file_name in os.listdir(os.path.join(self.game_system_location, 'raw')):
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
             if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub']:
                 continue  # Skip this iteration
+            books_to_read.append(file_name)
+        i = 1
+        for file_name in books_to_read:
             pub_id = os.path.splitext(file_name)[0]
+            filepath = os.path.join(self.game_system_location, 'raw', file_name)
+            print('\r', end="")
+            print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
             # Assumes that each raw file is renamed as a bs unique ID corresponding to a publication.
             self.raw_files[pub_id] = Book(filepath, settings=raw_import_settings, system=self)
+            i += 1
+        print()
         for pub_id, book in self.raw_files.items():
             publication_node = self.nodes_by_id.get(pub_id)
             if not publication_node:
