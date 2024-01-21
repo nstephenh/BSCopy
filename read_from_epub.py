@@ -12,6 +12,7 @@ if __name__ == '__main__':
                         ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR: True,
                         ReadSettingsKeys.ACTIONS: [
                             Actions.LOAD_SPECIAL_RULES,
+                            Actions.LOAD_WEAPON_PROFILES,
                         ],
                     })
     system.save_system()

@@ -4,4 +4,5 @@ class ReadSettingsKeys:
 
 
 class Actions:
-    LOAD_SPECIAL_RULES = 'load_special_rules'
+    LOAD_SPECIAL_RULES = 'Load Special Rules'
+    LOAD_WEAPON_PROFILES = 'Load Weapon Profiles'

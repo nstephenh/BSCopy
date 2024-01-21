@@ -92,14 +92,16 @@ class System:
             sys_file_for_pub = publication_node.system_file
             actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
             print("Actions to take: " + ", ".join(actions_to_take))
-            if Actions.LOAD_SPECIAL_RULES in actions_to_take:
-                print("Comparing raw special rules to existing special rules")
-                for page in book.pages:
-                    print(f"\t{page.page_number}")
+            for page in book.pages:
+                print(f"\t{page.page_number}")
+                if Actions.LOAD_SPECIAL_RULES in actions_to_take:
                     for rule_name, rule_text in page.special_rules_text.items():
-                        print(f"\t\t{rule_name}")
+                        print(f"\t\tRule: {rule_name}")
                         # First look for existing special rules
                         self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
+                if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
+                    for weapon in page.weapons:
+                        print(f"\t\tWeapon: {weapon.name}")
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
         nodes = [node for node in self.nodes_by_name.get(rule_name, []) if

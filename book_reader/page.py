@@ -66,7 +66,7 @@ class Page:
                 continue  # Not actually a special rule or not a special rule with content
             self.special_rules_text[special_rule_name] = composed_text
 
-        weapons: list[RawEntry] = []
+        self.weapons: list[RawEntry] = []
 
         # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
         for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):
@@ -156,4 +156,4 @@ class Page:
                 elif special_rules_string != "":  # a single special rule
                     special_rules = [special_rules_string]
 
-                weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
+                self.weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
