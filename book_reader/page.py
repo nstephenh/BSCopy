@@ -114,16 +114,16 @@ class Page:
 
             # Handle all partial lines
             combined_table_lines = []
-            new_index = 0
+            prev_index = -1
             for i in range(len(table_lines)):
                 weapon_name_and_stats_components, weapon_special_rules_components = table_lines[i]
                 # This is a partial line, we need to add it to the line before it.
                 if len(weapon_name_and_stats_components) < 3:
                     try:
-                        old1, old2 = combined_table_lines[new_index]
+                        old1, old2 = combined_table_lines[prev_index]
                         new1 = old1[:-3] + weapon_name_and_stats_components + old1[-3:]
                         new2 = old2 + weapon_special_rules_components
-                        combined_table_lines[new_index] = (new1, new2)
+                        combined_table_lines[prev_index] = (new1, new2)
                     except IndexError:
                         print_styled("Issue combining lines", STYLES.RED)
                         print(table_lines)
@@ -132,7 +132,7 @@ class Page:
                     # Don't update the index
                 else:
                     combined_table_lines.append((weapon_name_and_stats_components, weapon_special_rules_components))
-                    new_index += 1
+                    prev_index += 1
 
             # Processes the combined lines
             for weapon_name_and_stats_components, weapon_special_rules_components in combined_table_lines:
@@ -155,7 +155,7 @@ class Page:
                 elif special_rules_string != "":  # a single special rule
                     special_rules = [special_rules_string]
 
-                if weapon_name.startswith("Helblaster"):
+                if weapon_name.startswith("Trollhammer"):
                     print(weapon_name)
                     for stat_name, stat in stats_dict.items():
                         print(f"{stat_name}: {stat}")
