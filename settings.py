@@ -1,9 +1,14 @@
 import os
 
+from system.constants import SpecialRulesType, SystemSettingsKeys
 from util.generate_util import get_random_bs_id
 
 default_system = 'moreus-heresy'
 default_data_directory = os.path.expanduser("~/BattleScribe/data/")
+
+default_settings = {
+    SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.RULE,
+}
 
 name_synonyms = {
     "Corpus Skitarii": "The Corpus Skitarii",
@@ -27,5 +32,3 @@ lords_of_war_force_org = \
     f"""<categoryLink targetId="c658-dc6b-727b-c488" id="{get_random_bs_id()}" primary="true" name="Lords of War:"/>"""
 primarch_force_org = \
     f"""<categoryLink targetId="ad5f-31db-8bc7-5c46" id="{get_random_bs_id()}" primary="true" name="Primarch:"/>"""
-
-

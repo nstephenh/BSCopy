@@ -1,11 +1,13 @@
 import os
 
 from book_reader.book import Book
-from book_reader.import_constants import SETTINGS, ACTIONS
-from settings import default_system, default_data_directory
+from book_reader.constants import ReadSettingsKeys, Actions
+from settings import default_system, default_data_directory, default_settings
+from system.constants import SystemSettingsKeys
 from system.node import Node
 from system.system_file import SystemFile, set_namespace_from_file
 from util.generate_util import cleanup_file_match_bs_whitespace
+from util.log_util import STYLES, print_styled
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
                          'characteristicType']
@@ -13,15 +15,21 @@ IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 
 
 class System:
 
+    def __str__(self):
+        return self.system_name
+
     def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory,
+                 settings=None,
                  include_raw=False, raw_import_settings=None):
         print(f"Initializing {system_name}")
-
+        if settings is None:
+            settings = default_settings
+        self.settings = settings
         self.gst = None
         self.files: [SystemFile] = []
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
-        self.nodes_by_name: dict[str, list[Node]] = {}
+        self.nodes_by_name: dict[str, list[Node]] = {}  # can use nodes by name
         self.nodes_by_target_id: dict[str, list[Node]] = {}
 
         self.system_name = system_name
@@ -80,9 +88,34 @@ class System:
                 print(f"Please create a publication with ID {pub_id},"
                       f" or rename that file to be an existing publication ID")
                 exit()
-            if raw_import_settings.get(SETTINGS.actions) == ACTIONS.load_special_rules:
-                publication_system = publication_node.system_file
-                pass
+            sys_file_for_pub = publication_node.system_file
+            actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
+            print("Actions to take: " + ", ".join(actions_to_take))
+            if Actions.LOAD_SPECIAL_RULES in actions_to_take:
+                print("Comparing raw special rules to existing special rules")
+                for page in book.pages:
+                    print(f"\t{page.page_number}")
+                    for rule_name, rule_text in page.special_rules_text.items():
+                        print(f"\t\t{rule_name}")
+                        # First look for existing special rules
+                        nodes = [node for node in sys_file_for_pub.nodes_by_name.get(rule_name, []) if
+                                 node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
+                        if len(nodes) > 0:
+                            if len(nodes) > 1:
+                                nodes_str = ", ".join([str(node) for node in nodes])
+                                print_styled(f"\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
+                                continue
+                            node = nodes[0]
+                            print(f"\t\tRule exists in data files: {node.id}")
+                            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
+
+                            continue
+
+                        # Then create any we couldn't find
+                        # to consider, check the whole system for the rules we couldn't find.
+                        for node in (
+                                sys_file_for_pub.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
+                            pass
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

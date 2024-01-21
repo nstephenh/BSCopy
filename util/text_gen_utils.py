@@ -1,8 +1,9 @@
+import xml.etree.ElementTree as ET
+
 from settings import name_synonyms
+from util.generate_util import get_random_bs_id
 from util.system_globals import rules_list, wargear_list
 from util.text_utils import get_generic_rule_name, remove_plural
-from util.generate_util import get_random_bs_id
-import xml.etree.ElementTree as ET
 
 errors = ""
 
@@ -128,4 +129,3 @@ def create_rule_node(rules_root, name, text, pub, page):
     description_node = ET.SubElement(rule_node, 'description')
     description_node.text = text
     return rule_node
-

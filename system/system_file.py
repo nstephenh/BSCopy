@@ -36,6 +36,9 @@ class SystemFile:
         for element in self.source_tree.findall('.//*[@id]'):
             self.create_node_from_element(element)
 
+    def __str__(self):
+        return self.name
+
     def create_node_from_element(self, element):
         """
         Creates a node and adds it to our indexes.
@@ -44,10 +47,9 @@ class SystemFile:
         """
         node = Node(self, element)
         self.nodes_by_id.update({node.id: node})
-
-        if node.tag not in self.nodes_by_type.keys():
-            self.nodes_by_type[node.tag] = []
-        self.nodes_by_type[node.tag].append(node)
+        if node.get_type() not in self.nodes_by_type.keys():
+            self.nodes_by_type[node.get_type()] = []
+        self.nodes_by_type[node.get_type()].append(node)
 
         if node.name:
             if node.name not in self.nodes_by_name.keys():

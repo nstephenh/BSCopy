@@ -1,11 +1,17 @@
-from book_reader.import_constants import SETTINGS, ACTIONS
+from book_reader.constants import ReadSettingsKeys, Actions
+from system.constants import SpecialRulesType, SystemSettingsKeys
 from system.system import System
 
 if __name__ == '__main__':
-    system = System('Warhammer-The-Old-World', include_raw=True,
+    system = System('Warhammer-The-Old-World',
+                    settings={
+                        SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.PROFILE_SPECIAL_RULE,
+                    },
+                    include_raw=True,
                     raw_import_settings={
-                        SETTINGS.first_paragraph_is_flavor: True,
-                        SETTINGS.actions: [
-                            ACTIONS.load_special_rules,
-                        ]
+                        ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR: True,
+                        ReadSettingsKeys.ACTIONS: [
+                            Actions.LOAD_SPECIAL_RULES,
+                        ],
                     })
+    system.save_system()

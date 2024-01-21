@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup, Tag
 
-from book_reader.import_constants import SETTINGS
+from book_reader.constants import ReadSettingsKeys
 from util.log_util import print_styled
 
 
@@ -22,15 +22,15 @@ class Page:
             page_number = int(page_range_start) + int(page_name_components[-1]) - 1
         except ValueError:
             print(f"Could not get page number for {page_name}")
-            self = None
             return
+
         self.page_number = page_number
         content = page_item.get_content()
         soup = BeautifulSoup(content)
         special_rules_elements_by_name: dict[str: Tag] = {}
 
-        first_paragraph_is_flavor = (SETTINGS.first_paragraph_is_flavor in settings.keys()
-                                     and settings[SETTINGS.first_paragraph_is_flavor])
+        first_paragraph_is_flavor = (ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR in settings.keys()
+                                     and settings[ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR])
 
         # Find all special rules elements in the text
         for sr_element in soup.find_all('p', {'class': 'Headers_H4'}):

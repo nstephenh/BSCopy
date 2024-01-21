@@ -20,12 +20,21 @@ class Node:
         self.target_id = element.attrib.get('targetId')
 
         self.tag = element.tag.split('}')[1]
+        self.type_name = element.attrib.get('typeName')  # for profile types, at least generally
         if not self.is_link():
             self.name = element.attrib.get('name')
         self.parent = self.get_parent_element()
         self.shared = False
         if self.parent:
             self.shared = self.parent.tag.split('}')[1].startswith('shared')
+
+    def __str__(self):
+        return f"{self.name} ({self.get_type()} {self.id} in {self.system_file})"
+
+    def get_type(self):
+        if self.type_name:
+            return f"{self.tag}:{self.type_name}"
+        return self.tag
 
     def is_link(self):
         return self.target_id is not None
@@ -52,3 +61,6 @@ class Node:
         :return:
         """
         return self.system_file.parent_map[self.get_parent_element()]
+
+    def update_attributes(self, attrib):
+        self.element.attrib.update(attrib)
