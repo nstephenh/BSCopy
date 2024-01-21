@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup, Tag
 
 from book_reader.constants import ReadSettingsKeys
-from util.log_util import print_styled
+from util.log_util import print_styled, STYLES
 
 
 class Page:
@@ -38,6 +38,7 @@ class Page:
             if "..." in special_rule_name or not special_rule_name:
                 continue  # not actually a special rule
             special_rules_elements_by_name[special_rule_name] = sr_element
+
         # for each element, find the text between it and the next element
         for special_rule_name, sr_element in special_rules_elements_by_name.items():
             next_paragraph = sr_element.findNext('p')
@@ -63,5 +64,109 @@ class Page:
             if composed_text == "":
                 continue  # Not actually a special rule or not a special rule with content
             self.special_rules_text[special_rule_name] = composed_text
-            print_styled(special_rule_name)
-            print(self.special_rules_text[special_rule_name])
+
+        weapon_elements_by_name: dict[str: Tag] = {}
+
+        # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
+        for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):
+            # First, see what information we can gather from the header
+            # With this method, we can consistently get the start of the special rules column (but nothing else)
+            stats_headers = []
+            special_rules_left_align = None
+            for span in weapon_table.findChildren():
+                span_positioning = span['style'].split('left:')[1].split(';')[0]
+                header = span.text.strip()
+                if header == "Special":
+                    special_rules_left_align = span_positioning
+                    break
+                if header != "":
+                    stats_headers.append(header)
+            stats_headers = stats_headers[-3:]  # Special handling for Brace of Pistols on page 217 of TOW rules
+            # TODO: pull out text before stats_headers and prepend it to each weapon name
+
+            # Then, go through all rows in the table
+            if not special_rules_left_align:
+                continue  # This table doesn't have a special rules indicator, so it's not useful
+            next_paragraph = weapon_table
+
+            table_lines: list[tuple[list, list]] = []
+
+            while next_paragraph is not None:
+                next_paragraph = next_paragraph.findNext('p')
+                if next_paragraph is None or next_paragraph['class'][0] not in ['Stats_Weapon-Stats_Weapon-Body', ]:
+                    break
+
+                weapon_name_and_stats_components = []
+                weapon_special_rules_components = []
+                in_special_rules = False
+                for span in next_paragraph.findChildren():
+                    span_positioning = span['style'].split('left:')[1].split(';')[0]
+                    if span_positioning == special_rules_left_align:
+                        in_special_rules = True
+                    text = span.text.strip()
+                    if text == "":
+                        continue
+                    if in_special_rules:
+                        weapon_special_rules_components.append(text)
+                    else:
+                        weapon_name_and_stats_components.append(text)
+                table_lines.append((weapon_name_and_stats_components, weapon_special_rules_components))
+
+            # Handle all partial lines
+            combined_table_lines = []
+            new_index = 0
+            for i in range(len(table_lines)):
+                weapon_name_and_stats_components, weapon_special_rules_components = table_lines[i]
+                # This is a partial line, we need to add it to the line before it.
+                if len(weapon_name_and_stats_components) < 3:
+                    try:
+                        old1, old2 = combined_table_lines[new_index]
+                        new1 = old1[:-3] + weapon_name_and_stats_components + old1[-3:]
+                        new2 = old2 + weapon_special_rules_components
+                        combined_table_lines[new_index] = (new1, new2)
+                    except IndexError:
+                        print_styled("Issue combining lines", STYLES.RED)
+                        print(table_lines)
+                        print(combined_table_lines)
+                        exit()
+                    # Don't update the index
+                else:
+                    combined_table_lines.append((weapon_name_and_stats_components, weapon_special_rules_components))
+                    new_index += 1
+
+            # Processes the combined lines
+            for weapon_name_and_stats_components, weapon_special_rules_components in combined_table_lines:
+                weapon_name = " ".join(weapon_name_and_stats_components[0:-3])
+                print(weapon_name)
+                weapon_stats_array = weapon_name_and_stats_components[-3:]
+                # if a line in the table doesn't have stats, it's really just a continuation of the previous line.
+                try:
+                    stats_dict = {stats_headers[i]: weapon_stats_array[i] for i in range(len(stats_headers))}
+                except IndexError:
+                    print_styled("Headers don't line up!", STYLES.RED)
+                    print(stats_headers)
+                    print(weapon_stats_array)
+                    exit()
+
+                special_rules_string = " ".join(weapon_special_rules_components)
+                special_rules = ""
+                if "," in special_rules_string:
+                    special_rules = special_rules_string.split(',')  # May leave entries with trailing whitespace
+                elif special_rules_string != "":  # a single special rule
+                    special_rules = [special_rules_string]
+
+                if weapon_name.startswith("Helblaster"):
+                    print(weapon_name)
+                    for stat_name, stat in stats_dict.items():
+                        print(f"{stat_name}: {stat}")
+                    print("Special Rules: ", end="")
+                    for rule in special_rules:
+                        print(f"'{rule}', ", end="")
+                    print()
+                    exit()
+
+                # weapon_name = weapon_element.get_text().strip()
+                # if "..." in weapon_name or not weapon_name:
+                #     continue  # not actually a special rule
+                # weapon_elements_by_name[weapon_name] = weapon_name
+                # print(weapon_name)
