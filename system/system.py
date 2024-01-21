@@ -1,8 +1,10 @@
 import os
 
-from system.system_file import SystemFile, set_namespace_from_file
-from system.node import Node
+from book_reader.book import Book
+from book_reader.import_constants import SETTINGS, ACTIONS
 from settings import default_system, default_data_directory
+from system.node import Node
+from system.system_file import SystemFile, set_namespace_from_file
 from util.generate_util import cleanup_file_match_bs_whitespace
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
@@ -11,7 +13,8 @@ IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 
 
 class System:
 
-    def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory):
+    def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory,
+                 include_raw=False, raw_import_settings=None):
         print(f"Initializing {system_name}")
 
         self.gst = None
@@ -59,6 +62,27 @@ class System:
                 if target_id not in self.nodes_by_target_id.keys():
                     self.nodes_by_target_id[target_id] = []
                 self.nodes_by_target_id[target_id].extend(nodes)
+        self.raw_files = {}
+        if include_raw:
+            self.init_raw_game(raw_import_settings)
+
+    def init_raw_game(self, raw_import_settings):
+        for file_name in os.listdir(os.path.join(self.game_system_location, 'raw')):
+            filepath = os.path.join(self.game_system_location, 'raw', file_name)
+            if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub']:
+                continue  # Skip this iteration
+            pub_id = os.path.splitext(file_name)[0]
+            # Assumes that each raw file is renamed as a bs unique ID corresponding to a publication.
+            self.raw_files[pub_id] = Book(filepath, settings=raw_import_settings, system=self)
+        for pub_id, book in self.raw_files.items():
+            publication_node = self.nodes_by_id.get(pub_id)
+            if not publication_node:
+                print(f"Please create a publication with ID {pub_id},"
+                      f" or rename that file to be an existing publication ID")
+                exit()
+            if raw_import_settings.get(SETTINGS.actions) == ACTIONS.load_special_rules:
+                publication_system = publication_node.system_file
+                pass
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

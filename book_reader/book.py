@@ -5,9 +5,10 @@ from book_reader.page import Page
 
 
 class Book:
-    def __init__(self, epub_path, settings: {str: bool} = None):
+    def __init__(self, epub_path, settings: {str: bool} = None, system=None):
         if settings is None:
             settings = {}
+        self.system = system
         self.pages = []
         book = epub.read_epub(epub_path)
         for item in book.get_items():
