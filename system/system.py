@@ -7,7 +7,7 @@ from system.constants import SystemSettingsKeys
 from system.node import Node
 from system.system_file import SystemFile, set_namespace_from_file
 from util.generate_util import cleanup_file_match_bs_whitespace
-from util.log_util import STYLES, print_styled
+from util.log_util import STYLES, print_styled, get_diff
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
                          'characteristicType']
@@ -109,7 +109,12 @@ class System:
                             node = nodes[0]
                             print(f"\t\t\tRule exists in data files: {node.id}")
                             node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
-
+                            existing_rule_text = node.get_rules_text()
+                            diff = get_diff(existing_rule_text, rule_text, 3)
+                            if diff:
+                                print_styled("\tText Differs!", STYLES.PURPLE)
+                                print(diff)
+                                node.set_rules_text(rule_text)
                             continue
 
                         # Then create any we couldn't find
