@@ -88,3 +88,13 @@ class Node:
         element = self.get_rules_text_element()
         if element is not None:
             element.text = text
+
+    def get_diffable_profile(self):
+        text = f"Name: {self.name}\n"
+        for child_l1 in self.element:
+            if child_l1.tag.endswith('characteristics'):
+                for child_l2 in child_l1:
+                    if child_l2.tag.endswith('characteristic'):
+                        # should only be one child, description
+                        text += f"{child_l2.get('name')}: {child_l2.text}\n"
+        return text

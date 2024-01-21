@@ -97,13 +97,15 @@ class System:
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:
                     for rule_name, rule_text in page.special_rules_text.items():
                         print(f"\t\tRule: {rule_name}")
-                        # First look for existing special rules
                         self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
+                        self.create_or_update_profile(page, pub_id, weapon, type="profile:Weapon",
+                                                      default_sys_file=sys_file_for_pub)
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
+        # First look for existing special rules
         nodes = [node for node in self.nodes_by_name.get(rule_name, []) if
                  node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
         if len(nodes) > 0:
@@ -117,9 +119,35 @@ class System:
             existing_rule_text = node.get_rules_text()
             diff = get_diff(existing_rule_text, rule_text, 3)
             if diff:
-                print_styled("\tText Differs!", STYLES.PURPLE)
+                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
                 print(diff)
                 node.set_rules_text(rule_text)
+            return
+        # Then create any we couldn't find
+        for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
+            pass
+
+    def create_or_update_profile(self, page, pub_id, raw_profile, type, default_sys_file):
+        # A profile should also be in a selection entry with special rules,
+        # so once we find the profile, we'll want to find selection entries for it.
+
+        nodes = [node for node in self.nodes_by_name.get(raw_profile.name, []) if
+                 node.get_type() == type]
+        if len(nodes) > 0:
+            if len(nodes) > 1:
+                nodes_str = ", ".join([str(node) for node in nodes])
+                print_styled(f"\t\t\tProfile exists multiple times in data files: {nodes_str}", STYLES.RED)
+                return
+            node = nodes[0]
+            print(f"\t\t\tProfile exists in data files: {node.id}")
+            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
+            existing_profile_text = node.get_diffable_profile()
+            new_profile_text = raw_profile.get_diffable_profile()
+            diff = get_diff(existing_profile_text, new_profile_text, 3)
+            if diff:
+                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
+                print(diff)
+                # node.set_profile(stats=)
             return
         # Then create any we couldn't find
         for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
