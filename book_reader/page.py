@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup, Tag
 
 from book_reader.constants import ReadSettingsKeys
+from book_reader.raw_entry import RawEntry
 from util.log_util import print_styled, STYLES
 
 
@@ -65,7 +66,7 @@ class Page:
                 continue  # Not actually a special rule or not a special rule with content
             self.special_rules_text[special_rule_name] = composed_text
 
-        weapon_elements_by_name: dict[str: Tag] = {}
+        weapons: list[RawEntry] = []
 
         # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
         for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):
@@ -155,18 +156,4 @@ class Page:
                 elif special_rules_string != "":  # a single special rule
                     special_rules = [special_rules_string]
 
-                if weapon_name.startswith("Trollhammer"):
-                    print(weapon_name)
-                    for stat_name, stat in stats_dict.items():
-                        print(f"{stat_name}: {stat}")
-                    print("Special Rules: ", end="")
-                    for rule in special_rules:
-                        print(f"'{rule}', ", end="")
-                    print()
-                    exit()
-
-                # weapon_name = weapon_element.get_text().strip()
-                # if "..." in weapon_name or not weapon_name:
-                #     continue  # not actually a special rule
-                # weapon_elements_by_name[weapon_name] = weapon_name
-                # print(weapon_name)
+                weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
