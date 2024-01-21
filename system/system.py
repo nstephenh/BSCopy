@@ -99,28 +99,29 @@ class System:
                     for rule_name, rule_text in page.special_rules_text.items():
                         print(f"\t\t{rule_name}")
                         # First look for existing special rules
-                        nodes = [node for node in self.nodes_by_name.get(rule_name, []) if
-                                 node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
-                        if len(nodes) > 0:
-                            if len(nodes) > 1:
-                                nodes_str = ", ".join([str(node) for node in nodes])
-                                print_styled(f"\t\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
-                                continue
-                            node = nodes[0]
-                            print(f"\t\t\tRule exists in data files: {node.id}")
-                            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
-                            existing_rule_text = node.get_rules_text()
-                            diff = get_diff(existing_rule_text, rule_text, 3)
-                            if diff:
-                                print_styled("\tText Differs!", STYLES.PURPLE)
-                                print(diff)
-                                node.set_rules_text(rule_text)
-                            continue
+                        self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
 
-                        # Then create any we couldn't find
-                        for node in (
-                                sys_file_for_pub.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
-                            pass
+    def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
+        nodes = [node for node in self.nodes_by_name.get(rule_name, []) if
+                 node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
+        if len(nodes) > 0:
+            if len(nodes) > 1:
+                nodes_str = ", ".join([str(node) for node in nodes])
+                print_styled(f"\t\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
+                return
+            node = nodes[0]
+            print(f"\t\t\tRule exists in data files: {node.id}")
+            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
+            existing_rule_text = node.get_rules_text()
+            diff = get_diff(existing_rule_text, rule_text, 3)
+            if diff:
+                print_styled("\tText Differs!", STYLES.PURPLE)
+                print(diff)
+                node.set_rules_text(rule_text)
+            return
+        # Then create any we couldn't find
+        for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
+            pass
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 
