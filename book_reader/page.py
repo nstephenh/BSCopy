@@ -113,7 +113,8 @@ class Page:
                         weapon_name_and_stats_components.append(text)
                 table_lines.append((weapon_name_and_stats_components, weapon_special_rules_components))
 
-            # Handle all partial lines
+            # If a line in the table doesn't have stats, it's really just a continuation of the previous line.
+            # Handle all partial lines.
             combined_table_lines = []
             prev_index = -1
             for i in range(len(table_lines)):
@@ -138,9 +139,24 @@ class Page:
             # Processes the combined lines
             for weapon_name_and_stats_components, weapon_special_rules_components in combined_table_lines:
                 weapon_name = " ".join(weapon_name_and_stats_components[0:-3])
-                print(weapon_name)
                 weapon_stats_array = weapon_name_and_stats_components[-3:]
-                # if a line in the table doesn't have stats, it's really just a continuation of the previous line.
+
+                if '(' in weapon_name:
+                    try:
+
+                        weapon_name = " ".join(weapon_name_and_stats_components[0:-5])
+                        weapon_stats_array = [
+                            weapon_name_and_stats_components[-5],
+                            " ".join(weapon_name_and_stats_components[-4:-2]),
+                            " ".join(weapon_name_and_stats_components[-2:]),
+                        ]
+                    except IndexError:
+                        print_styled("Artillery false alarm", STYLES.RED)
+                        print(weapon_name)
+                        print(stats_headers)
+                        print(weapon_stats_array)
+                        exit()
+
                 try:
                     stats_dict = {stats_headers[i]: weapon_stats_array[i] for i in range(len(stats_headers))}
                 except IndexError:
