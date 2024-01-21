@@ -17,3 +17,10 @@ def update_page_and_pub(element, page, publication_id):
     if 'publicationId' not in element.attrib or element.attrib['publicationId'] != publication_id:
         print_styled("\tUpdated publication ID")
         element.attrib['publicationId'] = publication_id
+
+
+def get_tag(element):
+    tag = element.tag
+    if "}" in tag:
+        return tag.split("}")[1]
+    return tag

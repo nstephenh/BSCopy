@@ -3,7 +3,7 @@ from xml.etree import ElementTree as ET
 
 from book_reader.raw_entry import RawEntry
 from system.constants import SystemSettingsKeys, SpecialRulesType
-from util.element_util import get_description
+from util.element_util import get_description, get_tag
 
 if TYPE_CHECKING:
     from system.system_file import SystemFile
@@ -23,7 +23,7 @@ class Node:
 
         self.target_id = element.attrib.get('targetId')
 
-        self.tag = element.tag.split('}')[1]
+        self.tag = element.tag.split('}')[1]  # I think this only works because we've had a direct call to et.set_prefix
         self.type_name = element.attrib.get('typeName')  # for profile types, at least generally
         if not self.is_link():
             self.name = element.attrib.get('name')
@@ -74,15 +74,18 @@ class Node:
         elements = []
         for child_l1 in self.element:
             for child_l2 in child_l1:
-                if child_l2.tag.split("}")[0] == tag:
+                if get_tag(child_l2) == tag:
                     # To consider, these should have unique IDs, so we could pull nodes if we wanted.
-                    elements.append(elements)
+                    elements.append(child_l2)
         return elements
 
     def get_element_container_for_tag(self, tag):
         for child_l1 in self.element:
-            if child_l1.tag.split("}")[0] == (tag + 's'):
+            if get_tag(child_l1) == (tag + 's'):
                 return child_l1
+
+    def create_child(self, tag, attrib):
+        return ET.SubElement(self.get_element_container_for_tag(tag), tag, attrib)
 
     def update_attributes(self, attrib):
         self.element.attrib.update(attrib)
@@ -118,7 +121,7 @@ class Node:
                         text += f"{child_l2.get('name')}: {child_l2.text}\n"
         return text
 
-    def set_profile(self, raw_profile: RawEntry, profile_type=''):
+    def set_profile(self, raw_profile: RawEntry, profile_type):
         self.element.attrib['name'] = raw_profile.name
         set_characteristics = []
         # Set existing characteristic fields
@@ -127,9 +130,14 @@ class Node:
             if characteristic_type in raw_profile.stats.keys():
                 characteristic_element.text = raw_profile.stats[characteristic_type]
                 set_characteristics.append(characteristic_type)
-
         for characteristic_type in raw_profile.stats.keys():
             if characteristic_type in set_characteristics:
                 continue  # We've already set this one, skip
             # Get the typeId from the system
+            type_id = self.system_file.system.profile_characteristics[profile_type][characteristic_type]
             # add to the characteristic node
+            self.create_child('characteristic', attrib={
+                # characteristic nodes don't have an ID because they have a type and a parent with an ID.
+                'name': characteristic_type,
+                'typeId': type_id
+            }).text = raw_profile.stats[characteristic_type]

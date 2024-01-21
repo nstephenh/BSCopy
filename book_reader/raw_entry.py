@@ -1,8 +1,8 @@
 class RawEntry:
     def __init__(self, name, stats, special_rules):
-        self.name = name
-        self.stats = stats
-        self.special_rules = special_rules
+        self.name: str = name
+        self.stats: dict[str: str] = stats
+        self.special_rules: list[str] = special_rules
 
     def get_diffable_profile(self):
         text = ""

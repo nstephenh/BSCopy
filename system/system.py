@@ -32,6 +32,9 @@ class System:
         self.nodes_by_name: dict[str, list[Node]] = {}  # can use nodes by name
         self.nodes_by_target_id: dict[str, list[Node]] = {}
 
+        # profileType name: {characteristicType name: typeId}
+        self.profile_characteristics: dict[str: dict[str: str]] = {}
+
         self.system_name = system_name
         self.game_system_location = os.path.join(data_directory, system_name)
         game_files = os.listdir(self.game_system_location)
@@ -70,9 +73,18 @@ class System:
                 if target_id not in self.nodes_by_target_id.keys():
                     self.nodes_by_target_id[target_id] = []
                 self.nodes_by_target_id[target_id].extend(nodes)
+
+        self.define_profile_characteristics()
+
         self.raw_files = {}
         if include_raw:
             self.init_raw_game(raw_import_settings)
+
+    def define_profile_characteristics(self):
+        for node in self.nodes_by_type['profileType']:
+            self.profile_characteristics[node.name] = {}
+            for element in node.get_sub_elements_with_tag('characteristicType'):
+                self.profile_characteristics[node.name][element.get('name')] = element.get('id')
 
     def init_raw_game(self, raw_import_settings):
         books_to_read = []
@@ -110,7 +122,7 @@ class System:
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        self.create_or_update_profile(page, pub_id, weapon, type="profile:Weapon",
+                        self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
                                                       default_sys_file=sys_file_for_pub)
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
@@ -136,12 +148,12 @@ class System:
         for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
             pass
 
-    def create_or_update_profile(self, page, pub_id, raw_profile, type, default_sys_file):
+    def create_or_update_profile(self, page, pub_id, raw_profile, profile_type, default_sys_file):
         # A profile should also be in a selection entry with special rules,
         # so once we find the profile, we'll want to find selection entries for it.
 
         nodes = [node for node in self.nodes_by_name.get(raw_profile.name, []) if
-                 node.get_type() == type]
+                 node.get_type() == f"profile:{profile_type}"]
         if len(nodes) > 0:
             if len(nodes) > 1:
                 nodes_str = ", ".join([str(node) for node in nodes])
@@ -156,7 +168,7 @@ class System:
             if diff:
                 print_styled("\t\t\tText Differs!", STYLES.PURPLE)
                 print(diff)
-                # node.set_profile(stats=)
+                node.set_profile(raw_profile, profile_type)
             return
         # Then create any we couldn't find
         for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
