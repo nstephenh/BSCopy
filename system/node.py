@@ -1,6 +1,9 @@
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
+from system.constants import SystemSettingsKeys, SpecialRulesType
+from util.element_util import get_description
+
 if TYPE_CHECKING:
     from system.system_file import SystemFile
 
@@ -64,3 +67,24 @@ class Node:
 
     def update_attributes(self, attrib):
         self.element.attrib.update(attrib)
+
+    def get_rules_text_element(self):
+        if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
+            return get_description(self.element)
+        else:
+            for child_l1 in self.element:
+                if child_l1.tag.endswith('characteristics'):
+                    for child_l2 in child_l1:
+                        if child_l2.tag.endswith('characteristic'):
+                            # should only be one child, description
+                            return child_l2
+
+    def get_rules_text(self):
+        element = self.get_rules_text_element()
+        if element is not None:
+            return element.text
+
+    def set_rules_text(self, text):
+        element = self.get_rules_text_element()
+        if element is not None:
+            element.text = text
