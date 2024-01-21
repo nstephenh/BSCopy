@@ -45,10 +45,13 @@ class Page:
                 next_paragraph = next_paragraph.findNext('p')
             composed_text = ""
             while next_paragraph is not None:
+
                 paragraph_text = next_paragraph.get_text().strip()
                 if paragraph_text in special_rules_elements_by_name.keys() or not (
                         next_paragraph['class'][0] in ['Body-Black_Body-Italic',
-                                                       'Body-Black_Body-', ]) or paragraph_text.startswith(
+                                                       'Body-Black_Body-',
+                                                       'Body-Black_Bullets',
+                                                       ]) or paragraph_text.startswith(
                     'On this page you will find a full description for each of the army special rules used by models drawn from the'):
                     # We've reached the end of this special rule and are on to the next one.
                     # Or a section with different formatting
