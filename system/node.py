@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
+from book_reader.raw_entry import RawEntry
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_description
 
@@ -65,6 +66,24 @@ class Node:
         """
         return self.system_file.parent_map[self.get_parent_element()]
 
+    def get_sub_elements_with_tag(self, tag):
+        """
+        Children are containers for multiple grandchildren, so go through the grandchildren
+        :return:
+        """
+        elements = []
+        for child_l1 in self.element:
+            for child_l2 in child_l1:
+                if child_l2.tag.split("}")[0] == tag:
+                    # To consider, these should have unique IDs, so we could pull nodes if we wanted.
+                    elements.append(elements)
+        return elements
+
+    def get_element_container_for_tag(self, tag):
+        for child_l1 in self.element:
+            if child_l1.tag.split("}")[0] == (tag + 's'):
+                return child_l1
+
     def update_attributes(self, attrib):
         self.element.attrib.update(attrib)
 
@@ -98,3 +117,19 @@ class Node:
                         # should only be one child, description
                         text += f"{child_l2.get('name')}: {child_l2.text}\n"
         return text
+
+    def set_profile(self, raw_profile: RawEntry, profile_type=''):
+        self.element.attrib['name'] = raw_profile.name
+        set_characteristics = []
+        # Set existing characteristic fields
+        for characteristic_element in self.get_sub_elements_with_tag('characteristic'):
+            characteristic_type = characteristic_element.get('name')
+            if characteristic_type in raw_profile.stats.keys():
+                characteristic_element.text = raw_profile.stats[characteristic_type]
+                set_characteristics.append(characteristic_type)
+
+        for characteristic_type in raw_profile.stats.keys():
+            if characteristic_type in set_characteristics:
+                continue  # We've already set this one, skip
+            # Get the typeId from the system
+            # add to the characteristic node
