@@ -88,6 +88,7 @@ class System:
                 print(f"Please create a publication with ID {pub_id},"
                       f" or rename that file to be an existing publication ID")
                 exit()
+            print_styled(publication_node.name, STYLES.CYAN)
             sys_file_for_pub = publication_node.system_file
             actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
             print("Actions to take: " + ", ".join(actions_to_take))
@@ -98,21 +99,20 @@ class System:
                     for rule_name, rule_text in page.special_rules_text.items():
                         print(f"\t\t{rule_name}")
                         # First look for existing special rules
-                        nodes = [node for node in sys_file_for_pub.nodes_by_name.get(rule_name, []) if
+                        nodes = [node for node in self.nodes_by_name.get(rule_name, []) if
                                  node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
                         if len(nodes) > 0:
                             if len(nodes) > 1:
                                 nodes_str = ", ".join([str(node) for node in nodes])
-                                print_styled(f"\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
+                                print_styled(f"\t\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
                                 continue
                             node = nodes[0]
-                            print(f"\t\tRule exists in data files: {node.id}")
+                            print(f"\t\t\tRule exists in data files: {node.id}")
                             node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
 
                             continue
 
                         # Then create any we couldn't find
-                        # to consider, check the whole system for the rules we couldn't find.
                         for node in (
                                 sys_file_for_pub.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
                             pass
