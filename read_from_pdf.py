@@ -67,8 +67,8 @@ if __name__ == '__main__':
             print(page)
             # TODO: Strip headers and footers.
             non_column_text = ""
-            col_1_text = ""
-            col_2_text = ""
+            col_1_lines = []
+            col_2_lines = []
 
             line_count = len(page.split('\n'))
             heatmap = get_page_heatmap(page)
@@ -77,8 +77,6 @@ if __name__ == '__main__':
             divider_end = get_divider_end(heatmap)
 
             prev_line_had_col_brake = False
-            prev_a_blank = False
-            prev_b_blank = False
             for line in page.split('\n'):
                 has_col_break = False
                 col_1_only = False
@@ -88,10 +86,8 @@ if __name__ == '__main__':
                     # An empty line could apply to any column, so lets just put it in all columns.
                     print(style_text("\rEMPTY LINE", STYLES.GREEN))
                     non_column_text += "\n"
-                    col_1_text += "\n"
-                    col_2_text += "\n"
-                    prev_a_blank = True
-                    prev_b_blank = True
+                    col_1_lines.append("")
+                    col_2_lines.append("")
                     # Allow col break to persist across the linebreak
                     continue
 
@@ -108,16 +104,14 @@ if __name__ == '__main__':
                     if not col_1_only:
                         col_2 = line[divider_end:].strip()
 
-                    # if the rows aren't perfectly aligned, we'll start getting alternating blank lines.
-                    if not (not col_1 and col_2 and prev_a_blank and not prev_b_blank):
-                        col_1_text += col_1 + "\n"
+                    if col_1:
+                        col_1_lines.append(col_1)
                     else:
                         print(style_text("\rSkipped Newline in A\r", STYLES.GREEN), end="")
                         # ^ this prints over the existing line, so reprint it.
-                        print(line, end="")
 
-                    if not (col_1 and not col_2 and not prev_a_blank and prev_b_blank):
-                        col_2_text += col_2 + "\n"
+                    if col_2:
+                        col_2_lines.append(col_2)
                     else:
                         debug_col_spacing = ' ' * divider_end
                         print(style_text(f"\r{debug_col_spacing} Skipped Newline in B\r", STYLES.CYAN), end="")
@@ -135,8 +129,7 @@ if __name__ == '__main__':
             print_styled("Non-column text:", STYLES.PURPLE)
             print(non_column_text)
             print_styled("Column 1 text:", STYLES.PURPLE)
-            print(col_1_text)
+            print("\n".join(col_1_lines).strip())
             print_styled("Column 2 text:", STYLES.PURPLE)
-            print(col_2_text)
-
+            print("\n".join(col_2_lines).strip())
             exit()  # Early quit on page 1
