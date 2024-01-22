@@ -29,7 +29,7 @@ class Page:
 
         self.page_number = page_number
         content = page_item.get_content()
-        soup = BeautifulSoup(content)
+        soup = BeautifulSoup(content, "html.parser")
         special_rules_elements_by_name: dict[str: Tag] = {}
 
         first_paragraph_is_flavor = (ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR in settings.keys()
