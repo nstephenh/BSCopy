@@ -1,7 +1,5 @@
 import os
 
-from book_reader.book import Book
-from book_reader.constants import ReadSettingsKeys, Actions
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
 from system.node import Node
@@ -92,6 +90,8 @@ class System:
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
 
     def init_raw_game(self, raw_import_settings):
+        from book_reader.book import Book
+        from book_reader.constants import ReadSettingsKeys, Actions
         books_to_read = []
         for file_name in os.listdir(os.path.join(self.game_system_location, 'raw')):
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
