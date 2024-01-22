@@ -5,6 +5,7 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
 from system.node import Node
+from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
@@ -27,6 +28,9 @@ class System:
         self.settings = settings
         self.gst = None
         self.files: [SystemFile] = []
+
+        self.nodes = NodeCollection([])
+        # The goal is to replace the below indexed lists with just filtering this collection
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
         self.nodes_by_name: dict[str, list[Node]] = {}  # can use nodes by name
@@ -56,6 +60,7 @@ class System:
                 self.gst = file
         print()  # Newline after progress bar
         for file in self.files:
+            self.nodes = self.nodes + file.nodes
             self.nodes_by_id.update(file.nodes_by_id)
 
             for tag, nodes in file.nodes_by_type.items():
@@ -127,8 +132,10 @@ class System:
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
         # First look for existing special rules
-        nodes = [node for node in self.nodes_by_name.get(rule_name, []) if
-                 node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]
+        nodes = self.nodes.filter(lambda node: (
+                node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]
+                and (node.name and node.name.lower() == rule_name.lower())
+        ))
         if len(nodes) > 0:
             if len(nodes) > 1:
                 nodes_str = ", ".join([str(node) for node in nodes])
@@ -152,8 +159,10 @@ class System:
         # A profile should also be in a selection entry with special rules,
         # so once we find the profile, we'll want to find selection entries for it.
 
-        nodes = [node for node in self.nodes_by_name.get(raw_profile.name, []) if
-                 node.get_type() == f"profile:{profile_type}"]
+        nodes = self.nodes.filter(lambda node: (
+                node.get_type() == f"profile:{profile_type}"
+                and (node.name and node.name.lower() == raw_profile.name.lower())
+        ))
         if len(nodes) > 0:
             if len(nodes) > 1:
                 nodes_str = ", ".join([str(node) for node in nodes])

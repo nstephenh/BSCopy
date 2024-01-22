@@ -9,4 +9,4 @@ class NodeCollection(collections.UserList):
         super().__init__(nodes)
 
     def filter(self, sort_condition: Callable[[Node], bool]):
-        return NodeCollection([node for node in self._inner_list if sort_condition(node)])
+        return NodeCollection([node for node in self.data if sort_condition(node)])

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
 from system.node import Node
+from system.node_collection import NodeCollection
 from util.generate_util import get_random_bs_id
 
 if TYPE_CHECKING:
@@ -16,6 +17,8 @@ class SystemFile:
         self.name = os.path.split(path)[1]
         self.path = path
 
+        self.nodes = NodeCollection([])
+        # The goal is to replace the below indexed lists with just filtering this collection
         self.nodes_by_id: dict[str, Node] = {}
         self.nodes_by_type: dict[str, list[Node]] = {}
         self.nodes_by_name: dict[str, list[Node]] = {}
@@ -46,6 +49,7 @@ class SystemFile:
         :return:
         """
         node = Node(self, element)
+        self.nodes.append(node)
         self.nodes_by_id.update({node.id: node})
         if node.get_type() not in self.nodes_by_type.keys():
             self.nodes_by_type[node.get_type()] = []
