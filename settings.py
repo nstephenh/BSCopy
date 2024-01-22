@@ -8,6 +8,7 @@ default_data_directory = os.path.expanduser("~/BattleScribe/data/")
 
 default_settings = {
     SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.RULE,
+    SystemSettingsKeys.WEAPON_AS_DESCRIPTION: False,
 }
 
 name_synonyms = {

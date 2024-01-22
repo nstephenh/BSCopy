@@ -125,14 +125,24 @@ class Node:
         self.element.attrib['name'] = raw_profile.name
         existing_characteristics = []
         # Set existing characteristic fields
+        stats = raw_profile.stats
+        stats.update({"Special Rules": raw_profile.get_special_rules_list()})
+
+        if self.system_file.system.settings[SystemSettingsKeys.WEAPON_AS_DESCRIPTION]:
+            description_entries = []
+            for characteristic_type, value in raw_profile.stats.items():
+                newline = "\n" if characteristic_type == "Notes" else ""
+                description_entries.append(f"{newline}{characteristic_type}: {value}")
+            stats = {"Description": "\t".join(description_entries)}
+
         for characteristic_element in self.get_sub_elements_with_tag('characteristic'):
             characteristic_type = characteristic_element.get('name')
             existing_characteristics.append(characteristic_type)
 
-            if characteristic_type in raw_profile.stats.keys():
-                characteristic_element.text = raw_profile.stats[characteristic_type]
-        raw_profile.stats.update({"Special Rules": raw_profile.get_special_rules_list()})
-        for characteristic_type in raw_profile.stats.keys():
+            if characteristic_type in stats.keys():
+                characteristic_element.text = stats[characteristic_type]
+
+        for characteristic_type, value in stats.items():
             if characteristic_type in existing_characteristics:
                 continue  # This characteristic already exists, skip
             # Get the typeId from the system
@@ -142,4 +152,5 @@ class Node:
                 # characteristic nodes don't have an ID because they have a type and a parent with an ID.
                 'name': characteristic_type,
                 'typeId': type_id
-            }).text = raw_profile.stats[characteristic_type]
+            }).text = value
+            # TODO: Handle multiple profiles
