@@ -45,7 +45,7 @@ def get_divider_end(heatmap):
             return len(heatmap) - index - 1
 
 
-game_system_location = os.path.expanduser('~/BattleScribe/data/moreus-heresy/')
+game_system_location = os.path.expanduser('~/BattleScribe/data/horus-heresy/')
 
 if __name__ == '__main__':
     raw_location = os.path.join(game_system_location, "raw")
@@ -61,8 +61,6 @@ if __name__ == '__main__':
 
         for page in pdf:
             page_count += 1
-            if page_count < 112:
-                continue
 
             print(page)
             # TODO: Strip headers and footers.
