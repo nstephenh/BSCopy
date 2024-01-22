@@ -31,6 +31,7 @@ class Page:
         content = page_item.get_content()
         soup = BeautifulSoup(content, "html.parser")
         special_rules_elements_by_name: dict[str: Tag] = {}
+        table_label_elements: dict[str: Tag] = {}
 
         first_paragraph_is_flavor = (ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR in settings.keys()
                                      and settings[ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR])
@@ -40,6 +41,9 @@ class Page:
             special_rule_name = sr_element.get_text().strip()
             if "..." in special_rule_name or not special_rule_name:
                 continue  # not actually a special rule
+            if " Table" in special_rule_name:
+                table_label_elements[special_rule_name] = sr_element
+                continue  # Not added to the special rules list.
             special_rules_elements_by_name[special_rule_name] = sr_element
 
         # for each element, find the text between it and the next element
@@ -48,10 +52,16 @@ class Page:
             if first_paragraph_is_flavor:  # Skip the first paragraph
                 next_paragraph = next_paragraph.findNext('p')
             composed_text = ""
+            ends_in_table = False
             while next_paragraph is not None:
 
                 paragraph_text = next_paragraph.get_text().strip()
                 paragraph_text = re.sub(r" ", " ", paragraph_text)  # Pull out nbsp
+
+                # This special rule could end in a table. If it does, we'll start parsing it instead of paragraphs.
+                if paragraph_text in table_label_elements:
+                    ends_in_table = True  # This flag tells us to start processing the table.
+                    # Table processing will start at the header
 
                 if (paragraph_text in special_rules_elements_by_name.keys() or not (
                         next_paragraph['class'][0] in ['Body-Black_Body-Italic',
@@ -65,6 +75,9 @@ class Page:
                     break
                 composed_text += paragraph_text + "\n"  # otherwise, add to the rules text
                 next_paragraph = next_paragraph.findNext('p')
+
+            if ends_in_table:
+                composed_text += self.extract_table(next_paragraph)
 
             composed_text = composed_text.strip()
             if composed_text == "":
@@ -95,7 +108,6 @@ class Page:
                 prepend_to_name = " ".join(stats_headers[:-3]) + " - "
 
             stats_headers = stats_headers[-3:]
-
 
             # Then, go through all rows in the table
             if not special_rules_left_align:
@@ -196,3 +208,51 @@ class Page:
                         weapon_note = weapon_note.split(":")[1].strip()
                     stats_dict.update({"Notes": weapon_note})
                 self.weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
+
+    def extract_table(self, table_header_element):
+        table_text = table_header_element.text.strip() + ":\n"
+        table_line_element = table_header_element.findNext('p')
+        results_label_left_align = None
+
+        table_row_count = -1
+        die_roll_col_components = []
+        results_col_components = []
+        while table_line_element is not None:
+            if table_line_element['class'][0] not in ['Body-Black_D-Table-Header',
+                                                      'Body-Black_D-Table-Body',
+                                                      ]:
+                break  # We've reached the end of the table now.
+
+            # To consider, parameterize this and share with Weapons profiles, as it does the same thing,
+            # just splitting at Special vs Result
+
+            # process each row of the table
+            in_result_column = False
+            for span in table_line_element.findAll('span'):  # should ignore links and find all descendant spans
+                span_positioning = span['style'].split('left:')[1].split(';')[0]
+                component_text = span.text.strip()
+                if table_line_element['class'][0] == 'Body-Black_D-Table-Header':
+                    if component_text == "Result":
+                        results_label_left_align = span_positioning
+                if span_positioning == results_label_left_align:
+                    in_result_column = True
+                if not in_result_column:
+                    if component_text != "":
+                        if len(die_roll_col_components) - 1 == table_row_count:
+                            # We're at the start of a new row
+                            results_col_components.append([])
+                            die_roll_col_components.append([])
+                            table_row_count += 1
+                        die_roll_col_components[table_row_count].append(component_text)
+                else:
+                    results_col_components[table_row_count].append(component_text)
+
+            table_line_element = table_line_element.findNext('p')
+
+        # Clean up the table and print it nicely.
+        for row in range(len(die_roll_col_components)):
+            die_roll_cell = " ".join(die_roll_col_components[row])
+            results_roll_cell = " ".join(results_col_components[row])
+            table_text += f"● {die_roll_cell}:\t{results_roll_cell}\n"
+        table_text = table_text.strip()
+        return table_text
