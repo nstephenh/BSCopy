@@ -151,6 +151,7 @@ def cleanup_file_match_bs_whitespace(filepath):
         # We could use beautiful soup for this, but I'm attempting to avoid imports.
         # That is also the reason we're not mocking _escape_cdata
         content = re.sub("'", "&apos;", content)
+        content = re.sub(' ', " ", content) # Strip NBSP (as NR does on save now)
         # Go through and find all the quotes not inside of tags.
         new_content = ""
         for char in content:

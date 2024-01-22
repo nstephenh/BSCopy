@@ -1,3 +1,5 @@
+import re
+
 from bs4 import BeautifulSoup, Tag
 
 from book_reader.constants import ReadSettingsKeys
@@ -49,6 +51,8 @@ class Page:
             while next_paragraph is not None:
 
                 paragraph_text = next_paragraph.get_text().strip()
+                paragraph_text = re.sub(r" ", " ", paragraph_text)  # Pull out nbsp
+
                 if paragraph_text in special_rules_elements_by_name.keys() or not (
                         next_paragraph['class'][0] in ['Body-Black_Body-Italic',
                                                        'Body-Black_Body-',
@@ -105,6 +109,8 @@ class Page:
                     if span_positioning == special_rules_left_align:
                         in_special_rules = True
                     text = span.text.strip()
+                    text = re.sub(r" ", " ", text)  # Pull out nbsp
+
                     if text == "":
                         continue
                     if in_special_rules:
