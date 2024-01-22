@@ -130,15 +130,23 @@ modifier set manually. Again, the script you will remind you.
 
 As with the weapon script, you can then copy this into the Shared Selection Entry section in your file.
 
-## Parse raw text directly from an epub
-Why not from a PDF? Because PDF isn't super machine parsable.
+## Parse raw text directly from a document
 
 Unlike the other scripts, I can't rely on standard libraries to read epubs (Well, I could, but I don't want too),
-and beautiful soup makes reading html from the epub much easier.
+and beautiful soup makes reading html from the epub much easier. And PDF is even more difficult.
 
-You will need to install these dependencies with `pip install -r requirements.txt`
-
+### Epub
+Install dependencies with `pip install -r epub_requirements.txt`
 More documentation forthcoming, but essentially, you can modify settings in  `read_from_epub.py` and run it.
+
+### PDF
+
+If an epub is available, there's much more layout data we can easily parse in an epub.
+Reading from PDF is a WIP.
+
+Install dependencies with `pip install -r pdf_requirements.txt`. 
+The single requirement is a wrapper for poppler, which has to be installed via Conda.
+
 
 ## Copy changes from one file to another
 The copying function of BSCopy was set up originally, to copy the shared selection entry links from a template file 
