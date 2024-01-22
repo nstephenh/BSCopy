@@ -96,10 +96,16 @@ class Page:
             next_paragraph = weapon_table
 
             table_lines: list[tuple[list, list]] = []
-
+            weapon_note = ""
             while next_paragraph is not None:
                 next_paragraph = next_paragraph.findNext('p')
-                if next_paragraph is None or next_paragraph['class'][0] not in ['Stats_Weapon-Stats_Weapon-Body', ]:
+                if next_paragraph is None:
+                    break
+                if (next_paragraph['class'][0] in ['Body-Black_Body-Italic']
+                        and next_paragraph.get_text().startswith("Note")):  # Note: or Notes:
+                    weapon_note = re.sub(r" ", " ", next_paragraph.get_text())
+                    break
+                if next_paragraph['class'][0] not in ['Stats_Weapon-Stats_Weapon-Body', ]:
                     break
 
                 weapon_name_and_stats_components = []
@@ -178,5 +184,8 @@ class Page:
                     special_rules = special_rules_string.split(',')  # May leave entries with trailing whitespace
                 elif special_rules_string != "":  # a single special rule
                     special_rules = [special_rules_string]
-
+                if weapon_note:  # If there are multiple weapons on the same table, they'll get the same note. That's OK
+                    if ":" in weapon_note:
+                        weapon_note = weapon_note.split(":")[1].strip()
+                    stats_dict.update({"Notes": weapon_note})
                 self.weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
