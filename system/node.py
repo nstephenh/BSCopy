@@ -123,16 +123,18 @@ class Node:
 
     def set_profile(self, raw_profile: RawEntry, profile_type):
         self.element.attrib['name'] = raw_profile.name
-        set_characteristics = []
+        existing_characteristics = []
         # Set existing characteristic fields
         for characteristic_element in self.get_sub_elements_with_tag('characteristic'):
             characteristic_type = characteristic_element.get('name')
+            existing_characteristics.append(characteristic_type)
+
             if characteristic_type in raw_profile.stats.keys():
                 characteristic_element.text = raw_profile.stats[characteristic_type]
-                set_characteristics.append(characteristic_type)
+        raw_profile.stats.update({"Special Rules": raw_profile.get_special_rules_list()})
         for characteristic_type in raw_profile.stats.keys():
-            if characteristic_type in set_characteristics:
-                continue  # We've already set this one, skip
+            if characteristic_type in existing_characteristics:
+                continue  # This characteristic already exists, skip
             # Get the typeId from the system
             type_id = self.system_file.system.profile_characteristics[profile_type][characteristic_type]
             # add to the characteristic node

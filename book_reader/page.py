@@ -166,7 +166,7 @@ class Page:
                     exit()
 
                 special_rules_string = " ".join(weapon_special_rules_components)
-                special_rules = ""
+                special_rules = []
                 if "," in special_rules_string:
                     special_rules = special_rules_string.split(',')  # May leave entries with trailing whitespace
                 elif special_rules_string != "":  # a single special rule
