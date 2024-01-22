@@ -53,12 +53,13 @@ class Page:
                 paragraph_text = next_paragraph.get_text().strip()
                 paragraph_text = re.sub(r" ", " ", paragraph_text)  # Pull out nbsp
 
-                if paragraph_text in special_rules_elements_by_name.keys() or not (
+                if (paragraph_text in special_rules_elements_by_name.keys() or not (
                         next_paragraph['class'][0] in ['Body-Black_Body-Italic',
                                                        'Body-Black_Body-',
                                                        'Body-Black_Bullets',
-                                                       ]) or paragraph_text.startswith(
-                    'On this page you will find a full description for each of the army special rules used by models drawn from the'):
+                                                       ])
+                        or paragraph_text.startswith('On this page you will find a full description')
+                        or paragraph_text.startswith("On the following pages you will find a full description")):
                     # We've reached the end of this special rule and are on to the next one.
                     # Or a section with different formatting
                     break
