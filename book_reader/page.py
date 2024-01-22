@@ -87,8 +87,15 @@ class Page:
                     break
                 if header != "":
                     stats_headers.append(header)
-            stats_headers = stats_headers[-3:]  # Special handling for Brace of Pistols on page 217 of TOW rules
-            # TODO: pull out text before stats_headers and prepend it to each weapon name
+
+            # Pull out text before stats_headers and prepend it to each weapon name
+            # This is for weapons that have multiple profiles in the old world
+            prepend_to_name = ""
+            if len(stats_headers) > 3:
+                prepend_to_name = " ".join(stats_headers[:-3]) + " - "
+
+            stats_headers = stats_headers[-3:]
+
 
             # Then, go through all rows in the table
             if not special_rules_left_align:
@@ -151,7 +158,7 @@ class Page:
 
             # Processes the combined lines
             for weapon_name_and_stats_components, weapon_special_rules_components in combined_table_lines:
-                weapon_name = " ".join(weapon_name_and_stats_components[0:-3])
+                weapon_name = prepend_to_name + " ".join(weapon_name_and_stats_components[0:-3])
                 weapon_stats_array = weapon_name_and_stats_components[-3:]
 
                 if '(' in weapon_name:
