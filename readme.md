@@ -2,8 +2,11 @@
 
 BScopy is a set of scripts used to manipulate data in battlescribe/new recruit .cat files.
 
-There are two main cases:
+There are a few main cases:
 * Creating weapon or unit entries (selection entries) from raw text
+  * From text pasted into a script
+  * From an epub
+  * From a custom errata format (that's multiple blocks of pasted text)
 * Coping changes from one .cat file to another
 
 ## Parse raw text into the proper xml format.
@@ -126,6 +129,16 @@ Options lists are parsed by the ● character per list, and the `-` character pe
 modifier set manually. Again, the script you will remind you.
 
 As with the weapon script, you can then copy this into the Shared Selection Entry section in your file.
+
+## Parse raw text directly from an epub
+Why not from a PDF? Because PDF isn't super machine parsable.
+
+Unlike the other scripts, I can't rely on standard libraries to read epubs (Well, I could, but I don't want too),
+and beautiful soup makes reading html from the epub much easier.
+
+You will need to install these dependencies with `pip install -r requirements.txt`
+
+More documentation forthcoming, but essentially, you can modify settings in  `read_from_epub.py` and run it.
 
 ## Copy changes from one file to another
 The copying function of BSCopy was set up originally, to copy the shared selection entry links from a template file 
