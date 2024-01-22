@@ -106,7 +106,8 @@ class Node:
         if element is not None:
             return element.text
 
-    def set_rules_text(self, text):
+    def set_rules_text(self, name, text):
+        self.element.attrib['name'] = name.title()
         element = self.get_rules_text_element()
         if element is not None:
             element.text = text
@@ -122,7 +123,7 @@ class Node:
         return text
 
     def set_profile(self, raw_profile: RawEntry, profile_type):
-        self.element.attrib['name'] = raw_profile.name
+        self.element.attrib['name'] = raw_profile.name.title()
         existing_characteristics = []
         # Set existing characteristic fields
         stats = raw_profile.stats

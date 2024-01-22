@@ -149,7 +149,7 @@ class System:
             if diff:
                 print_styled("\t\t\tText Differs!", STYLES.PURPLE)
                 print(diff)
-                node.set_rules_text(rule_text)
+                node.set_rules_text(rule_name, rule_text)
             return
         # Then create any we couldn't find
         for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
