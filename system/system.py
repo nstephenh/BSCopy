@@ -95,7 +95,7 @@ class System:
         books_to_read = []
         for file_name in os.listdir(os.path.join(self.game_system_location, 'raw')):
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
-            if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub']:
+            if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub', '.pdf']:
                 continue  # Skip this iteration
             books_to_read.append(file_name)
         i = 1

@@ -11,6 +11,8 @@ class Book:
         self.pages = []
         if file_path.endswith('.epub'):
             self.read_as_epub()
+        if file_path.endswith('.pdf'):
+            self.read_as_pdf()
 
     def read_as_epub(self):
         import ebooklib
