@@ -47,7 +47,8 @@ class Book:
                 page = PdfPage(self, page_text, page_number)
                 self.pages.append(page)
 
-    def try_get_page_offset(self, page_text, page_counter):
+    @staticmethod
+    def try_get_page_offset(page_text, page_counter):
         if page_text.count("\n") > 5:  # Assuming there are 5 lines to check,
             for line in page_text.split("\n")[-5:]:  # Check the last 5 lines
                 line = line.strip()
