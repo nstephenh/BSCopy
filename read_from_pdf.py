@@ -198,12 +198,10 @@ def process_page(page, page_count):
         print("Could not split at Unit Composition")
         return  # If this datasheet doesn't have "Unit composition, something is wrong
 
-    # Access points comes before Options, though a sheet is not garunteed to have either.
+    # Access points comes before Options, though a sheet is not guaranteed to have either.
     was_split, upper_half, lower_half = split_at_header("Access Points", upper_half)
     if not was_split:
-        was_split, upper_half, lower_half = split_at_header("Options", upper_half)
-        if not was_split:
-            raise Exception("Could not split datasheet")
+        _, upper_half, lower_half = split_at_header("Options", upper_half)
 
     upper_half, comp_and_wargear, type_and_special_rules, _ = split_into_columns(upper_half, debug_print_level=0)[0]
 
