@@ -7,9 +7,10 @@ from util.text_utils import split_into_columns, split_at_header
 
 class PdfPage(Page):
 
-    def __init__(self, book, raw_text):
+    def __init__(self, book, raw_text, page_number):
         super().__init__(book)
         self.raw_text = raw_text
+        self.page_number = page_number
 
         if "Unit Composition" in raw_text:
             self.unit = self.read_datasheet()
