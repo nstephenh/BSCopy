@@ -78,6 +78,75 @@ def get_divider_end(heatmap):
 
 game_system_location = os.path.expanduser('~/BattleScribe/data/horus-heresy/')
 
+
+def split_into_columns(page_text):
+    non_column_text = ""
+    col_1_lines = []
+    col_2_lines = []
+    heatmap = get_page_heatmap(page_text)
+    divider_start, divider_end = get_divider_end(heatmap)
+    # print_heatmap_thresholds(heatmap,
+    #                          indicate_columns=[divider_start, divider_end],
+    #                          debug_print_page=page)
+    prev_line_had_col_brake = False
+    for line in page_text.split('\n'):
+        has_col_break = False
+        col_1_only = False
+        print(line, end="")  # Don't print end, so we can reprint over the line while processing.
+
+        if line.strip() == "":
+            # An empty line could apply to any column, so lets just put it in all columns.
+            print(style_text("\rEMPTY LINE", STYLES.GREEN))
+            non_column_text += "\n"
+            col_1_lines.append("")
+            col_2_lines.append("")
+            # Allow col break to persist across the linebreak
+            continue
+
+        if len(line) > divider_end:
+            has_col_break = all(char == " " for char in line[divider_start:divider_end])
+        elif prev_line_had_col_brake:
+            # if the current line is too short but the previous line had a col break,
+            has_col_break = True  # this line also has a col break.
+            col_1_only = True  # and doesn't go in non-column
+
+        if has_col_break:
+            col_1 = line[:divider_start]
+            col_2 = ""
+            if not col_1_only:
+                col_2 = line[divider_end:]
+            if col_1:
+                col_1_lines.append(col_1)
+            else:
+                print(style_text("\rSkipped Newline in A\r", STYLES.GREEN), end="")
+                # ^ this prints over the existing line, so reprint it.
+
+            if col_2:
+                col_2_lines.append(col_2)
+            else:
+                debug_col_spacing = ' ' * divider_end
+                print(style_text(f"\r{debug_col_spacing} Skipped Newline in B\r", STYLES.CYAN), end="")
+                # ^ this prints over the existing line, so reprint it.
+                print(line, end="")
+
+            prev_a_blank = bool(col_1)
+            prev_b_blank = bool(col_2)
+
+        else:
+            non_column_text += line + "\n"
+        print()
+        prev_line_had_col_brake = has_col_break
+    print_styled("Non-column text:", STYLES.PURPLE)
+    print(non_column_text)
+    print_styled("Column 1 text:", STYLES.PURPLE)
+    col_1_text = "\n".join(col_1_lines).rstrip()
+    print(col_1_text)
+    print_styled("Column 2 text:", STYLES.PURPLE)
+    col_2_text = "\n".join(col_2_lines).rstrip()
+    print(col_2_text)
+    return non_column_text, col_1_text, col_2_text
+
+
 if __name__ == '__main__':
     raw_location = os.path.join(game_system_location, "raw")
     for filename in os.listdir(raw_location):
@@ -100,69 +169,8 @@ if __name__ == '__main__':
 
 
             # TODO: Strip headers and footers.
-            non_column_text = ""
-            col_1_lines = []
-            col_2_lines = []
+            non_col_text, col_1_text, col_2_text = split_into_columns(page)
 
-            heatmap = get_page_heatmap(page)
-
-            divider_start, divider_end = get_divider_end(heatmap)
-            # print_heatmap_thresholds(heatmap,
-            #                          indicate_columns=[divider_start, divider_end],
-            #                          debug_print_page=page)
-
-            prev_line_had_col_brake = False
-            for line in page.split('\n'):
-                has_col_break = False
-                col_1_only = False
-                print(line, end="")  # Don't print end, so we can reprint over the line while processing.
-
-                if line.strip() == "":
-                    # An empty line could apply to any column, so lets just put it in all columns.
-                    print(style_text("\rEMPTY LINE", STYLES.GREEN))
-                    non_column_text += "\n"
-                    col_1_lines.append("")
-                    col_2_lines.append("")
-                    # Allow col break to persist across the linebreak
-                    continue
-
-                if len(line) > divider_end:
-                    has_col_break = all(char == " " for char in line[divider_start:divider_end])
-                elif prev_line_had_col_brake:
-                    # if the current line is too short but the previous line had a col break,
-                    has_col_break = True  # this line also has a col break.
-                    col_1_only = True  # and doesn't go in non-column
-
-                if has_col_break:
-                    col_1 = line[:divider_start]
-                    col_2 = ""
-                    if not col_1_only:
-                        col_2 = line[divider_end:]
-                    if col_1:
-                        col_1_lines.append(col_1)
-                    else:
-                        print(style_text("\rSkipped Newline in A\r", STYLES.GREEN), end="")
-                        # ^ this prints over the existing line, so reprint it.
-
-                    if col_2:
-                        col_2_lines.append(col_2)
-                    else:
-                        debug_col_spacing = ' ' * divider_end
-                        print(style_text(f"\r{debug_col_spacing} Skipped Newline in B\r", STYLES.CYAN), end="")
-                        # ^ this prints over the existing line, so reprint it.
-                        print(line, end="")
-
-                    prev_a_blank = bool(col_1)
-                    prev_b_blank = bool(col_2)
-
-                else:
-                    non_column_text += line.strip() + "\n"
-                print()
-                prev_line_had_col_brake = has_col_break
-
-            print_styled("Non-column text:", STYLES.PURPLE)
-            print(non_column_text)
-            print_styled("Column 1 text:", STYLES.PURPLE)
-            print("\n".join(col_1_lines))
-            print_styled("Column 2 text:", STYLES.PURPLE)
-            print("\n".join(col_2_lines))
+            for col_text in [col_1_text, col_2_text]:
+                if "Special Rules" in col_text:
+                    split_into_columns(col_text)
