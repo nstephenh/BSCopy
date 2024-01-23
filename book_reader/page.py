@@ -11,6 +11,7 @@ class Page:
     def __init__(self, book):
         self.book = book
         self.special_rules_text: dict[str: str] = {}
+        self.weapons: list[RawEntry] = []
 
     @property
     def settings(self):
@@ -90,8 +91,6 @@ class EpubPage(Page):
             if composed_text == "":
                 continue  # Not actually a special rule or not a special rule with content
             self.special_rules_text[special_rule_name] = composed_text
-
-        self.weapons: list[RawEntry] = []
 
         # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
         for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):
