@@ -71,7 +71,8 @@ def get_divider_end(heatmap):
 
     for index, item in enumerate(reversed(heatmap[:longest_edge])):
         if item != heatmap[longest_edge]:  # If this isn't the same length as the longest edge,
-            section_start = len(heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
+            section_start = len(
+                heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
             break
     return section_start, longest_edge
 
@@ -80,15 +81,17 @@ game_system_location = os.path.expanduser('~/BattleScribe/data/horus-heresy/')
 
 
 def split_into_columns(page_text):
-    non_column_text = ""
-    col_1_lines = []
-    col_2_lines = []
+    # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
+    non_column_lines: list[list[str]] = [[]]
+    col_1_lines: list[list[str]] = [[]]
+    col_2_lines: list[list[str]] = [[]]
     heatmap = get_page_heatmap(page_text)
     divider_start, divider_end = get_divider_end(heatmap)
     # print_heatmap_thresholds(heatmap,
     #                          indicate_columns=[divider_start, divider_end],
     #                          debug_print_page=page)
     prev_line_had_col_brake = False
+    section = 0
     for line in page_text.split('\n'):
         has_col_break = False
         col_1_only = False
@@ -97,9 +100,12 @@ def split_into_columns(page_text):
         if line.strip() == "":
             # An empty line could apply to any column, so lets just put it in all columns.
             print(style_text("\rEMPTY LINE", STYLES.GREEN))
-            non_column_text += "\n"
-            col_1_lines.append("")
-            col_2_lines.append("")
+            if prev_line_had_col_brake:
+                col_1_lines[section].append("")
+                col_2_lines[section].append("")
+            else:
+                non_column_lines[section].append("")
+
             # Allow col break to persist across the linebreak
             continue
 
@@ -116,35 +122,43 @@ def split_into_columns(page_text):
             if not col_1_only:
                 col_2 = line[divider_end:]
             if col_1:
-                col_1_lines.append(col_1)
+                col_1_lines[section].append(col_1)
             else:
                 print(style_text("\rSkipped Newline in A\r", STYLES.GREEN), end="")
                 # ^ this prints over the existing line, so reprint it.
 
             if col_2:
-                col_2_lines.append(col_2)
+                col_2_lines[section].append(col_2)
             else:
                 debug_col_spacing = ' ' * divider_end
                 print(style_text(f"\r{debug_col_spacing} Skipped Newline in B\r", STYLES.CYAN), end="")
                 # ^ this prints over the existing line, so reprint it.
                 print(line, end="")
 
-            prev_a_blank = bool(col_1)
-            prev_b_blank = bool(col_2)
-
         else:
-            non_column_text += line + "\n"
+            if prev_line_had_col_brake:  # Start a new section
+                non_column_lines.append([])
+                col_1_lines.append([])
+                col_2_lines.append([])
+                section += 1
+            non_column_lines[section].append(line)
         print()
+
         prev_line_had_col_brake = has_col_break
-    print_styled("Non-column text:", STYLES.PURPLE)
-    print(non_column_text)
-    print_styled("Column 1 text:", STYLES.PURPLE)
-    col_1_text = "\n".join(col_1_lines).rstrip()
-    print(col_1_text)
-    print_styled("Column 2 text:", STYLES.PURPLE)
-    col_2_text = "\n".join(col_2_lines).rstrip()
-    print(col_2_text)
-    return non_column_text, col_1_text, col_2_text
+    sections = []
+    for section in range(len(non_column_lines)):
+
+        print_styled("Non-column text:", STYLES.PURPLE)
+        non_column_text = "\n".join(non_column_lines[section])
+        print(non_column_text)
+        print_styled("Column 1 text:", STYLES.PURPLE)
+        col_1_text = "\n".join(col_1_lines[section]).rstrip()
+        print(col_1_text)
+        print_styled("Column 2 text:", STYLES.PURPLE)
+        col_2_text = "\n".join(col_2_lines[section]).rstrip()
+        print(col_2_text)
+        sections.append((non_column_text, col_1_text, col_2_text))
+    return sections
 
 
 if __name__ == '__main__':
@@ -167,10 +181,11 @@ if __name__ == '__main__':
             if page_count > 53:
                 exit()  # Early quit on page 1
 
-
             # TODO: Strip headers and footers.
-            non_col_text, col_1_text, col_2_text = split_into_columns(page)
+            # The main content of the page should only have one section, so get the first section.
+            non_col_text, col_1_text, col_2_text = split_into_columns(page)[0]
 
+            # If a datasheet, it should have two columns in the center of the page.
             for col_text in [col_1_text, col_2_text]:
                 if "Special Rules" in col_text:
                     split_into_columns(col_text)
