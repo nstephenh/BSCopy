@@ -28,8 +28,18 @@ def get_page_heatmap(page):
     return heatmap
 
 
-def print_heatmap_thresholds(heatmap):
-    for i in range(max(heatmap)):
+def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print_page=None):
+    if debug_print_page:
+        for line in debug_print_page.split('\n'):
+            print("\t" + line)
+    label_row_1 = ""
+    label_row_2 = ""
+    for i in range(len(heatmap)):
+        label_row_1 += str(i).rjust(2, " ")[-2]
+        label_row_2 += str(i)[-1]
+    print(f"\t{label_row_1}\n\t{label_row_2}")
+
+    for i in range(max(heatmap) + 1):
         print(f"{i}\t", end="")
         for count in heatmap:
             if count >= i:
@@ -37,12 +47,33 @@ def print_heatmap_thresholds(heatmap):
             else:
                 print(style_text("█", STYLES.RED), end="")
         print()
+    if isinstance(indicate_columns, list):
+        print(f"\t", end="")
+        for i in range(len(heatmap)):
+            if i in indicate_columns:
+                print(style_text("^", STYLES.CYAN), end="")
+            else:
+                print(" ", end="")
+        print()
 
 
 def get_divider_end(heatmap):
-    for index, item in enumerate(reversed(heatmap)):
-        if item == max(heatmap):
-            return len(heatmap) - index - 1
+    # look for the largest "edge"
+    section_start = 0
+    longest_edge = 0  # Best initial guess
+    longest_edge_height = 0
+
+    for index in range(len(heatmap) - 1):
+        edge_height = heatmap[index] - heatmap[index + 1]
+        if edge_height > longest_edge_height:
+            longest_edge = index
+            longest_edge_height = edge_height
+
+    for index, item in enumerate(reversed(heatmap[:longest_edge])):
+        if item != heatmap[longest_edge]:  # If this isn't the same length as the longest edge,
+            section_start = len(heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
+            break
+    return section_start, longest_edge
 
 
 game_system_location = os.path.expanduser('~/BattleScribe/data/horus-heresy/')
@@ -62,17 +93,23 @@ if __name__ == '__main__':
         for page in pdf:
             page_count += 1
 
-            print(page)
+            if page_count < 52:
+                continue
+            if page_count > 53:
+                exit()  # Early quit on page 1
+
+
             # TODO: Strip headers and footers.
             non_column_text = ""
             col_1_lines = []
             col_2_lines = []
 
-            line_count = len(page.split('\n'))
             heatmap = get_page_heatmap(page)
-            divider_start = heatmap.index(max(heatmap))
 
-            divider_end = get_divider_end(heatmap)
+            divider_start, divider_end = get_divider_end(heatmap)
+            # print_heatmap_thresholds(heatmap,
+            #                          indicate_columns=[divider_start, divider_end],
+            #                          debug_print_page=page)
 
             prev_line_had_col_brake = False
             for line in page.split('\n'):
@@ -97,11 +134,10 @@ if __name__ == '__main__':
                     col_1_only = True  # and doesn't go in non-column
 
                 if has_col_break:
-                    col_1 = line[:divider_start].strip()
+                    col_1 = line[:divider_start]
                     col_2 = ""
                     if not col_1_only:
-                        col_2 = line[divider_end:].strip()
-
+                        col_2 = line[divider_end:]
                     if col_1:
                         col_1_lines.append(col_1)
                     else:
@@ -127,7 +163,6 @@ if __name__ == '__main__':
             print_styled("Non-column text:", STYLES.PURPLE)
             print(non_column_text)
             print_styled("Column 1 text:", STYLES.PURPLE)
-            print("\n".join(col_1_lines).strip())
+            print("\n".join(col_1_lines))
             print_styled("Column 2 text:", STYLES.PURPLE)
-            print("\n".join(col_2_lines).strip())
-            exit()  # Early quit on page 1
+            print("\n".join(col_2_lines))
