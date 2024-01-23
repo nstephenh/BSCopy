@@ -1,3 +1,5 @@
+from util.log_util import style_text, STYLES, print_styled
+
 errors = ""
 
 
@@ -92,3 +94,167 @@ def get_bullet_type(existing_text):
             most_appearances = existing_text.count(option)
             bullet_type = option
     return bullet_type
+
+
+def get_section_heatmap(section_text):
+    heatmap = []
+    for line in section_text.split('\n'):
+        char_index = 0
+        last_char_was_space = False
+        for character in line:
+            # Populate empty slots in the heatmap
+            if len(heatmap) == char_index:
+                heatmap.append(0)
+            if character == " ":
+                if last_char_was_space:
+                    heatmap[char_index] += 1
+                last_char_was_space = True
+            else:
+                last_char_was_space = False
+            char_index += 1
+    return heatmap
+
+
+def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
+    if debug_print:
+        for line in debug_print.split('\n'):
+            print("\t" + line)
+    label_row_1 = ""
+    label_row_2 = ""
+    for i in range(len(heatmap)):
+        label_row_1 += str(i).rjust(2, " ")[-2]
+        label_row_2 += str(i)[-1]
+    print(f"\t{label_row_1}\n\t{label_row_2}")
+
+    for i in range(max(heatmap) + 1):
+        print(f"{i}\t", end="")
+        for count in heatmap:
+            if count >= i:
+                print(style_text("█", STYLES.GREEN), end="")
+            else:
+                print(style_text("█", STYLES.RED), end="")
+        print()
+    if isinstance(indicate_columns, list):
+        print(f"\t", end="")
+        for i in range(len(heatmap)):
+            if i in indicate_columns:
+                print(style_text("^", STYLES.CYAN), end="")
+            else:
+                print(" ", end="")
+        print()
+
+
+def get_divider_end(heatmap):
+    margins = 5  # Margins prevent us from cutting off the start of a bulleted list.
+    # A section can't be smaller than this defined margin.
+
+    # look for the largest "edge"
+    section_start = 0
+    longest_edge = 0  # Best initial guess
+    longest_edge_height = 0
+
+    for index in range(len(heatmap) - 1):
+        edge_height = heatmap[index] - heatmap[index + 1]
+        if index < margins:
+            continue  # Skip the first few lines
+        if edge_height > longest_edge_height:
+            longest_edge = index
+            longest_edge_height = edge_height
+
+    for index, item in enumerate(reversed(heatmap[:longest_edge])):
+        if item < heatmap[longest_edge]:  # If this isn't the same length as the longest edge,
+            section_start = len(
+                heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
+            break
+    return section_start, longest_edge
+def split_into_columns(text, debug_print_level=0):
+    # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
+    original_text: list[str] = [""]
+    non_column_lines: list[list[str]] = [[]]
+    col_1_lines: list[list[str]] = [[]]
+    col_2_lines: list[list[str]] = [[]]
+    if text.strip() == "":
+        raise Exception("No text passed to split_into_columns")
+    heatmap = get_section_heatmap(text)
+    divider_start, divider_end = get_divider_end(heatmap)
+
+    if debug_print_level > 1:
+        print_heatmap_thresholds(heatmap,
+                                 indicate_columns=[divider_start, divider_end],
+                                 debug_print=text)
+
+    prev_line_had_col_brake = False
+    section = 0
+    for line in text.split('\n'):
+        has_col_break = False
+        col_1_only = False
+        line = line.rstrip()  # Leftover trailing space can mess us up.
+        if line.strip() == "":
+            # An empty line could apply to any column, so lets just put it in all columns.
+            if debug_print_level > 0:
+                print(style_text("EMPTY LINE", STYLES.CYAN))
+            if prev_line_had_col_brake:
+                col_1_lines[section].append("")
+                col_2_lines[section].append("")
+            else:
+                non_column_lines[section].append("")
+
+            # Allow col break to persist across the linebreak
+            continue
+
+        if len(line) > divider_end:
+            has_col_break = all(char == " " for char in line[divider_start:divider_end])
+        elif prev_line_had_col_brake:
+            # if the current line is too short but the previous line had a col break,
+            has_col_break = True  # this line also has a col break.
+            col_1_only = True  # and doesn't go in non-column
+
+        if has_col_break:
+            col_1 = line[:divider_start].rstrip()  # Leftover trailing space can mess us up.
+            col_2 = ""
+            if not col_1_only:
+                col_2 = line[divider_end:].rstrip()  # Leftover trailing space can mess us up.
+            if col_1:
+                col_1_lines[section].append(col_1)
+            if col_2:
+                col_2_lines[section].append(col_2)
+        else:
+            if prev_line_had_col_brake:  # Start a new section
+                non_column_lines.append([])
+                col_1_lines.append([])
+                col_2_lines.append([])
+                col_2_lines.append([])
+                original_text.append("")
+                section += 1
+            non_column_lines[section].append(line)
+        if debug_print_level > 0:
+            print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t {line}")
+        original_text[section] += line + "\n"
+        prev_line_had_col_brake = has_col_break
+
+    sections = []
+    for section in range(len(non_column_lines)):
+        print_styled("Non-column text:", STYLES.PURPLE)
+        non_column_text = "\n".join(non_column_lines[section]) + "\n"
+        print(non_column_text)
+        print_styled("Column 1 text:", STYLES.PURPLE)
+        col_1_text = "\n".join(col_1_lines[section]).rstrip() + "\n"
+        print(col_1_text)
+        print_styled("Column 2 text:", STYLES.PURPLE)
+        col_2_text = "\n".join(col_2_lines[section]).rstrip() + "\n"
+        print(col_2_text)
+
+        sections.append((non_column_text, col_1_text, col_2_text, original_text[section]))
+    return sections
+
+
+def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool, str, str):
+    if header_at_end_of_line:
+        header = header + "\n"
+    lower_half = ""
+    if header in datasheet_text:
+        split_text = datasheet_text.split(header)
+        datasheet_text = split_text[0]
+        lower_half = header + split_text[1]
+        return True, datasheet_text, lower_half
+    return False, datasheet_text, lower_half

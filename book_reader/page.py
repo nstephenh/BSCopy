@@ -8,11 +8,18 @@ from util.log_util import print_styled, STYLES
 
 
 class Page:
-    def __init__(self, book, page_item, settings: {str: bool} = None):
-        if settings is None:
-            settings = {}
+    def __init__(self, book):
         self.book = book
         self.special_rules_text: dict[str: str] = {}
+
+    @property
+    def settings(self):
+        return self.book.settings
+
+
+class EpubPage(Page):
+    def __init__(self, book, page_item):
+        super().__init__(book)
 
         page_name = page_item.get_name()
         try:
@@ -33,8 +40,8 @@ class Page:
         special_rules_elements_by_name: dict[str: Tag] = {}
         table_label_elements: dict[str: Tag] = {}
 
-        first_paragraph_is_flavor = (ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR in settings.keys()
-                                     and settings[ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR])
+        first_paragraph_is_flavor = (ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR in self.settings.keys()
+                                     and self.settings[ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR])
 
         # Find all special rules elements in the text
         for sr_element in soup.find_all('p', {'class': 'Headers_H4'}):
