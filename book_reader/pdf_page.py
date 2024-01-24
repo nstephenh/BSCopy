@@ -52,9 +52,13 @@ class PdfPage(Page):
 
         rules_text = page_header + rules_text
 
-        if num_units >= 2:
-            pass  # TODO: Split the two units somehow
+        if num_units == 2:
+            unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
+            self.units = [self.get_unit_profile(unit_1), self.get_unit_profile(unit_2)]
             return
+
+        if num_units > 3:
+            raise NotImplemented("Have not yet handled 3 units on a page")
 
         self.units = [self.get_unit_profile(rules_text)]
 
@@ -85,3 +89,22 @@ class PdfPage(Page):
         return "".join(
             [profiles, comp_and_wargear, type_and_special_rules, upper_half, lower_half]
         )
+
+    def split_before_line_before_statline(self, raw_text):
+        """
+        Split at the SECOND occurrence of a statline in a given block
+        :param raw_text:
+        :return:
+        """
+        occurrence = 0
+        prev_line_with_text = 0
+        lines = raw_text.split("\n")
+        for index, line in enumerate(lines):
+            if self.does_line_contain_profile_header(line):
+                occurrence += 1
+                if occurrence < 2:
+                    continue
+                return "\n".join(lines[:prev_line_with_text]), "\n".join(lines[prev_line_with_text:])
+            if line.strip() != "":
+                prev_line_with_text = index
+        return raw_text, ""
