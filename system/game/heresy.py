@@ -8,3 +8,5 @@ class Heresy(Game):
     SYSTEM_NAME = "horus-heresy"
 
     ProfileLocator = "Unit Composition"
+
+    MIDDLE_IN_2_COLUMN = True

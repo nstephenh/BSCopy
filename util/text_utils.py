@@ -266,3 +266,17 @@ def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool
         lower_half = header + split_text[1]
         return True, datasheet_text, lower_half
     return False, datasheet_text, lower_half
+
+
+def split_after_header(raw_text, header):
+    found_header = False
+    lines = raw_text.split("\n")
+    for index, line in enumerate(lines):
+        if line.startswith(header):
+            found_header = True
+            continue
+        if found_header:
+            # Line is indented as part of table
+            if not line.startswith(" "):
+                return "\n".join(lines[:index]), "\n".join(lines[index-1:])
+    return raw_text, ""

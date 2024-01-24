@@ -12,3 +12,9 @@ class OldWorld(Game):
     UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Points"]
 
     WEAPON_PROFILE_TABLE_HEADERS = ["R", "S", "AP", "Special Rules"]
+
+    OPTIONS = "Options:"
+
+    MIDDLE_IN_2_COLUMN = False
+
+    ENDS_AFTER_SPECIAL_RULES = True

@@ -12,6 +12,7 @@ class Page:
         self.book = book
         self.special_rules_text: dict[str: str] = {}
         self.weapons: list[RawEntry] = []
+        self.units = []
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
@@ -262,4 +263,3 @@ class EpubPage(Page):
             table_text += f"● {die_roll_cell}:\t{results_roll_cell}\n"
         table_text = table_text.strip()
         return table_text
-
