@@ -12,10 +12,30 @@ class PdfPage(Page):
         self.raw_text = raw_text
         self.page_number = page_number
         if self.book.system.game.ProfileLocator in raw_text:
-            self.unit = self.read_unit_profile()
+            self.unit = self.read_datasheet()
             print(self.unit)
 
-    def read_unit_profile(self):
+    @property
+    def game(self):
+        return self.book.system.game
+
+    def get_number_of_units(self):
+        units = 0
+        for line in self.raw_text:
+            if self.does_line_contain_profile_header(line):
+                units += 1
+        return units
+
+    def does_line_contain_profile_header(self, line, header_index=0):
+        if header_index > len(self.game.PROFILE_TABLE_HEADERS):
+            return True
+        header_to_find = self.game.PROFILE_TABLE_HEADERS[header_index]
+        if header_to_find in line:
+            line = line[line.index(header_to_find):]
+            return self.does_line_contain_profile_header(line, header_index + 1)
+        return False
+
+    def read_datasheet(self):
 
         page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text)[0]
 
