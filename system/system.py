@@ -1,3 +1,4 @@
+import json
 import os
 
 from settings import default_system, default_data_directory, default_settings
@@ -112,20 +113,33 @@ class System:
             self.raw_files[pub_id] = Book(filepath, self, settings=raw_import_settings)
             i += 1
         print()
+        export_dict = {}
+        actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
+
         for pub_id, book in self.raw_files.items():
+            export_dict[pub_id] = {}
+
+            skip_non_dump_actions = False
+            sys_file_for_pub = None
             publication_node = self.nodes_by_id.get(pub_id)
             if not publication_node:
                 print(f"Please create a publication with ID {pub_id},"
                       f" or rename that file to be an existing publication ID")
-                exit()
-            print_styled(publication_node.name, STYLES.CYAN)
-            sys_file_for_pub = publication_node.system_file
-            actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
+                skip_non_dump_actions = True
+            else:
+                print_styled(publication_node.name, STYLES.CYAN)
+                sys_file_for_pub = publication_node.system_file
             print("Actions to take: " + ", ".join(actions_to_take))
             for page in book.pages:
                 print(f"\t{page.page_number}")
+                if Actions.DUMP_TO_JSON in actions_to_take:
+                    export_dict[pub_id][page.page_number] = {'Units': [
+                        unit.serialize() for unit in page.units
+                    ]}
+                if skip_non_dump_actions:
+                    continue
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:
-                    for rule_name, rule_text in page.special_rules_text.items():
+                    for rule_name, rule_text in page.special_rules.items():
                         print(f"\t\tRule: {rule_name}")
                         self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
@@ -133,6 +147,9 @@ class System:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
                                                       default_sys_file=sys_file_for_pub)
+        if Actions.DUMP_TO_JSON in actions_to_take:
+            with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w") as outfile:
+                outfile.write(json.dumps(export_dict))
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
         # First look for existing special rules

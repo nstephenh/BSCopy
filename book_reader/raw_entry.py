@@ -22,9 +22,17 @@ class RawProfile:
     def get_special_rules_list(self):
         return ", ".join(self.special_rules)
 
+    def serialize(self):
+        return {'Name': self.name, 'Stats': self.stats}
+
 
 class RawUnit:
     def __init__(self, name: str, points: int = None):
         self.name = name
         self.points = points
         self.model_profiles: list[RawProfile] = []
+
+    def serialize(self) -> dict:
+        return {'Name': self.name, 'Points': self.points,
+                'Profiles': [profile.serialize() for profile in self.model_profiles]
+                }

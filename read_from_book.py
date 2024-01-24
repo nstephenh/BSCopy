@@ -13,6 +13,7 @@ if __name__ == '__main__':
                     raw_import_settings={
                         ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR: True,
                         ReadSettingsKeys.ACTIONS: [
+                            Actions.DUMP_TO_JSON,
                             Actions.LOAD_SPECIAL_RULES,
                             Actions.LOAD_WEAPON_PROFILES,
                         ],

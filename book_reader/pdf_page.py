@@ -10,13 +10,12 @@ class PdfPage(Page):
 
     def __init__(self, book, raw_text, page_number):
         super().__init__(book)
-        self.units = []
         self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number
         if self.book.system.game.ProfileLocator in raw_text:
             self.get_text_units()
-            for unit in self.units_raw:
+            for unit in self.units_text:
                 print_styled("Raw Unit:", STYLES.DARKCYAN)
                 print(unit)
                 self.process_unit(unit)
@@ -57,13 +56,13 @@ class PdfPage(Page):
 
         if num_units == 2:  # To handle, don't split if there are two stat lines with "Note" in between.
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
-            self.units_raw = [self.get_text_unit(unit_1), self.get_text_unit(unit_2)]
+            self.units_text = [self.get_text_unit(unit_1), self.get_text_unit(unit_2)]
             return
 
         if num_units > 3:
             raise NotImplemented("Have not yet handled 3 units on a page")
 
-        self.units_raw = [self.get_text_unit(rules_text)]
+        self.units_text = [self.get_text_unit(rules_text)]
 
     def get_text_unit(self, rules_text):
         profile_locator = self.game.ProfileLocator

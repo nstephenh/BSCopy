@@ -3,16 +3,17 @@ import re
 from bs4 import BeautifulSoup, Tag
 
 from book_reader.constants import ReadSettingsKeys
-from book_reader.raw_entry import RawProfile
+from book_reader.raw_entry import RawProfile, RawUnit
 from util.log_util import print_styled, STYLES
 
 
 class Page:
     def __init__(self, book):
         self.book = book
-        self.special_rules_text: dict[str: str] = {}
+        self.special_rules: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
-        self.units_raw = []
+        self.units_text: list[str] = []
+        self.units: list[RawUnit] = []
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
@@ -91,7 +92,7 @@ class EpubPage(Page):
             composed_text = composed_text.strip()
             if composed_text == "":
                 continue  # Not actually a special rule or not a special rule with content
-            self.special_rules_text[special_rule_name] = composed_text
+            self.special_rules[special_rule_name] = composed_text
 
         # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
         for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):
