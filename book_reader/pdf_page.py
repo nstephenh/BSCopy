@@ -9,7 +9,7 @@ from util.text_utils import split_into_columns, split_at_header, split_after_hea
 class PdfPage(Page):
 
     def __init__(self, book, raw_text, page_number):
-        super().__init__(book)
+        super().__init__(book, page_number)
         self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number

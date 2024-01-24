@@ -94,6 +94,10 @@ class System:
             for element in node.get_sub_elements_with_tag('characteristicType'):
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
 
+    def read_books_json_config(self):
+        with open(os.path.join(self.game_system_location, 'raw', 'books.json')) as file:
+            return json.load(file)
+
     def init_raw_game(self, raw_import_settings):
         from book_reader.book import Book
         from book_reader.constants import ReadSettingsKeys, Actions
@@ -103,14 +107,22 @@ class System:
             if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub', '.pdf']:
                 continue  # Skip this iteration
             books_to_read.append(file_name)
+
+        json_config = self.read_books_json_config()
         i = 1
         for file_name in books_to_read:
             pub_id = os.path.splitext(file_name)[0]
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
             print('\r', end="")
             print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
-            # Assumes that each raw file is renamed as a bs unique ID corresponding to a publication.
-            self.raw_files[pub_id] = Book(filepath, self, settings=raw_import_settings)
+            # Assumes that each raw file is either named as a bs unique ID corresponding to a publication,
+            # Or has a publication defined in book_json_config
+            book_json_config = {}
+            for book in [book for book in json_config if book['file_name'] == file_name]:
+                pub_id = book['pub_id']
+                book_json_config = book
+                break  # Should only be one
+            self.raw_files[pub_id] = Book(filepath, self, settings=raw_import_settings, book_config=book_json_config)
             i += 1
         print()
         export_dict = {}
@@ -131,7 +143,7 @@ class System:
                 sys_file_for_pub = publication_node.system_file
             print("Actions to take: " + ", ".join(actions_to_take))
             for page in book.pages:
-                print(f"\t{page.page_number}")
+                print(f"\t{page.page_number} {page.get_page_type()}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[pub_id][page.page_number] = {'Units': [
                         unit.serialize() for unit in page.units

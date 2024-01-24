@@ -1,15 +1,19 @@
 import re
+from typing import TYPE_CHECKING
 
 from bs4 import BeautifulSoup, Tag
 
-from book_reader.constants import ReadSettingsKeys
+if TYPE_CHECKING:
+    from book_reader.book import Book
+from book_reader.constants import ReadSettingsKeys, PageTypes
 from book_reader.raw_entry import RawProfile, RawUnit
 from util.log_util import print_styled, STYLES
 
 
 class Page:
-    def __init__(self, book):
+    def __init__(self, book: 'Book', page_number):
         self.book = book
+        self.page_number = page_number
         self.special_rules: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
@@ -19,11 +23,15 @@ class Page:
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
         return self.book.settings
 
+    def get_page_type(self):
+        for page_type in PageTypes:
+            if page_type in self.book.book_config:
+                if self.page_number in self.book.range_dict_to_range(self.book.book_config[page_type]):
+                    return page_type
+
 
 class EpubPage(Page):
     def __init__(self, book, page_item):
-        super().__init__(book)
-
         page_name = page_item.get_name()
         try:
             page_name_components = page_name.split('.xhtml')[0].split("-")
@@ -36,8 +44,7 @@ class EpubPage(Page):
         except ValueError:
             # print(f"Could not get page number for {page_name}")
             return
-
-        self.page_number = page_number
+        super().__init__(book, page_number)
         content = page_item.get_content()
         soup = BeautifulSoup(content, "html.parser")
         special_rules_elements_by_name: dict[str: Tag] = {}

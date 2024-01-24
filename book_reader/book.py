@@ -2,10 +2,14 @@ from book_reader.pdf_page import PdfPage
 
 
 class Book:
-    def __init__(self, file_path, system, settings: {str: bool | str} = None):
+    def __init__(self, file_path, system, settings: {str: bool | str} = None, book_config: dict = None):
         if settings is None:
             settings = {}
         self.settings = settings
+        if book_config is None:
+            book_config = {}
+        self.book_config = book_config
+
         self.file_path = file_path
         self.system = system
         self.pages = []
@@ -37,9 +41,9 @@ class Book:
         with open(self.file_path, "rb") as f:
             pdf = pdftotext.PDF(f, physical=True)
 
-            page_offset = 0  # TODO: Pull page offset from some sort of settings file
+            page_offset = 0  # Consider pulling default page offset from book json.
             for page_counter, page_text in enumerate(pdf):
-                if page_counter < 5 and not page_offset:
+                if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
                     self.try_get_page_offset(page_text, page_counter)
                 if page_offset:
                     page_number = page_counter + page_offset
@@ -60,3 +64,9 @@ class Book:
                     print(f"Page counter is {page_counter}")
                     return page_read_from_pdf - page_counter
         return None
+
+    @staticmethod
+    def range_dict_to_range(range_dict):
+        start = range_dict["start"]
+        end = range_dict["end"]
+        return range(start, end + 1)
