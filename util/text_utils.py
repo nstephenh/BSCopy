@@ -269,14 +269,23 @@ def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool
 
 
 def split_after_header(raw_text, header):
-    found_header = False
+    header_spacing = 0
     lines = raw_text.split("\n")
     for index, line in enumerate(lines):
         if line.startswith(header):
-            found_header = True
+            line = line[len(header):]
+            for i, char in enumerate(line):
+                if char != " ":
+                    header_spacing = i + len(header)
+                    break
             continue
-        if found_header:
+        if header_spacing:
             # Line is indented as part of table
-            if not line.startswith(" "):
-                return "\n".join(lines[:index]), "\n".join(lines[index-1:])
+            line_spacing = 0
+            for i, char in enumerate(line):
+                if char != " ":
+                    line_spacing = i
+                    break
+            if line_spacing != header_spacing:
+                return "\n".join(lines[:index]), "\n".join(lines[index:])
     return raw_text, ""
