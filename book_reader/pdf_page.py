@@ -118,6 +118,7 @@ class PdfPage(Page):
         for line in raw_unit.split("\n"):
             if line.strip() != "":
                 unit_name = line.strip()
+                break
 
         constructed_unit = RawUnit(name=unit_name)
 
