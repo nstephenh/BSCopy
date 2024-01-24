@@ -12,7 +12,7 @@ class Page:
         self.book = book
         self.special_rules_text: dict[str: str] = {}
         self.weapons: list[RawEntry] = []
-        self.units = []
+        self.units_raw = []
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:

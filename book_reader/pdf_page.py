@@ -13,10 +13,11 @@ class PdfPage(Page):
         self.raw_text = raw_text
         self.page_number = page_number
         if self.book.system.game.ProfileLocator in raw_text:
-            self.get_units()
-            for unit in self.units:
-                print_styled("Unit Profile:", STYLES.DARKCYAN)
+            self.get_raw_units()
+            for unit in self.units_raw:
+                print_styled("Raw Unit:", STYLES.DARKCYAN)
                 print(unit)
+                self.process_unit(unit)
 
     @property
     def game(self):
@@ -38,7 +39,7 @@ class PdfPage(Page):
             return self.does_line_contain_profile_header(line, header_index + 1)
         return False
 
-    def get_units(self):
+    def get_raw_units(self):
         num_units = self.get_number_of_units()
         if num_units == 0:
             return
@@ -54,15 +55,15 @@ class PdfPage(Page):
 
         if num_units == 2:
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
-            self.units = [self.get_unit_profile(unit_1), self.get_unit_profile(unit_2)]
+            self.units_raw = [self.get_raw_unit(unit_1), self.get_raw_unit(unit_2)]
             return
 
         if num_units > 3:
             raise NotImplemented("Have not yet handled 3 units on a page")
 
-        self.units = [self.get_unit_profile(rules_text)]
+        self.units_raw = [self.get_raw_unit(rules_text)]
 
-    def get_unit_profile(self, rules_text):
+    def get_raw_unit(self, rules_text):
         profile_locator = self.game.ProfileLocator
 
         # First, try and split this datasheet into parts based on known headers
@@ -108,3 +109,22 @@ class PdfPage(Page):
             if line.strip() != "":
                 prev_line_with_text = index
         return raw_text, ""
+
+    def process_unit(self, raw_unit):
+        names = []
+        stats_array = []
+        # First, get the table out of the header.
+        num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
+        in_table = False
+        for line in raw_unit.split("\n"):
+            if self.does_line_contain_profile_header(line):
+                in_table = True
+                continue
+            if in_table:
+                cells = line.split()
+                name = " ".join(cells[:-num_data_cells])
+                stats = cells[-num_data_cells:]
+                print("Name: " + name)
+                print(stats)
+            if line.strip() == "" or line.startswith(self.game.ProfileLocator):
+                break
