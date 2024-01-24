@@ -119,14 +119,16 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
     if debug_print:
         for line in debug_print.split('\n'):
             print("\t" + line)
+    label_row_0 = ""
     label_row_1 = ""
     label_row_2 = ""
     for i in range(len(heatmap)):
-        label_row_1 += str(i).rjust(2, " ")[-2]
+        label_row_0 += str(i).rjust(3, " ")[-3]
+        label_row_1 += str(i).rjust(3, " ")[-2]
         label_row_2 += str(i)[-1]
-    print(f"\t{label_row_1}\n\t{label_row_2}")
+    print(f"\t{label_row_0}\n\t{label_row_1}\n\t{label_row_2}")
 
-    for i in range(max(heatmap) + 1):
+    for i in range(max(heatmap) + 2):
         print(f"{i}\t", end="")
         for count in heatmap:
             if count >= i:
@@ -230,7 +232,7 @@ def split_into_columns(text, debug_print_level=0):
                 section += 1
             non_column_lines[section].append(line)
         if debug_print_level > 0:
-            print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t {line}")
+            print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t{line}")
         original_text[section] += line + "\n"
         prev_line_had_col_brake = has_col_break
 
