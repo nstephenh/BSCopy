@@ -55,7 +55,7 @@ class PdfPage(Page):
 
         rules_text = page_header + rules_text
 
-        if num_units == 2:
+        if num_units == 2:  # To handle, don't split if there are two stat lines with "Note" in between.
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
             self.units_raw = [self.get_text_unit(unit_1), self.get_text_unit(unit_2)]
             return
@@ -127,8 +127,13 @@ class PdfPage(Page):
         # Then, get the table out of the header.
         num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
         in_table = False
-        profile_index = 0
+        profile_index = -1
         for line in raw_unit.split("\n"):
+            print(line)
+            if in_table and line.startswith("Note:"):
+                print("Note line detected: " + line)
+                stats[profile_index] += [line.split("Note:")[1]]
+                continue
             if line.strip() == "" or line.startswith(self.game.ProfileLocator):
                 break
             if self.does_line_contain_profile_header(line):
@@ -138,7 +143,7 @@ class PdfPage(Page):
                 cells = line.split()
                 if len(cells) < num_data_cells:
                     # partial row that's a continuation of a previous row
-                    names[profile_index].append(cells)
+                    names[profile_index] += cells
                     continue
                 names.append(cells[:-num_data_cells])
                 stats.append(cells[-num_data_cells:])
@@ -147,7 +152,7 @@ class PdfPage(Page):
         for index, name in enumerate(names):
             print(f"Name: {' '.join(name)}")
             print(f"Stats: {' '.join(stats[index])}")
-            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS,
+            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Note'],
                                                                stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
         self.units.append(constructed_unit)
