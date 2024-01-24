@@ -27,9 +27,9 @@ class PdfPage(Page):
         return units
 
     def does_line_contain_profile_header(self, line, header_index=0):
-        if header_index > len(self.game.PROFILE_TABLE_HEADERS):
+        if header_index > len(self.game.UNIT_PROFILE_TABLE_HEADERS):
             return True
-        header_to_find = self.game.PROFILE_TABLE_HEADERS[header_index]
+        header_to_find = self.game.UNIT_PROFILE_TABLE_HEADERS[header_index]
         if header_to_find in line:
             line = line[line.index(header_to_find):]
             return self.does_line_contain_profile_header(line, header_index + 1)
