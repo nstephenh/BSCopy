@@ -3,7 +3,7 @@ import re
 from bs4 import BeautifulSoup, Tag
 
 from book_reader.constants import ReadSettingsKeys
-from book_reader.raw_entry import RawEntry
+from book_reader.raw_entry import RawProfile
 from util.log_util import print_styled, STYLES
 
 
@@ -11,7 +11,7 @@ class Page:
     def __init__(self, book):
         self.book = book
         self.special_rules_text: dict[str: str] = {}
-        self.weapons: list[RawEntry] = []
+        self.weapons: list[RawProfile] = []
         self.units_raw = []
 
     @property
@@ -214,7 +214,8 @@ class EpubPage(Page):
                     if ":" in weapon_note:
                         weapon_note = weapon_note.split(":")[1].strip()
                     stats_dict.update({"Notes": weapon_note})
-                self.weapons.append(RawEntry(name=weapon_name, stats=stats_dict, special_rules=special_rules))
+                self.weapons.append(
+                    RawProfile(name=weapon_name, stats=stats_dict, special_rules=special_rules))
 
     def extract_table(self, table_header_element):
         table_text = table_header_element.text.strip() + ":\n"

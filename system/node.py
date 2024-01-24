@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
-from book_reader.raw_entry import RawEntry
+from book_reader.raw_entry import RawProfile
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_description, get_tag
 
@@ -122,7 +122,7 @@ class Node:
                         text += f"{child_l2.get('name')}: {child_l2.text}\n"
         return text
 
-    def set_profile(self, raw_profile: RawEntry, profile_type):
+    def set_profile(self, raw_profile: RawProfile, profile_type):
         self.element.attrib['name'] = raw_profile.name.title()
         existing_characteristics = []
         # Set existing characteristic fields

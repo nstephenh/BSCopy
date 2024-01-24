@@ -1,10 +1,11 @@
-class RawEntry:
-    def __init__(self, name: str, stats: dict[str: str], special_rules: list[str]):
+class RawProfile:
+    def __init__(self, name: str, stats: dict[str: str], special_rules: list[str] = None):
         self.name: str = name
         self.stats: dict[str: str] = stats
         self.special_rules: list[str] = []
-        for rule in special_rules:
-            self.special_rules.append(rule.strip())
+        if special_rules:
+            for rule in special_rules:
+                self.special_rules.append(rule.strip())
 
     def get_diffable_profile(self):
         text = ""
@@ -20,3 +21,10 @@ class RawEntry:
 
     def get_special_rules_list(self):
         return ", ".join(self.special_rules)
+
+
+class RawUnit:
+    def __init__(self, name: str, points: int = None):
+        self.name = name
+        self.points = points
+        self.model_profiles: list[RawProfile] = []

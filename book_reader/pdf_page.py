@@ -1,6 +1,7 @@
 import os
 
 from book_reader.page import Page
+from book_reader.raw_entry import RawUnit, RawProfile
 from util.log_util import style_text, STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header
 
@@ -9,11 +10,12 @@ class PdfPage(Page):
 
     def __init__(self, book, raw_text, page_number):
         super().__init__(book)
-        self.special_rules_raw = None
+        self.units = []
+        self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number
         if self.book.system.game.ProfileLocator in raw_text:
-            self.get_raw_units()
+            self.get_text_units()
             for unit in self.units_raw:
                 print_styled("Raw Unit:", STYLES.DARKCYAN)
                 print(unit)
@@ -39,7 +41,7 @@ class PdfPage(Page):
             return self.does_line_contain_profile_header(line, header_index + 1)
         return False
 
-    def get_raw_units(self):
+    def get_text_units(self):
         num_units = self.get_number_of_units()
         if num_units == 0:
             return
@@ -55,21 +57,21 @@ class PdfPage(Page):
 
         if num_units == 2:
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
-            self.units_raw = [self.get_raw_unit(unit_1), self.get_raw_unit(unit_2)]
+            self.units_raw = [self.get_text_unit(unit_1), self.get_text_unit(unit_2)]
             return
 
         if num_units > 3:
             raise NotImplemented("Have not yet handled 3 units on a page")
 
-        self.units_raw = [self.get_raw_unit(rules_text)]
+        self.units_raw = [self.get_text_unit(rules_text)]
 
-    def get_raw_unit(self, rules_text):
+    def get_text_unit(self, rules_text):
         profile_locator = self.game.ProfileLocator
 
         # First, try and split this datasheet into parts based on known headers
         if not self.game.MIDDLE_IN_2_COLUMN:
             if self.game.ENDS_AFTER_SPECIAL_RULES:
-                rules_text, self.special_rules_raw = split_after_header(rules_text, "Special Rules:")
+                rules_text, self.special_rules_text = split_after_header(rules_text, "Special Rules:")
             return rules_text
 
         upper_half = rules_text
@@ -111,20 +113,41 @@ class PdfPage(Page):
         return raw_text, ""
 
     def process_unit(self, raw_unit):
+
+        # First get the name, from what should hopefully be the first line in raw_unit
+        unit_name = ""
+        for line in raw_unit.split("\n"):
+            if line.strip() != "":
+                unit_name = line.strip()
+
+        constructed_unit = RawUnit(name=unit_name)
+
         names = []
-        stats_array = []
-        # First, get the table out of the header.
+        stats = []
+        # Then, get the table out of the header.
         num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
         in_table = False
+        profile_index = 0
         for line in raw_unit.split("\n"):
+            if line.strip() == "" or line.startswith(self.game.ProfileLocator):
+                break
             if self.does_line_contain_profile_header(line):
                 in_table = True
                 continue
             if in_table:
                 cells = line.split()
-                name = " ".join(cells[:-num_data_cells])
-                stats = cells[-num_data_cells:]
-                print("Name: " + name)
-                print(stats)
-            if line.strip() == "" or line.startswith(self.game.ProfileLocator):
-                break
+                if len(cells) < num_data_cells:
+                    # partial row that's a continuation of a previous row
+                    names[profile_index].append(cells)
+                    continue
+                names.append(cells[:-num_data_cells])
+                stats.append(cells[-num_data_cells:])
+                profile_index += 1
+
+        for index, name in enumerate(names):
+            print(f"Name: {' '.join(name)}")
+            print(f"Stats: {' '.join(stats[index])}")
+            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS,
+                                                               stats[index])))
+            constructed_unit.model_profiles.append(raw_profile)
+        self.units.append(constructed_unit)
