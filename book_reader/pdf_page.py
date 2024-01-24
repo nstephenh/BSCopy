@@ -111,11 +111,11 @@ class PdfPage(Page):
                 prev_line_with_text = index
         return raw_text, ""
 
-    def process_unit(self, raw_unit):
+    def process_unit(self, unit_text):
 
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
-        for line in raw_unit.split("\n"):
+        for line in unit_text.split("\n"):
             if line.strip() != "":
                 unit_name = line.strip()
                 break
@@ -128,13 +128,16 @@ class PdfPage(Page):
         num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
         in_table = False
         profile_index = -1
-        for line in raw_unit.split("\n"):
+        lines = unit_text.split("\n")
+        profiles_end = None
+        for line_number, line in enumerate(lines):
             print(line)
             if in_table and line.startswith("Note:"):
                 print("Note line detected: " + line)
                 stats[profile_index] += [line.split("Note:")[1]]
                 continue
             if line.strip() == "" or line.startswith(self.game.ProfileLocator):
+                profiles_end = line_number
                 break
             if self.does_line_contain_profile_header(line):
                 in_table = True
@@ -150,9 +153,11 @@ class PdfPage(Page):
                 profile_index += 1
 
         for index, name in enumerate(names):
-            print(f"Name: {' '.join(name)}")
-            print(f"Stats: {' '.join(stats[index])}")
+            name = ' '.join(name)
             raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Note'],
                                                                stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
+
+        constructed_unit.unit_text = "\n".join(lines[profiles_end:])
+
         self.units.append(constructed_unit)

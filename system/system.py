@@ -135,7 +135,9 @@ class System:
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[pub_id][page.page_number] = {'Units': [
                         unit.serialize() for unit in page.units
-                    ]}
+                    ],
+                        "Special Rules Text": page.special_rules_text
+                    }
                 if skip_non_dump_actions:
                     continue
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:
