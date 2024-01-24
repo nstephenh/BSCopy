@@ -167,6 +167,8 @@ def get_divider_end(heatmap):
                 heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
             break
     return section_start, longest_edge
+
+
 def split_into_columns(text, debug_print_level=0):
     # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
     original_text: list[str] = [""]
@@ -178,7 +180,7 @@ def split_into_columns(text, debug_print_level=0):
     heatmap = get_section_heatmap(text)
     divider_start, divider_end = get_divider_end(heatmap)
 
-    if debug_print_level > 1:
+    if debug_print_level > 2:
         print_heatmap_thresholds(heatmap,
                                  indicate_columns=[divider_start, divider_end],
                                  debug_print=text)
@@ -191,7 +193,7 @@ def split_into_columns(text, debug_print_level=0):
         line = line.rstrip()  # Leftover trailing space can mess us up.
         if line.strip() == "":
             # An empty line could apply to any column, so lets just put it in all columns.
-            if debug_print_level > 0:
+            if debug_print_level > 1:
                 print(style_text("EMPTY LINE", STYLES.CYAN))
             if prev_line_had_col_brake:
                 col_1_lines[section].append("")
@@ -234,15 +236,21 @@ def split_into_columns(text, debug_print_level=0):
 
     sections = []
     for section in range(len(non_column_lines)):
-        print_styled("Non-column text:", STYLES.PURPLE)
+
         non_column_text = "\n".join(non_column_lines[section]) + "\n"
-        print(non_column_text)
-        print_styled("Column 1 text:", STYLES.PURPLE)
+        if debug_print_level > 0:
+            print_styled("Non-column text:", STYLES.PURPLE)
+            print(non_column_text)
+
         col_1_text = "\n".join(col_1_lines[section]).rstrip() + "\n"
-        print(col_1_text)
-        print_styled("Column 2 text:", STYLES.PURPLE)
+        if debug_print_level > 0:
+            print_styled("Column 1 text:", STYLES.PURPLE)
+            print(col_1_text)
+
         col_2_text = "\n".join(col_2_lines[section]).rstrip() + "\n"
-        print(col_2_text)
+        if debug_print_level > 0:
+            print_styled("Column 2 text:", STYLES.PURPLE)
+            print(col_2_text)
 
         sections.append((non_column_text, col_1_text, col_2_text, original_text[section]))
     return sections
