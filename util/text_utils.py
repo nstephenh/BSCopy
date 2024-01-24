@@ -146,13 +146,13 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
         print()
 
 
-def get_divider_end(heatmap):
+def get_col_dividers(heatmap):
     margins = 5  # Margins prevent us from cutting off the start of a bulleted list.
     # A section can't be smaller than this defined margin.
 
     # look for the largest "edge"
     section_start = 0
-    longest_edge = 0  # Best initial guess
+    longest_edge = 0
     longest_edge_height = 0
 
     for index in range(len(heatmap) - 1):
@@ -168,7 +168,9 @@ def get_divider_end(heatmap):
             section_start = len(
                 heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
             break
-    return section_start, longest_edge
+
+    # Section start is off by 1, possibly from our sequential space check?
+    return section_start + 1, longest_edge
 
 
 def split_into_columns(text, debug_print_level=0):
@@ -180,7 +182,7 @@ def split_into_columns(text, debug_print_level=0):
     if text.strip() == "":
         raise Exception("No text passed to split_into_columns")
     heatmap = get_section_heatmap(text)
-    divider_start, divider_end = get_divider_end(heatmap)
+    divider_start, divider_end = get_col_dividers(heatmap)
 
     if debug_print_level > 2:
         print_heatmap_thresholds(heatmap,
