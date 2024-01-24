@@ -2,6 +2,7 @@ import os
 
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
+from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file
@@ -23,7 +24,10 @@ class System:
         print(f"Initializing {system_name}")
         if settings is None:
             settings = default_settings
+
+        self.game = get_game(system_name, settings.get(SystemSettingsKeys.GAME_IMPORT_SPEC))
         self.settings = settings
+
         self.gst = None
         self.files: [SystemFile] = []
 
@@ -105,7 +109,7 @@ class System:
             print('\r', end="")
             print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
             # Assumes that each raw file is renamed as a bs unique ID corresponding to a publication.
-            self.raw_files[pub_id] = Book(filepath, settings=raw_import_settings, system=self)
+            self.raw_files[pub_id] = Book(filepath, self, settings=raw_import_settings)
             i += 1
         print()
         for pub_id, book in self.raw_files.items():

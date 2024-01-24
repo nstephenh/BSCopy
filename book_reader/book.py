@@ -2,7 +2,7 @@ from book_reader.pdf_page import PdfPage
 
 
 class Book:
-    def __init__(self, file_path, settings: {str: bool} = None, system=None):
+    def __init__(self, file_path, system, settings: {str: bool | str} = None):
         if settings is None:
             settings = {}
         self.settings = settings

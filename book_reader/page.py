@@ -14,7 +14,7 @@ class Page:
         self.weapons: list[RawEntry] = []
 
     @property
-    def settings(self):
+    def settings(self) -> dict[ReadSettingsKeys: str | dict]:
         return self.book.settings
 
 
@@ -262,3 +262,4 @@ class EpubPage(Page):
             table_text += f"● {die_roll_cell}:\t{results_roll_cell}\n"
         table_text = table_text.strip()
         return table_text
+

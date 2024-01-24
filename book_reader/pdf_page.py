@@ -11,21 +11,23 @@ class PdfPage(Page):
         super().__init__(book)
         self.raw_text = raw_text
         self.page_number = page_number
+        if self.book.system.game.ProfileLocator in raw_text:
+            self.unit = self.read_unit_profile()
+            print(self.unit)
 
-        if "Unit Composition" in raw_text:
-            self.unit = self.read_datasheet()
-
-    def read_datasheet(self):
+    def read_unit_profile(self):
 
         page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text)[0]
 
         # If a datasheet, it should have two columns in the center of the page.
-        if "Unit Composition" not in col_1_text and "Unit Composition" not in col_2_text:
+        if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
             return False  # Not a datasheet
-        datasheet_text = col_1_text if "Unit Composition" in col_1_text else col_2_text
-        flavor_text = col_2_text if "Unit Composition" in col_2_text else col_1_text
-        print_styled("Datasheet:", STYLES.RED)
-        upper_half = datasheet_text
+        rules_text = col_1_text if self.book.system.game.ProfileLocator in col_1_text else col_2_text
+        flavor_text = col_2_text if self.book.system.game.ProfileLocator in col_2_text else col_1_text
+
+        print_styled("Unit Profile:", STYLES.DARKCYAN)
+        print(rules_text)
+        upper_half = rules_text
         # First, try and split this datasheet into parts based on known headers
         was_split, profiles, upper_half = split_at_header("Unit Composition", upper_half, header_at_end_of_line=False)
         if not was_split:
