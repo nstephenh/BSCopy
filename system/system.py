@@ -95,7 +95,10 @@ class System:
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
 
     def read_books_json_config(self):
-        with open(os.path.join(self.game_system_location, 'raw', 'books.json')) as file:
+        expected_location = os.path.join(self.game_system_location, 'raw', 'books.json')
+        if not os.path.isfile(expected_location):
+            return {}
+        with open(expected_location) as file:
             return json.load(file)
 
     def init_raw_game(self, raw_import_settings):
