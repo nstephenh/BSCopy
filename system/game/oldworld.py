@@ -1,4 +1,4 @@
-from system.constants import GameImportSpecs
+from system.constants import GameImportSpecs, SpecialRulesType, SystemSettingsKeys
 from system.game.game import Game
 
 
@@ -8,6 +8,11 @@ class OldWorld(Game):
     SYSTEM_NAME = "Warhammer-The-Old-World"
 
     ProfileLocator = "Troop Type:"
+
+    default_settings = {
+        SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.PROFILE_SPECIAL_RULE,
+        SystemSettingsKeys.WEAPON_AS_DESCRIPTION: False,
+    }
 
     UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Points"]
 

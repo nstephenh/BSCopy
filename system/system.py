@@ -23,11 +23,14 @@ class System:
                  settings=None,
                  include_raw=False, raw_import_settings=None):
         print(f"Initializing {system_name}")
+        print(settings)
         if settings is None:
-            settings = default_settings
-
+            settings = {}
         self.game = get_game(system_name, settings.get(SystemSettingsKeys.GAME_IMPORT_SPEC))
-        self.settings = settings
+        self.settings = dict(default_settings)
+        if self.game:
+            self.settings.update(self.game.default_settings)
+        self.settings.update(settings)
 
         self.gst = None
         self.files: [SystemFile] = []
@@ -171,7 +174,7 @@ class System:
             raise Exception("Special rule type is not defined for system")
 
         nodes = self.nodes.filter(lambda node: (
-                node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]
+                node.get_type() == node_type
                 and (node.name and node.name.lower() == rule_name.lower())
         ))
         if len(nodes) > 0:
@@ -189,6 +192,7 @@ class System:
                 print(diff)
                 node.set_rules_text(rule_name, rule_text)
             return
+
         # Then create any we couldn't find
         pass
 
@@ -217,8 +221,7 @@ class System:
                 node.set_profile(raw_profile, profile_type)
             return
         # Then create any we couldn't find
-        for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
-            pass
+        pass
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

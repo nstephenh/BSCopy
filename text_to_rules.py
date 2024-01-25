@@ -1,8 +1,5 @@
 from util.element_util import get_description, update_page_and_pub
 from util.log_util import STYLES, print_styled, get_diff
-from util.system_globals import rules_list, files_in_system
-from util.system_util import get_node_from_system, read_system, save_system, get_root_rules_node
-from util.text_gen_utils import errors, create_rule_node
 from util.text_utils import bullet_options
 
 page_number = "165"
@@ -59,6 +56,16 @@ def text_to_rules_dict(text, first_p_is_flavor):
 
 
 def text_to_rules(new_rules_dict, rules_node, page, pub_id):
+    """
+    Do not use at this time from a library context.
+    :param new_rules_dict:
+    :param rules_node:
+    :param page:
+    :param pub_id:
+    :return:
+    """
+    from util.text_gen_utils import errors, create_rule_node
+
     rules_ids = []
     for rule, rule_text in new_rules_dict.items():
         print(f'\033[1m {rule}\033[0m')
@@ -86,6 +93,10 @@ def text_to_rules(new_rules_dict, rules_node, page, pub_id):
 
 
 if __name__ == '__main__':
+    # Only import these if being called directly
+    from util.system_globals import rules_list, files_in_system
+    from util.system_util import get_node_from_system, read_system, save_system, get_root_rules_node
+
     read_system()
     tree_to_update = ""
     for filepath in files_in_system.keys():

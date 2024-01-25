@@ -15,6 +15,6 @@ def get_game(system_name, game_constant=None) -> 'Game':
             return game
 
     if game_constant is None:
-        raise ValueError(f"Game system {system_name} has no default import spec\n Set GAME_IMPORT_SPEC")
+        raise ValueError(f"Game system {system_name} has no default import spec\nSet GAME_IMPORT_SPEC")
 
     raise ValueError(f"Game {game_constant} not defined")
