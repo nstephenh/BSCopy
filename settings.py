@@ -1,6 +1,6 @@
 import os
 
-from system.constants import SpecialRulesType, SystemSettingsKeys
+from system.constants import SpecialRulesType, SystemSettingsKeys, GameImportSpecs
 from util.generate_util import get_random_bs_id
 
 default_system = 'moreus-heresy'
@@ -9,6 +9,7 @@ default_data_directory = os.path.expanduser("~/BattleScribe/data/")
 default_settings = {
     SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.RULE,
     SystemSettingsKeys.WEAPON_AS_DESCRIPTION: False,
+    SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY
 }
 
 name_synonyms = {

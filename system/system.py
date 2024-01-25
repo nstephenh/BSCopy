@@ -144,19 +144,15 @@ class System:
             else:
                 print_styled(publication_node.name, STYLES.CYAN)
                 sys_file_for_pub = publication_node.system_file
+            if skip_non_dump_actions:
+                actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in actions_to_take else []
             print("Actions to take: " + ", ".join(actions_to_take))
             for page in book.pages:
                 print(f"\t{page.page_number} {page.get_page_type()}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
-                    export_dict[pub_id][page.page_number] = {'Units': [
-                        unit.serialize() for unit in page.units
-                    ],
-                        "Special Rules Text": page.special_rules_text
-                    }
-                if skip_non_dump_actions:
-                    continue
+                    export_dict[pub_id][page.page_number] = page.serialize()
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:
-                    for rule_name, rule_text in page.special_rules.items():
+                    for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
                         self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
@@ -170,6 +166,10 @@ class System:
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
         # First look for existing special rules
+        node_type = self.settings.get(SystemSettingsKeys.SPECIAL_RULE_TYPE)
+        if node_type is None:
+            raise Exception("Special rule type is not defined for system")
+
         nodes = self.nodes.filter(lambda node: (
                 node.get_type() == self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]
                 and (node.name and node.name.lower() == rule_name.lower())
@@ -190,8 +190,7 @@ class System:
                 node.set_rules_text(rule_name, rule_text)
             return
         # Then create any we couldn't find
-        for node in (default_sys_file.nodes_by_type[self.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE]]):
-            pass
+        pass
 
     def create_or_update_profile(self, page, pub_id, raw_profile, profile_type, default_sys_file):
         # A profile should also be in a selection entry with special rules,

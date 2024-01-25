@@ -17,3 +17,4 @@ class PageTypes(StrEnum):
     SPECIAL_RULES = "special_rule_pages"
     WEAPON_PROFILES = 'weapon_profile_pages'
     UNIT_PROFILES = "unit_profile_pages"
+    BLANK_OR_IGNORED = "blank_or_ignored_pages"

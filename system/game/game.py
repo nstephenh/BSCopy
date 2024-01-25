@@ -13,3 +13,5 @@ class Game:
     MIDDLE_IN_2_COLUMN = False
 
     ENDS_AFTER_SPECIAL_RULES = False
+
+    FIRST_PARAGRAPH_IS_FLAVOR = False

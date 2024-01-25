@@ -14,7 +14,7 @@ class Page:
     def __init__(self, book: 'Book', page_number):
         self.book = book
         self.page_number = page_number
-        self.special_rules: dict[str: str] = {}
+        self.special_rules_dict: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
         self.units: list[RawUnit] = []
@@ -36,6 +36,14 @@ class Page:
         if len(self.units):
             return PageTypes.UNIT_PROFILES
         return ""
+
+    def serialize(self):
+        return {'Units': [
+            unit.serialize() for unit in self.units
+        ],
+            # "Special Rules Text": self.special_rules_text,
+            'Special Rules': self.special_rules_dict
+        }
 
 
 class EpubPage(Page):
@@ -107,7 +115,7 @@ class EpubPage(Page):
             composed_text = composed_text.strip()
             if composed_text == "":
                 continue  # Not actually a special rule or not a special rule with content
-            self.special_rules[special_rule_name] = composed_text
+            self.special_rules_dict[special_rule_name] = composed_text
 
         # KNOWN INPUT ISSUE, Two/additional hand weapon is just missing a name on page 213
         for weapon_table in soup.find_all('p', {'class': 'Stats_Weapon-Stats_Weapon-Header'}):

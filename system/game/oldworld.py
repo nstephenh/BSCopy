@@ -18,3 +18,6 @@ class OldWorld(Game):
     MIDDLE_IN_2_COLUMN = False
 
     ENDS_AFTER_SPECIAL_RULES = True
+
+    FIRST_PARAGRAPH_IS_FLAVOR = True
+

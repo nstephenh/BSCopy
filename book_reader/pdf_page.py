@@ -3,6 +3,7 @@ import os
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile
+from text_to_rules import text_to_rules_dict
 from util.log_util import style_text, STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header
 
@@ -14,9 +15,13 @@ class PdfPage(Page):
         self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number
-        page_processed = self.handle_unit_page()
-        if not page_processed:  # If not a unit page, could be a page of special rules.
-            page_processed = self.handle_special_rules_page(prev_page_type)
+        if self.raw_text.strip() == "":
+            self.page_type = PageTypes.BLANK_OR_IGNORED
+            return
+        self.handle_unit_page()
+        if not self.page_type:  # If not a unit page, could be a page of special rules.
+            self.handle_special_rules_page(prev_page_type)
+        self.process_special_rules()
 
     def handle_unit_page(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
@@ -29,7 +34,6 @@ class PdfPage(Page):
                 return True
 
     def handle_special_rules_page(self, prev_page_type):
-
         if any([("Special Rules" in line) for line in self.raw_text.splitlines()[:5]]) \
                 or prev_page_type is PageTypes.SPECIAL_RULES:
             # Special rules pages are two-column format, and the header of the page is irrelevant
@@ -183,3 +187,13 @@ class PdfPage(Page):
         constructed_unit.unit_text = "\n".join(lines[profiles_end:])
 
         self.units.append(constructed_unit)
+
+    def process_special_rules(self):
+        if not self.special_rules_text:
+            return
+        # print_styled("Special rules raw text to process:", STYLES.DARKCYAN)
+        # print(self.special_rules_text)
+        # TODO: Handle extraneous lines starting in '*Note' that should be part of the unit.
+        # TODO: If there's a weapon profile in one of or before the special rules, pull it out.
+        self.special_rules_dict = text_to_rules_dict(self.special_rules_text, self.game.FIRST_PARAGRAPH_IS_FLAVOR)
+        # print(self.special_rules_dict)

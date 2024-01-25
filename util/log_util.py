@@ -62,6 +62,10 @@ def get_diff(a, b, indent=0):
 
     # Don't run with splitlines (true), as extra whitespace will confuse the output.
     # We're ok with extra lines at the end.
+    if not a:
+        a = ""
+    if not b:
+        b = ""
     diff_lines = list(difflib.Differ().compare(a.splitlines(),
                                                b.splitlines()))
 
