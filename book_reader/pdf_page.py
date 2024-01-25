@@ -18,20 +18,19 @@ class PdfPage(Page):
         if self.raw_text.strip() == "":
             self.page_type = PageTypes.BLANK_OR_IGNORED
             return
-        self.handle_unit_page()
-        if not self.page_type:  # If not a unit page, could be a page of special rules.
+        if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
+            self.try_handle_units()
+        if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:  # If not a unit page, could be a page of special rules.
             self.handle_special_rules_page(prev_page_type)
         self.process_special_rules()
 
-    def handle_unit_page(self):
+    def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
-            self.page_type = PageTypes.UNIT_PROFILES
             self.get_text_units()
             for unit in self.units_text:
-                print_styled("Raw Unit:", STYLES.DARKCYAN)
                 self.process_unit(unit)
-            if len(self.units):
-                return True
+            if len(self.units):  # if we found any units, this page is a units page
+                self.page_type = PageTypes.UNIT_PROFILES
 
     def handle_special_rules_page(self, prev_page_type):
         if any([("Special Rules" in line) for line in self.raw_text.splitlines()[:5]]) \
@@ -40,7 +39,7 @@ class PdfPage(Page):
             header_text, col_1, col_2, _ = split_into_columns(self.raw_text)[0]
             if prev_page_type is PageTypes.SPECIAL_RULES:
                 if header_text.strip() != "":
-                    return False  # If the next page has a header, then it's not a special rules page
+                    return  # If the next page has a header, then it's not a special rules page
 
             self.page_type = PageTypes.SPECIAL_RULES
 
@@ -138,7 +137,7 @@ class PdfPage(Page):
         return raw_text, ""
 
     def process_unit(self, unit_text):
-
+        print_styled("Raw Unit:", STYLES.DARKCYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
         for line in unit_text.split("\n"):

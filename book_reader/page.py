@@ -11,6 +11,11 @@ from util.log_util import print_styled, STYLES
 
 
 class Page:
+    """
+    A page's goal is to take something from a book, and turn it into json that we can either export,
+     or apply to the game system.
+    """
+
     def __init__(self, book: 'Book', page_number):
         self.book = book
         self.page_number = page_number
@@ -18,29 +23,26 @@ class Page:
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
         self.units: list[RawUnit] = []
-        self.page_type = ""
+        self.page_type = self.get_configured_page_type()
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
         return self.book.settings
 
-    def get_page_type(self):
-        if self.page_type != "":
-            return self.page_type
+    def get_configured_page_type(self):
         if len(self.book.book_config):
             for page_type in PageTypes:
                 if page_type in self.book.book_config:
                     if self.page_number in self.book.range_dict_to_range(self.book.book_config[page_type]):
                         self.page_type = page_type  # Cache it
                         return page_type
-        if len(self.units):
-            return PageTypes.UNIT_PROFILES
-        return ""
 
     def serialize(self):
-        return {'Units': [
-            unit.serialize() for unit in self.units
-        ],
+        return {
+            'page_type': self.page_type,
+            'Units': [
+                unit.serialize() for unit in self.units
+            ],
             # "Special Rules Text": self.special_rules_text,
             'Special Rules': self.special_rules_dict
         }

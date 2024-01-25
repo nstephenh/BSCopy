@@ -151,7 +151,7 @@ class System:
                 actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in actions_to_take else []
             print("Actions to take: " + ", ".join(actions_to_take))
             for page in book.pages:
-                print(f"\t{page.page_number} {page.get_page_type()}")
+                print(f"\t{page.page_number} {str(page.page_type or '')}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[pub_id][page.page_number] = page.serialize()
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:

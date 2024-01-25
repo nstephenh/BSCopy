@@ -40,6 +40,9 @@ class Book:
             exit()
         with open(self.file_path, "rb") as f:
             pdf = pdftotext.PDF(f, physical=True)
+
+            # If the next page doesn't have information to help identify it,
+            # we can guess that it's still the previous page type.
             prev_page_type = None
             page_offset = 0  # Consider pulling default page offset from book json.
             for page_counter, page_text in enumerate(pdf):
@@ -52,7 +55,7 @@ class Book:
                     page_number = page_counter
                 page = PdfPage(self, page_text, page_number, prev_page_type=prev_page_type)
                 self.pages.append(page)
-                prev_page_type = page.get_page_type()
+                prev_page_type = page.page_type
 
     @staticmethod
     def try_get_page_offset(page_text, page_counter):
