@@ -53,14 +53,18 @@ class PdfPage(Page):
         units = 0
         for line in self.raw_text.splitlines():
             if self.does_line_contain_profile_header(line):
+                # print(f"Line contains profile header: {line}")
                 units += 1
         return units
 
     def does_line_contain_profile_header(self, line, header_index=0):
+        if self.game.UNIT_PROFILE_TABLE_HEADERS is None:
+            raise Exception("No UNIT PROFILE HEADERS")
         if header_index >= len(self.game.UNIT_PROFILE_TABLE_HEADERS):
             return True
         header_to_find = self.game.UNIT_PROFILE_TABLE_HEADERS[header_index]
         if header_to_find in line:
+            # print(f"Found {header_to_find} in {line}")
             line = line[line.index(header_to_find):]
             return self.does_line_contain_profile_header(line, header_index + 1)
         return False
@@ -85,6 +89,8 @@ class PdfPage(Page):
             return
 
         if num_units > 3:
+            print_styled("There are 3 units on this page:",STYLES.RED)
+            print(self.raw_text)
             raise NotImplemented("Have not yet handled 3 units on a page")
 
         self.units_text = [self.get_text_unit(rules_text)]
