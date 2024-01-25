@@ -45,6 +45,7 @@ if __name__ == '__main__':
                     # As of now this assumes format=block
                     expected_ids = get_associated_nodes(addition)
                     text_block = addition['content']
+                    raise NotImplemented("Need to re-implement text_to_rules")
                     rules_ids = text_to_rules(root_rules_node, text_block, page_number, pub_id)
                     addition['associated_nodes'] = rules_ids
                     # Check if an existing ID is not found / created.

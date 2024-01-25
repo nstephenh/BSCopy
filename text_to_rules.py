@@ -3,6 +3,7 @@ from util.log_util import STYLES, print_styled, get_diff
 from util.system_globals import rules_list, files_in_system
 from util.system_util import get_node_from_system, read_system, save_system, get_root_rules_node
 from util.text_gen_utils import errors, create_rule_node
+from util.text_utils import bullet_options
 
 page_number = "165"
 publication_id = "d9b2-e711-f717-0c45"
@@ -19,7 +20,9 @@ Will add a newline if an input line ends in a period.
     """
 
 
-def text_to_rules(rules_node, text, page, pub_id):
+def text_to_rules_dict(text, first_p_is_flavor):
+    special_rule_length_threshold = 30
+
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
@@ -27,13 +30,18 @@ def text_to_rules(rules_node, text, page, pub_id):
         line = line.strip()
         if not line:
             continue
-        if len(line) < 50 and not (line.endswith('.') or line.endswith("…")):
+        if len(line) < special_rule_length_threshold and not (line.endswith('.')
+                                                              or line.endswith("…")
+                                                              or line[0] in bullet_options):
             # print(f"{line} is likely a special rule")
             current_rule = line
             new_rules[current_rule] = ""
-            paragraph_count = 0 if first_paragraph_is_flavor else 1
+            paragraph_count = 0 if first_p_is_flavor else 1
 
         # We now know we are inside a rule.
+        if not current_rule:
+            print_styled(f"'{line}' does not appear to be part of a rule", STYLES.RED)
+            continue
 
         # Skip this line if it's flavor text.
         # print(f"{line} is part of {current_rule}, paragraph {paragraph_count}")
@@ -46,11 +54,13 @@ def text_to_rules(rules_node, text, page, pub_id):
                 new_rules[current_rule] += "\n"
             paragraph_count += 1
         else:
-            if new_rules[current_rule]:
-                new_rules[current_rule] += " "  # Space instead of a line break.
+            new_rules[current_rule] += " "  # Space instead of a line break.
+    return {name: rule.strip() for name, rule in new_rules.items()}
 
+
+def text_to_rules(new_rules_dict, rules_node, page, pub_id):
     rules_ids = []
-    for rule, rule_text in new_rules.items():
+    for rule, rule_text in new_rules_dict.items():
         print(f'\033[1m {rule}\033[0m')
         if rule_text.strip() == "":
             print(f"Rule {rule} could not be read properly")
@@ -86,7 +96,9 @@ if __name__ == '__main__':
         print("No file to update found!")
     root_rules_node = get_root_rules_node(tree_to_update)
 
-    text_to_rules(root_rules_node, raw_text, page_number, publication_id)
+    rules_dict = text_to_rules_dict(raw_text, first_p_is_flavor=first_paragraph_is_flavor)
+
+    text_to_rules(rules_dict, root_rules_node, page_number, publication_id)
 
     if len(errors) > 1:
         print("There were one or more errors, please validate the output")

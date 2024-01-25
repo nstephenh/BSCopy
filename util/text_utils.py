@@ -80,6 +80,9 @@ def column_text_to_paragraph_text(text, force_single_paragraph=False):
     return text_out
 
 
+bullet_options = ["-", "*", "●", "•"]
+
+
 def get_bullet_type(existing_text):
     """
     Given existing text, find the bullet character used the most in that selection.
@@ -87,7 +90,6 @@ def get_bullet_type(existing_text):
     :return: "-", "*", "●", or "•", default to "●"
     """
     bullet_type = "●"  # Default to big bullet
-    bullet_options = ["-", "*", "●", "•"]
     most_appearances = 0
     for option in bullet_options:
         if existing_text.count(option) > most_appearances:
