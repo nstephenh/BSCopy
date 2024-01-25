@@ -100,20 +100,17 @@ def get_bullet_type(existing_text):
 
 def get_section_heatmap(section_text):
     heatmap = []
-    for line in section_text.split('\n'):
-        char_index = 0
-        last_char_was_space = False
-        for character in line:
-            # Populate empty slots in the heatmap
-            if len(heatmap) == char_index:
-                heatmap.append(0)
-            if character == " ":
-                if last_char_was_space:
-                    heatmap[char_index] += 1
-                last_char_was_space = True
-            else:
-                last_char_was_space = False
-            char_index += 1
+    lines = section_text.splitlines()
+
+    # First, find the longest line
+    # Populate empty slots in the heatmap
+    heatmap = [0] * len(max(lines, key=len))
+
+    # For each line, track whitespace and characters past the end of the line
+    for line in section_text.splitlines():
+        for char_index in range(len(heatmap)):
+            if char_index >= len(line) or line[char_index] == " ":
+                heatmap[char_index] += 1
     return heatmap
 
 
@@ -164,20 +161,18 @@ def get_col_dividers(heatmap):
             longest_edge_height = edge_height
 
     for index, item in enumerate(reversed(heatmap[:longest_edge])):
-        if item < heatmap[longest_edge]:  # If this isn't the same length as the longest edge,
+        if item != heatmap[longest_edge]:  # If this isn't the same length as the longest edge,
             section_start = len(
                 heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
             break
 
-    # Values will be off by 1, possibly from our sequential space check?
-    section_start += 1
-    longest_edge += 1
-    if longest_edge - section_start < min_width:  # But this could also make our divider too small.
-        print_styled(f"Had to use min_width because dividing colum was {longest_edge - section_start} chars",
+    section_end = longest_edge + 1  # the next section starts at the character after our longest_edge char.
+    if section_end - section_start < min_width:  # But this could also make our divider too small.
+        print_styled(f"Had to use min_width because dividing colum was {section_end - section_start} chars",
                      STYLES.YELLOW)
-        section_start = longest_edge - min_width
+        section_start = section_end - min_width
 
-    return section_start, longest_edge
+    return section_start, section_end
 
 
 def split_into_columns(text, debug_print_level=0):
