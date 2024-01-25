@@ -139,7 +139,7 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
         print(f"\t", end="")
         for i in range(len(heatmap)):
             if i in indicate_columns:
-                print(style_text("^", STYLES.CYAN), end="")
+                print(style_text("⎸", STYLES.CYAN), end="")
             else:
                 print(" ", end="")
         print()
