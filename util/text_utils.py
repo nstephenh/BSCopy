@@ -116,9 +116,6 @@ def get_section_heatmap(section_text):
 
 
 def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
-    if debug_print:
-        for line in debug_print.split('\n'):
-            print("\t" + line)
     label_row_0 = ""
     label_row_1 = ""
     label_row_2 = ""
@@ -148,6 +145,7 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
 
 def get_col_dividers(heatmap):
     margins = 5  # Margins prevent us from cutting off the start of a bulleted list.
+    min_width = 2
     # A section can't be smaller than this defined margin.
 
     # look for the largest "edge"
@@ -169,8 +167,15 @@ def get_col_dividers(heatmap):
                 heatmap[:longest_edge]) - index  # then the previous value it's the end of that a section.
             break
 
-    # Section start is off by 1, possibly from our sequential space check?
-    return section_start + 1, longest_edge
+    # Values will be off by 1, possibly from our sequential space check?
+    section_start += 1
+    longest_edge += 1
+    if longest_edge - section_start < min_width:  # But this could also make our divider too small.
+        print_styled(f"Had to use min_width because dividing colum was {longest_edge - section_start} chars",
+                     STYLES.YELLOW)
+        section_start = longest_edge - min_width
+
+    return section_start, longest_edge
 
 
 def split_into_columns(text, debug_print_level=0):
@@ -234,7 +239,9 @@ def split_into_columns(text, debug_print_level=0):
                 section += 1
             non_column_lines[section].append(line)
         if debug_print_level > 0:
-            print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t{line}")
+            print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t", end="")
+            print(
+                f"{line[:divider_start]}{style_text(line[divider_start:divider_end], STYLES.UNDERLINE)}{line[divider_end:]}")
         original_text[section] += line + "\n"
         prev_line_had_col_brake = has_col_break
 
