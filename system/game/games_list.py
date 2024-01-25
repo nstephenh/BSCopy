@@ -1,21 +1,20 @@
-from system.constants import GameImportSpecs
 from system.game.game import Game
 from system.game.heresy import Heresy
+
 from system.game.oldworld import OldWorld
 
-games = {
-    GameImportSpecs.OLDWORLD: OldWorld(),
-    GameImportSpecs.HERESY: Heresy(),
-}
+games = [
+    OldWorld(),
+    Heresy(),
+]
 
 
 def get_game(system_name, game_constant=None) -> 'Game':
-    if game_constant is None:
-        for game in games.values():
-            if game.SYSTEM_NAME == system_name:
-                return game
-        raise ValueError(f"Game system {system_name} has no default import spec")
+    for game in games:
+        if game.SYSTEM_NAME == system_name or game.GAME_FORMAT_CONSTANT == game_constant:
+            return game
 
-    if game_constant in games:
-        return games[game_constant]
+    if game_constant is None:
+        raise ValueError(f"Game system {system_name} has no default import spec\n Set GAME_IMPORT_SPEC")
+
     raise ValueError(f"Game {game_constant} not defined")
