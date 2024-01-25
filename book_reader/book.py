@@ -40,7 +40,7 @@ class Book:
             exit()
         with open(self.file_path, "rb") as f:
             pdf = pdftotext.PDF(f, physical=True)
-
+            prev_page_type = None
             page_offset = 0  # Consider pulling default page offset from book json.
             for page_counter, page_text in enumerate(pdf):
                 if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
@@ -50,8 +50,9 @@ class Book:
                     # print(f"Page number is {page_number}, from {page_counter} + {page_offset}")
                 else:
                     page_number = page_counter
-                page = PdfPage(self, page_text, page_number)
+                page = PdfPage(self, page_text, page_number, prev_page_type=prev_page_type)
                 self.pages.append(page)
+                prev_page_type = page.get_page_type()
 
     @staticmethod
     def try_get_page_offset(page_text, page_counter):

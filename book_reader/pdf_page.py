@@ -1,5 +1,6 @@
 import os
 
+from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile
 from util.log_util import style_text, STYLES, print_styled
@@ -8,17 +9,38 @@ from util.text_utils import split_into_columns, split_at_header, split_after_hea
 
 class PdfPage(Page):
 
-    def __init__(self, book, raw_text, page_number):
+    def __init__(self, book, raw_text, page_number, prev_page_type=None):
         super().__init__(book, page_number)
         self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number
-        if self.book.system.game.ProfileLocator in raw_text:
+        page_processed = self.handle_unit_page()
+        if not page_processed:  # If not a unit page, could be a page of special rules.
+            page_processed = self.handle_special_rules_page(prev_page_type)
+
+    def handle_unit_page(self):
+        if self.book.system.game.ProfileLocator in self.raw_text:
+            self.page_type = PageTypes.UNIT_PROFILES
             self.get_text_units()
             for unit in self.units_text:
                 print_styled("Raw Unit:", STYLES.DARKCYAN)
-                print(unit)
                 self.process_unit(unit)
+            if len(self.units):
+                return True
+
+    def handle_special_rules_page(self, prev_page_type):
+
+        if any([("Special Rules" in line) for line in self.raw_text.splitlines()[:5]]) \
+                or prev_page_type is PageTypes.SPECIAL_RULES:
+            # Special rules pages are two-column format, and the header of the page is irrelevant
+            header_text, col_1, col_2, _ = split_into_columns(self.raw_text)[0]
+            if prev_page_type is PageTypes.SPECIAL_RULES:
+                if header_text.strip() != "":
+                    return False  # If the next page has a header, then it's not a special rules page
+
+            self.page_type = PageTypes.SPECIAL_RULES
+
+            self.special_rules_text = col_1 + "\n" + col_2
 
     @property
     def game(self):
