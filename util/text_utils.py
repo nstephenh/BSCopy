@@ -296,13 +296,15 @@ def split_after_header(raw_text, header):
     lines = raw_text.split("\n")
     for index, line in enumerate(lines):
         if line.startswith(header):
-            line = get_line_indent(line, len(header))
+            # print(f"Header line: {header_spacing} ⎹\t{line}")
+            header_spacing = get_line_indent(line, len(header))
             continue
         if header_spacing:
             # Line is indented as part of table
             line_spacing = get_line_indent(line)
             if line_spacing != header_spacing:
                 return "\n".join(lines[:index]), "\n".join(lines[index:])
+            # print(f"{header_spacing} vs {line_spacing} ⎹\t{line}")
     return raw_text, ""
 
 
@@ -363,3 +365,4 @@ def get_line_indent(line, offset=0):
     for i, char in enumerate(line[offset:]):  # Skip the bullet
         if char != " ":
             return i + offset
+    return 0
