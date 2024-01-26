@@ -143,7 +143,7 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
 
 
 def get_col_dividers(heatmap):
-    margins = 5  # Margins prevent us from cutting off the start of a bulleted list.
+    margins = 10  # Margins prevent us from cutting off the start of a bulleted list.
     min_width = 2
     # A section can't be smaller than this defined margin.
 
@@ -176,11 +176,6 @@ def get_col_dividers(heatmap):
 
 
 def split_into_columns(text, debug_print_level=0):
-    # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
-    original_text: list[str] = [""]
-    non_column_lines: list[list[str]] = [[]]
-    col_1_lines: list[list[str]] = [[]]
-    col_2_lines: list[list[str]] = [[]]
     if text.strip() == "":
         raise Exception("No text passed to split_into_columns")
     heatmap = get_section_heatmap(text)
@@ -191,6 +186,17 @@ def split_into_columns(text, debug_print_level=0):
                                  indicate_columns=[divider_start, divider_end],
                                  debug_print=text)
 
+    return split_into_columns_at_divider(text, divider_end, divider_start, debug_print_level=debug_print_level)
+
+
+def split_into_columns_at_divider(text: str, divider_end, divider_start=None, debug_print_level=0):
+    if divider_start is None:
+        divider_start = divider_end - 2
+    # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
+    original_text: list[str] = [""]
+    non_column_lines: list[list[str]] = [[]]
+    col_1_lines: list[list[str]] = [[]]
+    col_2_lines: list[list[str]] = [[]]
     prev_line_had_col_brake = False
     section = 0
     for line in text.split('\n'):
@@ -297,3 +303,34 @@ def split_after_header(raw_text, header):
             if line_spacing != header_spacing:
                 return "\n".join(lines[:index]), "\n".join(lines[index:])
     return raw_text, ""
+
+
+def does_line_contain_header(line, headers, header_index=0):
+    if header_index >= len(headers):
+        return True
+    header_to_find = headers[header_index]
+    if header_to_find in line:
+        # print(f"Found {header_to_find} in {line}")
+        line = line[line.index(header_to_find):]
+        return does_line_contain_header(line, headers, header_index + 1)
+    return False
+
+
+def get_index_of_line_with_headers(text, stagger_row_headers):
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        for header in stagger_row_headers:
+            if header in line:
+                line = line[line.index(header) + len(header):]
+                if header == stagger_row_headers[-1]:
+                    return index
+
+
+def un_justify(text, index):
+    new_text_array = []
+    for line in text.splitlines():
+        if len(line) < index:
+            new_text_array.append("")
+        else:
+            new_text_array.append(line[index:])
+    return "\n".join(new_text_array)

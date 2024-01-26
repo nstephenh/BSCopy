@@ -4,6 +4,7 @@ from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile
 from text_to_rules import text_to_rules_dict
+from util import text_utils
 from util.log_util import style_text, STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header
 
@@ -60,28 +61,88 @@ class PdfPage(Page):
     def does_line_contain_profile_header(self, line, header_index=0):
         if self.game.UNIT_PROFILE_TABLE_HEADERS is None:
             raise Exception("No UNIT PROFILE HEADERS")
-        if header_index >= len(self.game.UNIT_PROFILE_TABLE_HEADERS):
-            return True
-        header_to_find = self.game.UNIT_PROFILE_TABLE_HEADERS[header_index]
-        if header_to_find in line:
-            # print(f"Found {header_to_find} in {line}")
-            line = line[line.index(header_to_find):]
-            return self.does_line_contain_profile_header(line, header_index + 1)
-        return False
+        return text_utils.does_line_contain_header(line, self.game.UNIT_PROFILE_TABLE_HEADERS)
+
+    def does_contain_stagger(self, headers):
+        indexes = []
+        active_header_index = 0
+        for line in self.raw_text.splitlines():
+            if headers[active_header_index] in line:
+                indexes.append(line.index(headers[active_header_index]))
+                active_header_index += 1
+                if active_header_index == len(headers) - 1:
+                    break
+        if active_header_index != (len(headers) - 1):
+            raise Exception(
+                "We can't tell if this has stagger because it doesn't have all the headers: " + str(headers))
+        alignment = indexes[0]
+        for header_alignment in indexes[1:]:
+            if header_alignment != alignment:
+                return False, 0
+        return True, alignment
 
     def get_text_units(self):
         num_units = self.get_number_of_units()
         if num_units == 0:
             return
-        page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text)[0]
 
-        # If a datasheet, it should have two columns in the center of the page.
-        if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
-            return False  # Not a datasheet
-        rules_text = col_1_text if self.book.system.game.ProfileLocator in col_1_text else col_2_text
-        flavor_text = col_2_text if self.book.system.game.ProfileLocator in col_2_text else col_1_text
+        # TODO: Check for Has Excessive Stagger Condition:
+        could_contain_stagger = True
+        if could_contain_stagger:
+            print("Has Stagger!")
+            # TODO make this more generic
+            second_split = text_utils.get_index_of_line_with_headers(self.raw_text,
+                                                                     ["Wargear", "Special Rules"])
 
-        rules_text = page_header + rules_text
+            lines = self.raw_text.splitlines()
+
+            left_sidebar_divider_index = lines[second_split].index("Wargear")
+            if left_sidebar_divider_index:  # Left flavor text
+                _, flavor_text, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
+                                                                                         left_sidebar_divider_index,
+                                                                                         debug_print_level=1)[0]
+            else:  # Right flavor text, column detection should work.
+                page_header, rules_text, flavor_text, _ = split_into_columns(self.raw_text, debug_print_level=1)[0]
+                rules_text = page_header + rules_text
+
+            second_split = text_utils.get_index_of_line_with_headers(rules_text,
+                                                                     ["Wargear", "Special Rules"])
+            lines = rules_text.splitlines()
+
+            top_half = "\n".join(lines[:second_split])
+            first_split = text_utils.get_index_of_line_with_headers(top_half,
+                                                                    ["Unit Composition", "Unit Type"])
+            print(top_half)
+            if left_sidebar_divider_index:
+                top_half = text_utils.un_justify(top_half, lines[first_split].index("Unit Composition"))
+
+            profiles = "\n".join(top_half[:first_split])
+            uc_and_ut = "\n".join(top_half[first_split])
+            ut_index = lines[first_split].index("Unit Type")
+            _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index)[0]
+
+            bottom_half = "\n".join(lines[second_split:])
+            # TODO: make this determine the optimal width for this split
+            sectional_bottom_half = text_utils.split_into_columns_at_divider(bottom_half,
+                                                                             lines[second_split].index("Special Rules"),
+                                                                             debug_print_level=2)
+            _, wg, sr, _ = sectional_bottom_half[0]
+            if len(sectional_bottom_half) > 1:
+                _, _, _, self.special_rules_text = sectional_bottom_half[1]
+
+            return "".join(
+                [profiles, uc, ut, wg, sr]
+            )
+        else:
+            page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=1)[0]
+
+            # If a datasheet, it should have two columns in the center of the page.
+            if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
+                return False  # Not a datasheet
+            rules_text = col_1_text if self.book.system.game.ProfileLocator in col_1_text else col_2_text
+            flavor_text = col_2_text if self.book.system.game.ProfileLocator in col_2_text else col_1_text
+
+            rules_text = page_header + rules_text
 
         if num_units == 2:  # To handle, don't split if there are two stat lines with "Note" in between.
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
@@ -89,7 +150,7 @@ class PdfPage(Page):
             return
 
         if num_units > 3:
-            print_styled("There are 3 units on this page:",STYLES.RED)
+            print_styled("There are 3 units on this page:", STYLES.RED)
             print(self.raw_text)
             raise NotImplemented("Have not yet handled 3 units on a page")
 
@@ -144,6 +205,7 @@ class PdfPage(Page):
 
     def process_unit(self, unit_text):
         print_styled("Raw Unit:", STYLES.DARKCYAN)
+        print_styled(unit_text, STYLES.CYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
         for line in unit_text.split("\n"):
