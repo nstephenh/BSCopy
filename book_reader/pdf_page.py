@@ -131,7 +131,7 @@ class PdfPage(Page):
             rules_text = "".join([profiles, uc, ut, bottom_half])
 
             if rules_text:
-                self.units_text = [self.get_text_unit(rules_text)]
+                self.units_text = [self.cleanup_unit_text(rules_text)]
             return
         else:
             page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=0)[0]
@@ -146,7 +146,7 @@ class PdfPage(Page):
 
         if num_units == 2:  # To handle, don't split if there are two stat lines with "Note" in between.
             unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
-            self.units_text = [self.get_text_unit(unit_1), self.get_text_unit(unit_2)]
+            self.units_text = [self.cleanup_unit_text(unit_1), self.cleanup_unit_text(unit_2)]
             return
 
         if num_units > 3:
@@ -154,13 +154,18 @@ class PdfPage(Page):
             print(self.raw_text)
             raise NotImplemented("Have not yet handled 3 units on a page")
 
-        self.units_text = [self.get_text_unit(rules_text)]
+        self.units_text = [self.cleanup_unit_text(rules_text)]
 
-    def get_text_unit(self, rules_text):
+    def cleanup_unit_text(self, rules_text):
+        """
+        Take the rules text from the page and clean it up.
+        :param rules_text:
+        :return:
+        """
         profile_locator = self.game.ProfileLocator
 
-        if not self.game.MIDDLE_IN_2_COLUMN:  # This block is for heresy, which ends with the special rules section
-            if self.game.ENDS_AFTER_SPECIAL_RULES:
+        if not self.game.MIDDLE_IN_2_COLUMN:  # This block is for the old world handling,
+            if self.game.ENDS_AFTER_SPECIAL_RULES:  # which ends with the special rules section
                 rules_text, self.special_rules_text = split_after_header(rules_text, "Special Rules:")
             return rules_text
 
@@ -170,7 +175,7 @@ class PdfPage(Page):
             print(f"Could not split at {profile_locator}")
             return  # If this datasheet doesn't have Unit composition, something is wrong
 
-        print_styled("Upper Half", STYLES.GREEN)
+        # print_styled("Upper Half", STYLES.GREEN)
         _, upper_half, wargear_and_on = split_at_header("Wargear", upper_half, header_at_end_of_line=False)
 
         # Go through sections in reverse order now:
@@ -183,10 +188,10 @@ class PdfPage(Page):
         if end_of_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc
             self.special_rules_text = "\n".join(lines[end_of_bullets:])
             wargear_and_on = "\n".join(lines[:end_of_bullets])
-            print_styled(f"Lines from wargear and special rules + the following sections: {headers}", STYLES.GREEN)
-            print(wargear_and_on)
-            print_styled("Special Rules", STYLES.GREEN)
-            print(self.special_rules_text)
+            # print_styled(f"Lines from wargear and special rules + the following sections: {headers}", STYLES.GREEN)
+            # print(wargear_and_on)
+            # print_styled("Special Rules", STYLES.GREEN)
+            # print(self.special_rules_text)
 
         # At this point wargear and on no longer has any special rules or profiles.
         # progressively split wargear and on in reverse order, till we get back up to just the wargear and special rules
@@ -196,8 +201,8 @@ class PdfPage(Page):
             if was_split:
                 header_sections[header] = content
 
-        print_styled("Upper Half without any special rules text", STYLES.GREEN)
-        print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
+        # print_styled("Upper Half without any special rules text", STYLES.GREEN)
+        # print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
 
         # If special rules, split wargear_and_on at that position
         # instead of using the find column and split there code.
@@ -217,7 +222,6 @@ class PdfPage(Page):
             [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
                                                   header_sections.keys()]
         )
-        print(new_text)
         return new_text
 
     def split_before_line_before_statline(self, raw_text):
@@ -240,7 +244,7 @@ class PdfPage(Page):
         return raw_text, ""
 
     def process_unit(self, unit_text):
-        print_styled("Raw Unit:", STYLES.DARKCYAN)
+        print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
         print_styled(unit_text, STYLES.CYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
@@ -260,7 +264,6 @@ class PdfPage(Page):
         lines = unit_text.split("\n")
         profiles_end = None
         for line_number, line in enumerate(lines):
-            print(line)
             if in_table and line.startswith("Note:"):
                 print("Note line detected: " + line)
                 stats[profile_index] += [line.split("Note:")[1]]
