@@ -292,20 +292,27 @@ class PdfPage(Page):
         # Then, get the table out of the header.
         num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
         in_table = False
+        in_note = False
         profile_index = -1
         lines = unit_text.split("\n")
         profiles_end = None
         for line_number, line in enumerate(lines):
+            print(f"{line}, In Table: {in_table}, In Note: {in_note}")
+            if self.does_line_contain_profile_header(line):
+                in_table = True
+                in_note = False  # Note has ended
+                continue
             if in_table and line.startswith("Note:"):
                 print("Note line detected: " + line)
                 stats[profile_index] += [line.split("Note:")[1]]
+                in_note = True
                 continue
+            if in_note:
+                stats[profile_index][-1] += " " + line
             if line.strip() == "" or line.startswith(self.game.ProfileLocator):
                 profiles_end = line_number
                 break
-            if self.does_line_contain_profile_header(line):
-                in_table = True
-                continue
+
             if in_table:
                 cells = line.split()
                 if len(cells) < num_data_cells:
