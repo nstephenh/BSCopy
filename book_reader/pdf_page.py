@@ -199,16 +199,22 @@ class PdfPage(Page):
         print_styled("Upper Half without any special rules text", STYLES.GREEN)
         print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
 
-        # Consider: if special rules, split wargear_and_on at that position
+        # If special rules, split wargear_and_on at that position
         # instead of using the find column and split there code.
-        # Now that it's just wargear and or special rules split it here.
-        _, col1, col2, _ = \
-            split_into_columns(wargear_and_on, debug_print_level=0)[0]
+        wargear = wargear_and_on  # Default, assume no special rules and this is just wargear.
+        special_rules_list = ""
+        if "Special Rules" in wargear_and_on:
+            sr_row_index = text_utils.get_index_of_line_with_headers(wargear_and_on, "Special Rules")
+            sr_col_index = wargear_and_on.splitlines()[sr_row_index].index("Special Rules")
+
+            # At this point, wargear and on is just wargear and special rules,
+            # So we can split it with our two-column split code.
+            _, wargear, special_rules_list, _ = \
+                text_utils.split_into_columns_at_divider(wargear_and_on, sr_col_index, debug_print_level=0)[0]
 
         # Now lets put everything together:
-        print_styled("Reconstructed Datasheet", STYLES.GREEN)
         new_text = "".join(
-            [profiles, upper_half, col1, col2] + [header_sections[header] for header in
+            [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
                                                   header_sections.keys()]
         )
         print(new_text)
