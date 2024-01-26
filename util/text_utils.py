@@ -326,9 +326,12 @@ def get_index_of_line_with_headers(text, stagger_row_headers):
                     return index
 
 
-def un_justify(text, index):
+def un_justify(text):
+    index = None
     new_text_array = []
     for line in text.splitlines():
+        if index is None and not line.strip() == "":
+            index = len(line) - len(line.lstrip())
         if len(line) < index:
             new_text_array.append("")
         else:

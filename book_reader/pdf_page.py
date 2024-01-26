@@ -100,9 +100,9 @@ class PdfPage(Page):
             if left_sidebar_divider_index:  # Left flavor text
                 _, flavor_text, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
                                                                                          left_sidebar_divider_index,
-                                                                                         debug_print_level=1)[0]
+                                                                                         debug_print_level=0)[0]
             else:  # Right flavor text, column detection should work.
-                page_header, rules_text, flavor_text, _ = split_into_columns(self.raw_text, debug_print_level=1)[0]
+                page_header, rules_text, flavor_text, _ = split_into_columns(self.raw_text, debug_print_level=0)[0]
                 rules_text = page_header + rules_text
 
             line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
@@ -110,37 +110,32 @@ class PdfPage(Page):
             lines = rules_text.splitlines()
 
             top_half = "\n".join(lines[:line_with_wargear_header])
-            line_with_uc = text_utils.get_index_of_line_with_headers(top_half,
-                                                                     ["Unit Composition", "Unit Type"])
-            print(top_half)
-            if left_sidebar_divider_index:
-                top_half = text_utils.un_justify(top_half, lines[line_with_uc].index("Unit Composition"))
-
-            profiles = "\n".join(top_half[:line_with_uc])
-            uc_and_ut = "\n".join(top_half[line_with_uc])
-            ut_index = lines[line_with_uc].index("Unit Type")
-            _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index)[0]
-
             bottom_half = "\n".join(lines[line_with_wargear_header:])
 
-            line_with_sr_header = line_with_wargear_header
-            if "Special Rules" not in lines[line_with_sr_header]:
-                line_with_sr_header = text_utils.get_index_of_line_with_headers(rules_text,
-                                                                                ["Special Rules"])
+            if left_sidebar_divider_index:
+                top_half = text_utils.un_justify(top_half)
 
-            sectional_bottom_half = text_utils.split_into_columns_at_divider(bottom_half,
-                                                                             lines[line_with_sr_header].index(
-                                                                                 "Special Rules"),
-                                                                             debug_print_level=2)
-            _, wg, sr, _ = sectional_bottom_half[0]
-            if len(sectional_bottom_half) > 1:
-                _, _, _, self.special_rules_text = sectional_bottom_half[1]
+            unit_composition_index = text_utils.get_index_of_line_with_headers(top_half,
+                                                                               ["Unit Composition", "Unit Type"])
+            lines = top_half.splitlines()
+            profiles = "\n".join(lines[:unit_composition_index])
+            uc_and_ut = "\n".join(lines[unit_composition_index:])
 
-            return "".join(
-                [profiles, uc, ut, wg, sr]
-            )
+            if left_sidebar_divider_index:
+                uc_and_ut = text_utils.un_justify(uc_and_ut)
+
+            ut_index = uc_and_ut.index("Unit Type")
+
+            _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index,
+                                                                    debug_print_level=0)[0]
+
+            rules_text = "".join([profiles, uc, ut, bottom_half])
+
+            if rules_text:
+                self.units_text = [self.get_text_unit(rules_text)]
+            return
         else:
-            page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=1)[0]
+            page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=0)[0]
 
             # If a datasheet, it should have two columns in the center of the page.
             if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
