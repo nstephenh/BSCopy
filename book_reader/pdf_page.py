@@ -142,17 +142,51 @@ class PdfPage(Page):
 
             rules_text = page_header + rules_text
 
-        if num_units == 2:  # To handle, don't split if there are two stat lines with "Note" in between.
-            unit_1, unit_2 = self.split_before_line_before_statline(rules_text)
-            self.units_text = [self.cleanup_unit_text(unit_1), self.cleanup_unit_text(unit_2)]
+        if num_units > 1:  # There may be more than one unit, but there may not be.
+
+            self.units_text = [self.cleanup_unit_text(unit_text) for unit_text in self.find_multiple_units(rules_text)]
             return
 
-        if num_units > 3:
-            print_styled("There are 3 units on this page:", STYLES.RED)
-            print(self.raw_text)
-            raise NotImplemented("Have not yet handled 3 units on a page")
-
         self.units_text = [self.cleanup_unit_text(rules_text)]
+
+    def find_multiple_units(self, rules_text):
+        unit_text = [[]]  # 2D array containing lines for each unit.
+        unit_counter = 0
+        in_table = False  # In table starts when we start a table and ends when we hit troop type,
+        # so we get all the "Note" or "Notes" in the table.
+        for line in rules_text.splitlines():
+            # If we come across a stat block, check the previous lines to see if it was a unit.
+            if not in_table and self.does_line_contain_profile_header(line):
+                # Check the previous line, it should either be a unit name, or "Note:"
+                last_line = ""
+                while last_line.strip() == "":
+                    last_line = unit_text[unit_counter].pop() + "\n" + last_line  # Preserve empty lines.
+
+                #  If this ended in a colon, it is not the start of a unit, the previous line is
+                # "When taken as a character mount, <unit> has the following profile:"
+                if not last_line.strip().endswith(":"):
+                    # If this is a unit, increment the counter and set us as in a table.
+                    in_table = True
+                    unit_counter += 1
+                    unit_text.append([])
+                # Append the line we popped, either to the old entry or the new one.
+                unit_text[unit_counter].append(last_line)
+                unit_text[unit_counter].append(line)  # and append our newly processed line as we'll skip the loops one.
+                continue
+            if in_table:
+                if self.game.ProfileLocator in line:
+                    in_table = False  # The table only ends with "Troop Type:" and not with "Notes" or any other text.
+
+            # Always then append the line we just processed.
+            unit_text[unit_counter].append(line)
+
+        # The first entry in unit text should ideally end up being an empty array,
+        # as it had the name and then was popped out.
+        unit_text = ["\n".join(unit_lines) for unit_lines in unit_text[1:]]
+        # for unit in unit_text:
+        #     print_styled("Separated Unit:", STYLES.GREEN)
+        #     print(unit)
+        return unit_text
 
     def cleanup_unit_text(self, rules_text):
         """
@@ -218,7 +252,7 @@ class PdfPage(Page):
         # Now lets put everything together:
         new_text = "".join(
             [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
-                                                  header_sections.keys()]
+                                                                   header_sections.keys()]
         )
         return new_text
 
