@@ -13,7 +13,6 @@ class PdfPage(Page):
 
     def __init__(self, book, raw_text, page_number, prev_page_type=None):
         super().__init__(book, page_number)
-        self.special_rules_text = None
         self.raw_text = raw_text
         self.page_number = page_number
         if self.raw_text.strip() == "":
@@ -160,8 +159,7 @@ class PdfPage(Page):
     def get_text_unit(self, rules_text):
         profile_locator = self.game.ProfileLocator
 
-        # First, try and split this datasheet into parts based on known headers
-        if not self.game.MIDDLE_IN_2_COLUMN:
+        if not self.game.MIDDLE_IN_2_COLUMN:  # This block is for heresy, which ends with the special rules section
             if self.game.ENDS_AFTER_SPECIAL_RULES:
                 rules_text, self.special_rules_text = split_after_header(rules_text, "Special Rules:")
             return rules_text
@@ -170,20 +168,48 @@ class PdfPage(Page):
         was_split, profiles, upper_half = split_at_header(profile_locator, upper_half, header_at_end_of_line=False)
         if not was_split:
             print(f"Could not split at {profile_locator}")
-            return  # If this datasheet doesn't have "Unit composition, something is wrong
+            return  # If this datasheet doesn't have Unit composition, something is wrong
 
-        # Access points comes before Options, though a sheet is not guaranteed to have either.
-        was_split, upper_half, lower_half = split_at_header("Access Points", upper_half)
-        if not was_split:
-            _, upper_half, lower_half = split_at_header(self.book.system.game.OPTIONS, upper_half)
+        print_styled("Upper Half", STYLES.GREEN)
+        _, upper_half, wargear_and_on = split_at_header("Wargear", upper_half, header_at_end_of_line=False)
 
-        upper_half, comp_and_wargear, type_and_special_rules, _ = split_into_columns(upper_half, debug_print_level=0)[0]
+        # Go through sections in reverse order now:
+        headers = ["Dedicated Transport:",
+                   "Access Points:",
+                   "Options:"
+                   ]
+        end_of_bullets = text_utils.get_first_non_list_or_header_line(wargear_and_on, headers)
+        lines = wargear_and_on.splitlines()
+        if end_of_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc
+            self.special_rules_text = "\n".join(lines[end_of_bullets:])
+            wargear_and_on = "\n".join(lines[:end_of_bullets])
+            print_styled(f"Lines from wargear and special rules + the following sections: {headers}", STYLES.GREEN)
+            print(wargear_and_on)
+            print_styled("Special Rules", STYLES.GREEN)
+            print(self.special_rules_text)
+
+        # At this point wargear and no longer has any special rules or profiles.
+        upper_half = "\n".join(upper_half.splitlines() + wargear_and_on.splitlines())
+        print_styled("Upper Half without any special rules text", STYLES.GREEN)
+        print(upper_half)
+
+        # progressively split wargear and on in reverse order, till we get back up to just the wagear and special rules
+        header_sections = {}
+        for header in reversed(headers):
+            was_split, wargear_and_on, content = split_at_header(header, wargear_and_on)
+            if was_split:
+                header_sections[header] = content
+
+        upper_half, comp_and_wargear, type_and_special_rules, _ = \
+            split_into_columns(wargear_and_on, debug_print_level=0)[0]
 
         # Now lets put everything together:
         print_styled("Reconstructed Datasheet", STYLES.GREEN)
-        return "".join(
-            [profiles, comp_and_wargear, type_and_special_rules, upper_half, lower_half]
+        new_text = "".join(
+            [profiles, comp_and_wargear, type_and_special_rules, upper_half] + [header_sections[header] for header in
+                                                                                header_sections.keys()]
         )
+        return new_text
 
     def split_before_line_before_statline(self, raw_text):
         """

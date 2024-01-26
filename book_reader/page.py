@@ -24,6 +24,7 @@ class Page:
         self.units_text: list[str] = []
         self.units: list[RawUnit] = []
         self.page_type = self.get_configured_page_type()
+        self.special_rules_text = None
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
@@ -43,7 +44,7 @@ class Page:
             'Units': [
                 unit.serialize() for unit in self.units
             ],
-            # "Special Rules Text": self.special_rules_text,
+            "Special Rules Text": self.special_rules_text,
             'Special Rules': self.special_rules_dict
         }
 

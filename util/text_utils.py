@@ -283,6 +283,15 @@ def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool
 
 
 def split_after_header(raw_text, header):
+    """
+    Splits after an indented header, such as:
+    Special Rules:  Some items
+                    More items
+    Will split out after more items, and not just on the line "Special Rules"
+    :param raw_text:
+    :param header:
+    :return:
+    """
     header_spacing = 0
     lines = raw_text.split("\n")
     for index, line in enumerate(lines):
@@ -337,3 +346,17 @@ def un_justify(text):
         else:
             new_text_array.append(line[index:])
     return "\n".join(new_text_array)
+
+
+def get_first_non_list_or_header_line(text, headers):
+    """
+    Get the first non-list entry or header line after the initial line.
+    :param text:
+    :param headers:
+    :return:
+    """
+    for index, line in enumerate(text.splitlines()[1:]):
+        if line.strip() == "":
+            continue
+        if not (line.lstrip()[0] in bullet_options or line.strip() in headers):
+            return index + 1
