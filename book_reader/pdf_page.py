@@ -188,27 +188,30 @@ class PdfPage(Page):
             print_styled("Special Rules", STYLES.GREEN)
             print(self.special_rules_text)
 
-        # At this point wargear and no longer has any special rules or profiles.
-        upper_half = "\n".join(upper_half.splitlines() + wargear_and_on.splitlines())
-        print_styled("Upper Half without any special rules text", STYLES.GREEN)
-        print(upper_half)
-
-        # progressively split wargear and on in reverse order, till we get back up to just the wagear and special rules
+        # At this point wargear and on no longer has any special rules or profiles.
+        # progressively split wargear and on in reverse order, till we get back up to just the wargear and special rules
         header_sections = {}
         for header in reversed(headers):
             was_split, wargear_and_on, content = split_at_header(header, wargear_and_on)
             if was_split:
                 header_sections[header] = content
 
-        upper_half, comp_and_wargear, type_and_special_rules, _ = \
+        print_styled("Upper Half without any special rules text", STYLES.GREEN)
+        print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
+
+        # Consider: if special rules, split wargear_and_on at that position
+        # instead of using the find column and split there code.
+        # Now that it's just wargear and or special rules split it here.
+        _, col1, col2, _ = \
             split_into_columns(wargear_and_on, debug_print_level=0)[0]
 
         # Now lets put everything together:
         print_styled("Reconstructed Datasheet", STYLES.GREEN)
         new_text = "".join(
-            [profiles, comp_and_wargear, type_and_special_rules, upper_half] + [header_sections[header] for header in
-                                                                                header_sections.keys()]
+            [profiles, upper_half, col1, col2] + [header_sections[header] for header in
+                                                  header_sections.keys()]
         )
+        print(new_text)
         return new_text
 
     def split_before_line_before_statline(self, raw_text):
