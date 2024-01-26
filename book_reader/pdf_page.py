@@ -91,12 +91,12 @@ class PdfPage(Page):
         if could_contain_stagger:
             print("Has Stagger!")
             # TODO make this more generic
-            second_split = text_utils.get_index_of_line_with_headers(self.raw_text,
-                                                                     ["Wargear", "Special Rules"])
+            line_with_wargear_header = text_utils.get_index_of_line_with_headers(self.raw_text,
+                                                                                 ["Wargear"])
 
             lines = self.raw_text.splitlines()
 
-            left_sidebar_divider_index = lines[second_split].index("Wargear")
+            left_sidebar_divider_index = lines[line_with_wargear_header].index("Wargear")
             if left_sidebar_divider_index:  # Left flavor text
                 _, flavor_text, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
                                                                                          left_sidebar_divider_index,
@@ -105,26 +105,32 @@ class PdfPage(Page):
                 page_header, rules_text, flavor_text, _ = split_into_columns(self.raw_text, debug_print_level=1)[0]
                 rules_text = page_header + rules_text
 
-            second_split = text_utils.get_index_of_line_with_headers(rules_text,
-                                                                     ["Wargear", "Special Rules"])
+            line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
+                                                                                 ["Wargear"])
             lines = rules_text.splitlines()
 
-            top_half = "\n".join(lines[:second_split])
-            first_split = text_utils.get_index_of_line_with_headers(top_half,
-                                                                    ["Unit Composition", "Unit Type"])
+            top_half = "\n".join(lines[:line_with_wargear_header])
+            line_with_uc = text_utils.get_index_of_line_with_headers(top_half,
+                                                                     ["Unit Composition", "Unit Type"])
             print(top_half)
             if left_sidebar_divider_index:
-                top_half = text_utils.un_justify(top_half, lines[first_split].index("Unit Composition"))
+                top_half = text_utils.un_justify(top_half, lines[line_with_uc].index("Unit Composition"))
 
-            profiles = "\n".join(top_half[:first_split])
-            uc_and_ut = "\n".join(top_half[first_split])
-            ut_index = lines[first_split].index("Unit Type")
+            profiles = "\n".join(top_half[:line_with_uc])
+            uc_and_ut = "\n".join(top_half[line_with_uc])
+            ut_index = lines[line_with_uc].index("Unit Type")
             _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index)[0]
 
-            bottom_half = "\n".join(lines[second_split:])
-            # TODO: make this determine the optimal width for this split
+            bottom_half = "\n".join(lines[line_with_wargear_header:])
+
+            line_with_sr_header = line_with_wargear_header
+            if "Special Rules" not in lines[line_with_sr_header]:
+                line_with_sr_header = text_utils.get_index_of_line_with_headers(rules_text,
+                                                                                ["Special Rules"])
+
             sectional_bottom_half = text_utils.split_into_columns_at_divider(bottom_half,
-                                                                             lines[second_split].index("Special Rules"),
+                                                                             lines[line_with_sr_header].index(
+                                                                                 "Special Rules"),
                                                                              debug_print_level=2)
             _, wg, sr, _ = sectional_bottom_half[0]
             if len(sectional_bottom_half) > 1:
