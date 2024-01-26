@@ -22,3 +22,9 @@ class Game:
     FIRST_PARAGRAPH_IS_FLAVOR = False
 
     COULD_HAVE_STAGGERED_HEADERS = False
+
+    UNIT_SUBHEADINGS: list[str] = []  # MUST BE IN ORDER
+
+    SUBHEADINGS_ON_SAME_LINE = False
+
+    SUBHEADING_SEPARATORS: str = None  # Bullets, commas, or Commas and "and"

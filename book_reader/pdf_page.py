@@ -328,7 +328,13 @@ class PdfPage(Page):
                                                                stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
 
-        constructed_unit.unit_text = "\n".join(lines[profiles_end:])
+        unit_text = "\n".join(lines[profiles_end:])
+
+        # From the bottom up, split out the individual sections
+        for header in reversed(self.game.UNIT_SUBHEADINGS):
+            was_split, unit_text, content = split_at_header(header, unit_text, header_at_end_of_line=False)
+            if was_split:
+                constructed_unit.subheadings[header] = content[len(header):] # Cut the header label off.
 
         self.units.append(constructed_unit)
 

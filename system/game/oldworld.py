@@ -26,3 +26,10 @@ class OldWorld(Game):
 
     FIRST_PARAGRAPH_IS_FLAVOR = True
 
+    UNIT_SUBHEADINGS: list[str] = ["Troop Type:",
+                                   "Base Size:",
+                                   "Unit Size:",
+                                   "Armour Value:",
+                                   "Equipment:",
+                                   "Options:",
+                                   "Special Rules:", ]

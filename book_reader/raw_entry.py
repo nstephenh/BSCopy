@@ -32,10 +32,10 @@ class RawUnit:
         self.points = points
         self.model_profiles: list[RawProfile] = []
         self.special_rules: list[str] = []
-        self.unit_text: str = None
+        self.subheadings: {str: str} = {}
 
     def serialize(self) -> dict:
         return {'Name': self.name, 'Points': self.points,
                 'Profiles': [profile.serialize() for profile in self.model_profiles],
-                'Unit Text': self.unit_text
+                'Subheadings': self.subheadings,
                 }
