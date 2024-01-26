@@ -296,19 +296,11 @@ def split_after_header(raw_text, header):
     lines = raw_text.split("\n")
     for index, line in enumerate(lines):
         if line.startswith(header):
-            line = line[len(header):]
-            for i, char in enumerate(line):
-                if char != " ":
-                    header_spacing = i + len(header)
-                    break
+            line = get_line_indent(line, len(header))
             continue
         if header_spacing:
             # Line is indented as part of table
-            line_spacing = 0
-            for i, char in enumerate(line):
-                if char != " ":
-                    line_spacing = i
-                    break
+            line_spacing = get_line_indent(line)
             if line_spacing != header_spacing:
                 return "\n".join(lines[:index]), "\n".join(lines[index:])
     return raw_text, ""
@@ -351,12 +343,23 @@ def un_justify(text):
 def get_first_non_list_or_header_line(text, headers):
     """
     Get the first non-list entry or header line after the initial line.
-    :param text:
-    :param headers:
+    If the indent is the same, it counts it as a continuation of the existing entry.
+    :param text: text to search
+    :param headers: list of headers
     :return:
     """
+    last_indent = 0
     for index, line in enumerate(text.splitlines()[1:]):
         if line.strip() == "":
             continue
-        if not (line.lstrip()[0] in bullet_options or line.strip() in headers):
+        if not (line.lstrip()[0] in bullet_options
+                or line.strip() in headers
+                or last_indent == get_line_indent(line)):
             return index + 1
+        last_indent = get_line_indent(line, 1)
+
+
+def get_line_indent(line, offset=0):
+    for i, char in enumerate(line[offset:]):  # Skip the bullet
+        if char != " ":
+            return i + offset
