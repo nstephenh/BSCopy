@@ -13,3 +13,5 @@ class Heresy(Game):
     MIDDLE_IN_2_COLUMN = True
 
     FIRST_PARAGRAPH_IS_FLAVOR = True
+
+    COULD_HAVE_STAGGERED_HEADERS = True  # In some fan supplements, the headers may not line up because of images.

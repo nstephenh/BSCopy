@@ -85,9 +85,7 @@ class PdfPage(Page):
         if num_units == 0:
             return
 
-        # TODO: Check for Has Excessive Stagger Condition:
-        could_contain_stagger = True
-        if could_contain_stagger:
+        if self.game.COULD_HAVE_STAGGERED_HEADERS:
             print("Has Stagger!")
             # TODO make this more generic
             line_with_wargear_header = text_utils.get_index_of_line_with_headers(self.raw_text,
