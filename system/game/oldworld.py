@@ -31,8 +31,8 @@ class OldWorld(Game):
     UNIT_SUBHEADINGS: list[str] = ["Troop Type:",
                                    "Base Size:",
                                    "Unit Size:",
-                                   "Magic:",
                                    "Armour Value:",
                                    "Equipment:",
+                                   "Magic:",
                                    "Options:",
                                    "Special Rules:", ]
