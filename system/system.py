@@ -166,7 +166,7 @@ class System:
         if Actions.DUMP_TO_JSON in actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
                       encoding='utf-8') as outfile:
-                outfile.write(json.dumps(export_dict, ensure_ascii=False))
+                outfile.write(json.dumps(export_dict, ensure_ascii=False, indent=2))
 
     def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
         # First look for existing special rules
