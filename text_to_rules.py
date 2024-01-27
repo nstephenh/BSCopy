@@ -27,6 +27,9 @@ def text_to_rules_dict(text, first_p_is_flavor):
         line = line.strip()
         if not line:
             continue
+        if line.strip().isdigit():
+            # Probably a page number
+            continue
         if len(line) < special_rule_length_threshold and not (line.endswith('.')
                                                               or line.endswith("…")
                                                               or line[0] in bullet_options):
