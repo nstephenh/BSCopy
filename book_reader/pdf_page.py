@@ -311,12 +311,13 @@ class PdfPage(Page):
                 stats[profile_index] += [line.split("Note: ")[1]]
                 in_note = True
                 continue
-            if in_note:
-                stats[profile_index][-1] += " " + line
+
             if line.startswith(self.game.ProfileLocator):
                 profiles_end = line_number
                 break
-
+            if in_note:
+                stats[profile_index][-1] += " " + line
+                continue
             if in_table:
                 cells = line.split()
                 if len(cells) < num_data_cells:
