@@ -52,7 +52,7 @@ class Book:
             page_offset = 0  # Consider pulling default page offset from book json.
             for page_counter, page_text in enumerate(pdf.split('')):
                 if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
-                    self.try_get_page_offset(page_text, page_counter)
+                    page_offset = self.try_get_page_offset(page_text, page_counter)
                 if page_offset:
                     page_number = page_counter + page_offset
                     # print(f"Page number is {page_number}, from {page_counter} + {page_offset}")
