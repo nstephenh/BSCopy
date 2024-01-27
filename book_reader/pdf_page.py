@@ -371,6 +371,8 @@ class PdfPage(Page):
         name_prefix = ""
         profile_index = -1
         sr_col_index = 0
+        name_col_index = 0
+
         for line in self.special_rules_text.split("\n"):
             print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if text_utils.does_line_contain_header(line, ["R", "S", "Special Rules", "AP"]):
@@ -400,10 +402,17 @@ class PdfPage(Page):
                     # The best we can do to detect the end of note/notes is the end of a sentence.
                     in_note = False
                     in_table = False
+                    name_col_index = 0
                 continue
             if line.strip() == "":
                 in_table = False
                 in_note = False
+                name_col_index = 0
+            if name_col_index and line[:name_col_index].strip() != "":
+                # If this line is before the first letter of the name column, the table has probably ended.
+                in_table = False
+                in_note = False
+                name_col_index = 0
             if in_table:
                 name_and_stats = line
                 special_rules = ""
@@ -443,7 +452,8 @@ class PdfPage(Page):
                     stats_for_line = [cells[-5],
                                       " ".join(cells[-4:-2]),
                                       " ".join(cells[-2:]), ]
-
+                if name and not name_col_index:
+                    name_col_index = line.index(name[0])
                 if name_prefix:
                     name = [name_prefix + " - "] + name
                 stats_for_line.append(special_rules)
