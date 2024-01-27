@@ -28,3 +28,5 @@ class Game:
     SUBHEADINGS_ON_SAME_LINE = False
 
     SUBHEADING_SEPARATORS: str = None  # Bullets, commas, or Commas and "and"
+
+    COMBINED_ARTILLERY_PROFILE = False

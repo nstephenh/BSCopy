@@ -18,6 +18,8 @@ class OldWorld(Game):
 
     WEAPON_PROFILE_TABLE_HEADERS = ["R", "S", "AP", "Special Rules"]
 
+    COMBINED_ARTILLERY_PROFILE = True
+
     OPTIONS = "Options:"
 
     MIDDLE_IN_2_COLUMN = False

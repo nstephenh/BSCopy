@@ -10,6 +10,8 @@ class Heresy(Game):
 
     UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Sv"]
 
+    WEAPON_PROFILE_TABLE_HEADERS = ["Range", "Str", "AP", "Type"]
+
     MIDDLE_IN_2_COLUMN = True
 
     FIRST_PARAGRAPH_IS_FLAVOR = True

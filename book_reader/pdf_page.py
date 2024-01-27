@@ -1,5 +1,3 @@
-import os
-
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile
@@ -367,6 +365,8 @@ class PdfPage(Page):
         if not len(self.game.WEAPON_PROFILE_TABLE_HEADERS):
             raise Exception("No weapon profile headers defined")
 
+        last_header = self.game.WEAPON_PROFILE_TABLE_HEADERS[-1]
+
         in_table = False
         in_note = False
         name_prefix = ""
@@ -382,7 +382,7 @@ class PdfPage(Page):
             if text_utils.does_line_contain_header(line, self.game.WEAPON_PROFILE_TABLE_HEADERS):
                 if not line.lstrip().startswith(self.game.WEAPON_PROFILE_TABLE_HEADERS[0]):
                     name_prefix = line.split(f" {self.game.WEAPON_PROFILE_TABLE_HEADERS[0]} ")[0].strip()
-                sr_col_index = line.index("Special Rules")
+                sr_col_index = line.index(last_header)
 
                 in_table = True
                 in_note = False  # A previous note has ended
@@ -426,7 +426,7 @@ class PdfPage(Page):
                 name = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
                 stats_for_line.append(special_rules)
-                if ")" in cells[-1]:  # Special handling for artillery
+                if ")" in cells[-1] and self.game.COMBINED_ARTILLERY_PROFILE:  # Special handling for artillery
                     print(cells)
                     name = cells[:-(num_data_cells + 2)]
 
