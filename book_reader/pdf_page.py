@@ -482,5 +482,7 @@ class PdfPage(Page):
         # print(self.special_rules_text)
         # TODO: Handle extraneous lines starting in '*Note' that should be part of the unit.
         # TODO: If there's a weapon profile in one of or before the special rules, pull it out.
-        self.special_rules_dict = text_to_rules_dict(self.special_rules_text, self.game.FIRST_PARAGRAPH_IS_FLAVOR)
+        first_paragraph_is_flavor = self.game.IN_DATASHEET_FIRST_PARAGRAPH_IS_FLAVOR if len(self.units) \
+            else self.game.FIRST_PARAGRAPH_IS_FLAVOR
+        self.special_rules_dict = text_to_rules_dict(self.special_rules_text, first_paragraph_is_flavor)
         # print(self.special_rules_dict)

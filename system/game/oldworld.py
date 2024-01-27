@@ -27,6 +27,8 @@ class OldWorld(Game):
     ENDS_AFTER_SPECIAL_RULES = True
 
     FIRST_PARAGRAPH_IS_FLAVOR = True
+    IN_DATASHEET_FIRST_PARAGRAPH_IS_FLAVOR = True
+
 
     UNIT_SUBHEADINGS: list[str] = ["Troop Type:",
                                    "Base Size:",
