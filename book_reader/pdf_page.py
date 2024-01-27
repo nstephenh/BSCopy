@@ -397,6 +397,9 @@ class PdfPage(Page):
                     in_note = False
                     in_table = False
                 continue
+            if line.strip() == "":
+                in_table = False
+                in_note = False
             if in_table:
                 name_and_stats = line
                 special_rules = ""
