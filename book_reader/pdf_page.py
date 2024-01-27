@@ -355,15 +355,17 @@ class PdfPage(Page):
 
         names = []
         stats = []
-        special_rules = []
 
         # The following is similar to the unit profile detection, but is likely worse at handling notes.
         # The best we can do to detect the end of note/notes is the end of a sentence, or the start of a new table.
         # If a line ends a sentence of a note, it'll unfortunately chop off the
 
-        num_data_cells = len(self.game.WEAPON_PROFILE_TABLE_HEADERS)
-        if num_data_cells == 0:
+        num_data_cells = len(self.game.WEAPON_PROFILE_TABLE_HEADERS) - 1
+        # Minus one as we deal with special rules separately
+
+        if not len(self.game.WEAPON_PROFILE_TABLE_HEADERS):
             raise Exception("No weapon profile headers defined")
+
         in_table = False
         in_note = False
         name_prefix = ""
@@ -397,12 +399,17 @@ class PdfPage(Page):
                 continue
             if in_table:
                 name_and_stats = line
+                special_rules = ""
                 if len(line) > sr_col_index:
                     name_and_stats = line[:sr_col_index]
                     if name_and_stats.strip() == "":
-                        special_rules[profile_index] += line[sr_col_index:]
+                        stats[profile_index][-1] += line[sr_col_index:]
                         continue  # Not a full line, just a continuation of special rules.
-                    special_rules.append(line[sr_col_index:])
+                    special_rules = line[sr_col_index:]
+
+                print("Name and stats: ", name_and_stats)
+                print("Special Rules:  ", special_rules)
+
                 # Name and stats
                 cells = name_and_stats.split()
                 if len(cells) < num_data_cells:
@@ -414,6 +421,7 @@ class PdfPage(Page):
 
                 name = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
+                stats_for_line.append(special_rules)
                 if ")" in cells[-1]:  # Special handling for artillery
                     print(cells)
                     name = cells[:-(num_data_cells + 2)]
@@ -437,7 +445,7 @@ class PdfPage(Page):
         for index, name in enumerate(names):
             name = ' '.join(name)
 
-            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Notes'],
+            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS + ['Notes'],
                                                                stats[index])))
             self.weapons.append(raw_profile)
 
