@@ -352,8 +352,7 @@ class PdfPage(Page):
 
         non_weapon_lines = []
 
-        names = []
-        stats = []
+        weapons_dicts = []
 
         # The following is similar to the unit profile detection, but is likely worse at handling notes.
         # The best we can do to detect the end of note/notes is the end of a sentence, or the start of a new table.
@@ -388,11 +387,15 @@ class PdfPage(Page):
                 in_note = False  # A previous note has ended
                 continue
             if in_table and line.startswith("Notes:"):
-                stats[profile_index].append(line.split("Notes: ")[1])
+                weapons_dicts[profile_index]["Notes"] = line.split("Notes: ")[1]
+                in_note = True
+                continue
+            if in_table and line.startswith("Note:"):
+                weapons_dicts[profile_index]["Notes"] = line.split("Note: ")[1]
                 in_note = True
                 continue
             if in_note:
-                stats[profile_index][-1] += " " + line
+                weapons_dicts[profile_index]["Notes"] += " " + line
                 if line.rstrip().endswith("."):
                     # The best we can do to detect the end of note/notes is the end of a sentence.
                     in_note = False
@@ -407,7 +410,8 @@ class PdfPage(Page):
                 if len(line) > sr_col_index:
                     name_and_stats = line[:sr_col_index]
                     if name_and_stats.strip() == "":
-                        stats[profile_index][-1] += line[sr_col_index:]
+                        print(f"Profile index: {profile_index} Weapons dicts: {str(weapons_dicts)}")
+                        weapons_dicts[profile_index][last_header] += line[sr_col_index:]
                         continue  # Not a full line, just a continuation of special rules.
                     special_rules = line[sr_col_index:]
 
@@ -419,14 +423,20 @@ class PdfPage(Page):
                 if len(cells) < num_data_cells:
                     if profile_index < 0:  # partial row that's a continuation of the name
                         name_prefix += " " + name_and_stats.strip()
-                    else:  # partial row that's a continuation of a previous row
-                        names[profile_index] += cells
+                    else:  # partial row that's a continuation of a previous row's name
+                        weapons_dicts[profile_index]["Name"] += cells
                     continue
 
                 name = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
-                stats_for_line.append(special_rules)
-                if ")" in cells[-1] and self.game.COMBINED_ARTILLERY_PROFILE:  # Special handling for artillery
+                if cells[-num_data_cells][0] in ["B", "M"]:  # If Breath Weapon or Magical Attack, scoot it over one
+                    print(cells)
+                    name = cells[:-num_data_cells - 1]  # Shift over one
+                    stats_for_line = cells[-num_data_cells - 1:]  # Shift over one
+                    # This was cropped off the start of special rules, so re-append it
+                    special_rules = cells[-num_data_cells] + special_rules
+                if ")" in cells[-num_data_cells] and self.game.COMBINED_ARTILLERY_PROFILE:
+                    # Special handling for artillery
                     print(cells)
                     name = cells[:-(num_data_cells + 2)]
 
@@ -436,9 +446,11 @@ class PdfPage(Page):
 
                 if name_prefix:
                     name = [name_prefix + " - "] + name
-                names.append(name)
-                stats.append(stats_for_line)
+                stats_for_line.append(special_rules)
+                weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
+                                              stats_for_line)))
                 profile_index += 1
+                weapons_dicts[profile_index]["Name"] = name
             else:
                 in_table = False
                 in_note = False
@@ -446,11 +458,9 @@ class PdfPage(Page):
                 non_weapon_lines.append(line)
 
         # rejoin stats and name components.
-        for index, name in enumerate(names):
-            name = ' '.join(name)
-
-            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS + ['Notes'],
-                                                               stats[index])))
+        for weapon_as_dict in weapons_dicts:
+            name = ' '.join(weapon_as_dict.pop("Name"))  # Remove the name from the dict
+            raw_profile = RawProfile(name=name, stats=weapon_as_dict)
             self.weapons.append(raw_profile)
 
         self.special_rules_text = "\n".join(non_weapon_lines)
