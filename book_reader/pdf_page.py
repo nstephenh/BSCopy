@@ -20,8 +20,13 @@ class PdfPage(Page):
             return
         if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
             self.try_handle_units()
-        if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:  # If not a unit page, could be a page of special rules.
+        if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
+            # If not a unit page, could be a page of special rules.
             self.handle_special_rules_page(prev_page_type)
+        # TODO: Handle weapons page
+
+        # Pull out any special rules or profiles, either the main body of the page, or set from units.
+        self.process_weapon_profiles()
         self.process_special_rules()
 
     def try_handle_units(self):
@@ -322,6 +327,7 @@ class PdfPage(Page):
                 stats.append(cells[-num_data_cells:])
                 profile_index += 1
 
+        # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
             raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Note'],
@@ -334,9 +340,108 @@ class PdfPage(Page):
         for header in reversed(self.game.UNIT_SUBHEADINGS):
             was_split, unit_text, content = split_at_header(header, unit_text, header_at_end_of_line=False)
             if was_split:
-                constructed_unit.subheadings[header] = content[len(header):] # Cut the header label off.
+                constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
         self.units.append(constructed_unit)
+
+    def process_weapon_profiles(self):
+        if not self.special_rules_text:
+            return
+
+        print_styled("Unprocessed special rules Text:", STYLES.GREEN)
+        print_styled(self.special_rules_text, STYLES.YELLOW)
+
+        non_weapon_lines = []
+
+        names = []
+        stats = []
+        special_rules = []
+
+        # The following is similar to the unit profile detection, but is likely worse at handling notes.
+        # The best we can do to detect the end of note/notes is the end of a sentence, or the start of a new table.
+        # If a line ends a sentence of a note, it'll unfortunately chop off the
+
+        num_data_cells = len(self.game.WEAPON_PROFILE_TABLE_HEADERS)
+        if num_data_cells == 0:
+            raise Exception("No weapon profile headers defined")
+        in_table = False
+        in_note = False
+        name_prefix = ""
+        profile_index = -1
+        sr_col_index = 0
+        for line in self.special_rules_text.split("\n"):
+            print(f"{line}, In Table: {in_table}, In Note: {in_note}")
+            if text_utils.does_line_contain_header(line, ["R", "S", "Special Rules", "AP"]):
+                print("Malformed table line!")
+                self.weapons.append(RawProfile(name=f"Unable to read profile from {self.special_rules_text}", stats={}))
+                self.special_rules_text = "\n".join(line)
+                return
+            if text_utils.does_line_contain_header(line, self.game.WEAPON_PROFILE_TABLE_HEADERS):
+                if not line.lstrip().startswith(self.game.WEAPON_PROFILE_TABLE_HEADERS[0]):
+                    name_prefix = line.split(f" {self.game.WEAPON_PROFILE_TABLE_HEADERS[0]} ")[0].strip()
+                sr_col_index = line.index("Special Rules")
+
+                in_table = True
+                in_note = False  # A previous note has ended
+                continue
+            if in_table and line.startswith("Notes:"):
+                stats[profile_index].append(line.split("Notes: ")[1])
+                in_note = True
+                continue
+            if in_note:
+                stats[profile_index][-1] += " " + line
+                if line.rstrip().endswith("."):
+                    # The best we can do to detect the end of note/notes is the end of a sentence.
+                    in_note = False
+                    in_table = False
+                continue
+            if in_table:
+                name_and_stats = line
+                if len(line) > sr_col_index:
+                    name_and_stats = line[:sr_col_index]
+                    if name_and_stats.strip() == "":
+                        special_rules[profile_index] += line[sr_col_index:]
+                        continue  # Not a full line, just a continuation of special rules.
+                    special_rules.append(line[sr_col_index:])
+                # Name and stats
+                cells = name_and_stats.split()
+                if len(cells) < num_data_cells:
+                    if profile_index < 0:  # partial row that's a continuation of the name
+                        name_prefix += " " + name_and_stats.strip()
+                    else:  # partial row that's a continuation of a previous row
+                        names[profile_index] += cells
+                    continue
+
+                name = cells[:-num_data_cells]
+                stats_for_line = cells[-num_data_cells:]
+                if ")" in cells[-1]:  # Special handling for artillery
+                    print(cells)
+                    name = cells[:-(num_data_cells + 2)]
+
+                    stats_for_line = [cells[-5],
+                                      " ".join(cells[-4:-2]),
+                                      " ".join(cells[-2:]), ]
+
+                if name_prefix:
+                    name = [name_prefix + " - "] + name
+                names.append(name)
+                stats.append(stats_for_line)
+                profile_index += 1
+            else:
+                in_table = False
+                in_note = False
+                name_prefix = ""
+                non_weapon_lines.append(line)
+
+        # rejoin stats and name components.
+        for index, name in enumerate(names):
+            name = ' '.join(name)
+
+            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Notes'],
+                                                               stats[index])))
+            self.weapons.append(raw_profile)
+
+        self.special_rules_text = "\n".join(non_weapon_lines)
 
     def process_special_rules(self):
         if not self.special_rules_text:

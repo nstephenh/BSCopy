@@ -1,4 +1,8 @@
+import os
+
 from book_reader.pdf_page import PdfPage
+
+import subprocess as sp
 
 
 class Book:
@@ -38,14 +42,15 @@ class Book:
         except Exception as e:
             print("You probably need poppler installed via Conda")
             exit()
-        with open(self.file_path, "rb") as f:
-            pdf = pdftotext.PDF(f, physical=True)
-
+        self.pdftotext()  # Save a text file of the pdf.
+        self.file_path = self.file_path.replace('.pdf', '.txt')
+        with open(self.file_path, "r", encoding='utf-8') as f:
+            pdf = f.read()
             # If the next page doesn't have information to help identify it,
             # we can guess that it's still the previous page type.
             prev_page_type = None
             page_offset = 0  # Consider pulling default page offset from book json.
-            for page_counter, page_text in enumerate(pdf):
+            for page_counter, page_text in enumerate(pdf.split('')):
                 if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
                     self.try_get_page_offset(page_text, page_counter)
                 if page_offset:
@@ -56,6 +61,19 @@ class Book:
                 page = PdfPage(self, page_text, page_number, prev_page_type=prev_page_type)
                 self.pages.append(page)
                 prev_page_type = page.page_type
+
+    def pdftotext(self):
+        """
+        Generate a text rendering of a PDF file in the form of a list of lines.
+        # Because the python wrapper doesn't give us as good of output...
+        """
+        # Need pdftotext 23, not 4.x
+        path_to_pdftotext = os.path.expanduser("~/miniconda3/Library/bin/pdftotext.exe")
+        args = [path_to_pdftotext, '-layout', '-enc', 'UTF-8', self.file_path]
+        sp.run(
+            args, stdout=sp.PIPE, stderr=sp.DEVNULL,
+            check=True
+        )
 
     @staticmethod
     def try_get_page_offset(page_text, page_counter):
