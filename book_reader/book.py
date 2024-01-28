@@ -1,8 +1,7 @@
 import os
+import subprocess as sp
 
 from book_reader.pdf_page import PdfPage
-
-import subprocess as sp
 
 
 class Book:
@@ -76,7 +75,6 @@ class Book:
                 args, stdout=sp.PIPE, stderr=sp.DEVNULL,
                 check=True
             )
-
 
     @staticmethod
     def try_get_page_offset(page_text, page_counter):
