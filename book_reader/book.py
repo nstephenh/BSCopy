@@ -37,11 +37,6 @@ class Book:
                     self.pages.append(page)
 
     def read_as_pdf(self):
-        try:
-            import pdftotext
-        except Exception as e:
-            print("You probably need poppler installed via Conda")
-            exit()
         self.pdftotext()  # Save a text file of the pdf.
         self.file_path = self.file_path.replace('.pdf', '.txt')
         with open(self.file_path, "r", encoding='utf-8') as f:
@@ -69,11 +64,19 @@ class Book:
         """
         # Need pdftotext 23, not 4.x
         path_to_pdftotext = os.path.expanduser("~/miniconda3/Library/bin/pdftotext.exe")
-        args = [path_to_pdftotext, '-layout', '-enc', 'UTF-8', self.file_path]
-        sp.run(
-            args, stdout=sp.PIPE, stderr=sp.DEVNULL,
-            check=True
-        )
+        try:
+            args = [path_to_pdftotext, '-layout', '-enc', 'UTF-8', self.file_path]
+            sp.run(
+                args, stdout=sp.PIPE, stderr=sp.DEVNULL,
+                check=True
+            )
+        except Exception:
+            args = ['pdftotext', '-layout', '-enc', 'UTF-8', self.file_path]
+            sp.run(
+                args, stdout=sp.PIPE, stderr=sp.DEVNULL,
+                check=True
+            )
+
 
     @staticmethod
     def try_get_page_offset(page_text, page_counter):
