@@ -60,8 +60,13 @@ class EpubPage(Page):
             try:
                 page_range_start = int(page_name_components[0])
             except ValueError:
-                page_range_start = int(page_name_components[0].split('_')[0])
-
+                page_start_components = page_name_components[0].split('_')
+                if "Journal" in page_start_components:
+                    # Journals are in groups of 28 pages for some reason. So far it's consistent.
+                    page_range_start = (int(page_start_components[-2]) - 1) * 28
+                else:
+                    page_range_start = int(page_start_components[0])
+            # Minus one for the cover page:
             page_number = int(page_range_start) + int(page_name_components[-1]) - 1
         except ValueError:
             # print(f"Could not get page number for {page_name}")
