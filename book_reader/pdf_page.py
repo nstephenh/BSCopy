@@ -84,6 +84,7 @@ class PdfPage(Page):
         return True, alignment
 
     def get_text_units(self):
+
         num_units = self.get_number_of_units()
         if num_units == 0:
             return
@@ -98,11 +99,13 @@ class PdfPage(Page):
 
             left_sidebar_divider_index = lines[line_with_wargear_header].index("Wargear")
             if left_sidebar_divider_index:  # Left flavor text
-                _, flavor_text, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
-                                                                                         left_sidebar_divider_index,
-                                                                                         debug_print_level=0)[0]
+                _, self.flavor_text_col, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
+                                                                                                  left_sidebar_divider_index,
+                                                                                                  debug_print_level=0)[
+                    0]
             else:  # Right flavor text, column detection should work.
-                page_header, rules_text, flavor_text, _ = split_into_columns(self.raw_text, debug_print_level=0)[0]
+                page_header, rules_text, self.flavor_text_col, _ = \
+                    split_into_columns(self.raw_text, debug_print_level=0)[0]
                 rules_text = page_header + rules_text
 
             line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
@@ -141,7 +144,7 @@ class PdfPage(Page):
             if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
                 return False  # Not a datasheet
             rules_text = col_1_text if self.book.system.game.ProfileLocator in col_1_text else col_2_text
-            flavor_text = col_2_text if self.book.system.game.ProfileLocator in col_2_text else col_1_text
+            self.flavor_text_col = col_2_text if self.book.system.game.ProfileLocator in col_2_text else col_1_text
 
             rules_text = page_header + rules_text
 
@@ -283,13 +286,35 @@ class PdfPage(Page):
         print_styled(unit_text, STYLES.CYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
+        points = None
         for line in unit_text.split("\n"):
             if line.strip() != "":
-                unit_name = line.strip()
-                break
+                unit_name += line.strip()
+                if not self.game.NAME_HAS_DOTS or "..." in unit_name:
+                    break
+                else:
+                    unit_name += " "  # Add a space between lines.
 
-        constructed_unit = RawUnit(name=unit_name)
+        if "..." in unit_name:
+            points = unit_name[unit_name.rindex('.') + 1:].strip()
+            unit_name = unit_name[:unit_name.index('.')].strip()
 
+        if points and ("p" in points.lower()):
+            points = points[:points.lower().rindex("p")].strip()
+            if points.isdigit():
+                points = int(points)
+            else:
+                points = None
+                print_styled("Was not able to read points", STYLES.RED)
+
+        constructed_unit = RawUnit(name=unit_name, points=points)
+
+        if self.game.FORCE_ORG_IN_FLAVOR:
+            for line in self.flavor_text_col.splitlines():
+                if line.strip().isupper():
+                    constructed_unit.force_org = line.strip()
+
+                    break
         names = []
         stats = []
         # Then, get the table out of the header.

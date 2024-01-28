@@ -138,7 +138,7 @@ class System:
             export_dict[pub_id] = {}
 
             skip_non_dump_actions = False
-            sys_file_for_pub = None
+            sys_file_for_pub = self.gst
             publication_node = self.nodes_by_id.get(pub_id)
             if not publication_node:
                 print(f"Please create a publication with ID {pub_id},"
@@ -162,6 +162,11 @@ class System:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
+                                                      default_sys_file=sys_file_for_pub)
+                if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
+                    for unit in page.units:
+                        print(f"\t\tWeapon: {unit.name}")
+                        self.create_or_update_unit(page, pub_id, unit,
                                                       default_sys_file=sys_file_for_pub)
         if Actions.DUMP_TO_JSON in actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
@@ -222,6 +227,26 @@ class System:
                 node.set_profile(raw_profile, profile_type)
             return
         # Then create any we couldn't find
+        pass
+
+    def create_or_update_unit(self, page, pub_id, raw_unit, default_sys_file):
+
+        nodes = self.nodes.filter(lambda node: (
+                node.get_type() == f"selectionEntry:unit"
+                and (node.name and node.name.lower() == raw_unit.name.lower())
+        ))
+        # Find existing units
+        if len(nodes) > 0:
+            if len(nodes) > 1:
+                nodes_str = ", ".join([str(node) for node in nodes])
+                print_styled(f"\t\t\tUnit exists multiple times in data files: {nodes_str}", STYLES.RED)
+                return
+            node = nodes[0]
+            print(f"\t\t\tUnit exists in data files: {node.id}")
+
+            return
+        # Then create any we couldn't find
+
         pass
 
     def get_duplicates(self) -> dict[str, list['Node']]:

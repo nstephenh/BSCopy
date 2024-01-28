@@ -25,6 +25,7 @@ class Page:
         self.units: list[RawUnit] = []
         self.page_type = self.get_configured_page_type()
         self.special_rules_text = None
+        self.flavor_text_col = None
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:

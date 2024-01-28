@@ -24,3 +24,7 @@ class Heresy(Game):
                                    "Options"]
 
     SUBHEADINGS_ON_SAME_LINE = True
+
+    NAME_HAS_DOTS: bool = True
+
+    FORCE_ORG_IN_FLAVOR: bool = True

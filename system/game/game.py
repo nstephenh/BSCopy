@@ -31,3 +31,7 @@ class Game:
     SUBHEADING_SEPARATORS: str = None  # Bullets, commas, or Commas and "and"
 
     COMBINED_ARTILLERY_PROFILE = False
+
+    NAME_HAS_DOTS: bool = False
+
+    FORCE_ORG_IN_FLAVOR: bool = False

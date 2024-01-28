@@ -30,12 +30,18 @@ class RawUnit:
     def __init__(self, name: str, points: int = None):
         self.name = name
         self.points = points
+        self.force_org: str | None = None
         self.model_profiles: list[RawProfile] = []
         self.special_rules: list[str] = []
         self.subheadings: {str: str} = {}
 
     def serialize(self) -> dict:
-        return {'Name': self.name, 'Points': self.points,
-                'Profiles': [profile.serialize() for profile in self.model_profiles],
-                'Subheadings': self.subheadings,
-                }
+        dict_to_return = {'Name': self.name}
+        if self.points is not None:
+            dict_to_return['Points'] = self.points
+        if self.force_org is not None:
+            dict_to_return['Force Org'] = self.force_org
+        dict_to_return.update({'Profiles': [profile.serialize() for profile in self.model_profiles],
+                               'Subheadings': self.subheadings,
+                               })
+        return dict_to_return

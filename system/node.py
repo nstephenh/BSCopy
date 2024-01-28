@@ -24,7 +24,7 @@ class Node:
         self.target_id = element.attrib.get('targetId')
 
         self.tag = element.tag.split('}')[1]  # I think this only works because we've had a direct call to et.set_prefix
-        self.type_name = element.attrib.get('typeName')  # for profile types, at least generally
+        self.type_name = element.attrib.get('typeName', element.attrib.get('type'))  # typeName on profiles, type on SEs
         if not self.is_link():
             self.name = element.attrib.get('name')
         self.parent = self.get_parent_element()
