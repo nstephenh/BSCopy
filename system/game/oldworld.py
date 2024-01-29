@@ -29,7 +29,6 @@ class OldWorld(Game):
     FIRST_PARAGRAPH_IS_FLAVOR = True
     IN_DATASHEET_FIRST_PARAGRAPH_IS_FLAVOR = True
 
-
     UNIT_SUBHEADINGS: list[str] = ["Troop Type:",
                                    "Base Size:",
                                    "Unit Size:",
@@ -37,4 +36,5 @@ class OldWorld(Game):
                                    "Equipment:",
                                    "Magic:",
                                    "Options:",
-                                   "Special Rules:", ]
+                                   "Special Rules:",
+                                   ]
