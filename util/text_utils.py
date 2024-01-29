@@ -275,9 +275,9 @@ def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool
         header = header + "\n"
     lower_half = ""
     if header in datasheet_text:
-        split_text = datasheet_text.split(header)
-        datasheet_text = split_text[0]
-        lower_half = header + split_text[1]
+        header_index = datasheet_text.index(header)
+        lower_half = datasheet_text[header_index:]
+        datasheet_text = datasheet_text[:header_index]
         return True, datasheet_text, lower_half
     return False, datasheet_text, lower_half
 
