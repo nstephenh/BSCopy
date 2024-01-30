@@ -22,15 +22,19 @@ class Node:
             raise Exception("Node initialization attempted on element with no ID")
 
         self.target_id = element.attrib.get('targetId')
-
-        self.tag = element.tag.split('}')[1]  # I think this only works because we've had a direct call to et.set_prefix
+        self.tag = element.tag
+        if "}" in self.tag:
+            self.tag = self.tag.split('}')[1]  # If we don't have the prefix set, tag will have the verbose namespace.
         self.type_name = element.attrib.get('typeName', element.attrib.get('type'))  # typeName on profiles, type on SEs
         if not self.is_link():
             self.name = element.attrib.get('name')
         self.parent = self.get_parent_element()
         self.shared = False
         if self.parent:
-            self.shared = self.parent.tag.split('}')[1].startswith('shared')
+            parent_tag = self.parent.tag
+            if "}" in self.tag:
+                parent_tag = self.tag.split('}')[1]
+            self.shared = parent_tag.startswith('shared')
 
     def __str__(self):
         return f"{self.name} ({self.get_type()} {self.id} in {self.system_file})"
@@ -56,7 +60,10 @@ class Node:
         # Difficult to go through all the lists and clean up, so doing this as a temporary measure
 
     def get_parent_element(self):
-        return self.system_file.parent_map[self.element]
+        if self.element in self.system_file.parent_map:
+            return self.system_file.parent_map[self.element]
+        else:
+            return None
 
     def get_grandparent(self):
         """

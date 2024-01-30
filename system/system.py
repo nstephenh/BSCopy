@@ -131,7 +131,8 @@ class System:
                 name_to_pub_id[file_no_ext] = book['pub_id']
                 book_json_config = book
                 break  # Should only be one
-            self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings, book_config=book_json_config)
+            self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings,
+                                               book_config=book_json_config)
             i += 1
         print()
         export_dict = {}
@@ -171,7 +172,7 @@ class System:
                     for unit in page.units:
                         print(f"\t\tUnit: {unit.name}")
                         self.create_or_update_unit(page, pub_id, unit,
-                                                      default_sys_file=sys_file_for_pub)
+                                                   default_sys_file=sys_file_for_pub)
         if Actions.DUMP_TO_JSON in actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
                       encoding='utf-8') as outfile:
@@ -233,12 +234,13 @@ class System:
         # Then create any we couldn't find
         pass
 
-    def create_or_update_unit(self, page, pub_id, raw_unit, default_sys_file):
+    def create_or_update_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
 
         nodes = self.nodes.filter(lambda node: (
                 node.get_type() == f"selectionEntry:unit"
                 and (node.name and node.name.lower() == raw_unit.name.lower())
         ))
+        name = raw_unit.name.title()
         # Find existing units
         if len(nodes) > 0:
             if len(nodes) > 1:
@@ -247,11 +249,13 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tUnit exists in data files: {node.id}")
-
             return
         # Then create any we couldn't find
+        if not default_sys_file:
+            print_styled("\t\t\tCannot create a unit without a file to create them in")
+            return
 
-        pass
+        default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number)
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

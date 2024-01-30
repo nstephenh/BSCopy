@@ -68,28 +68,36 @@ class SystemFile:
     def get_namespace_tag(self) -> str:
         return "{" + self.namespace + "}"
 
-    def create_element(self, tag, name, parent=None, pub=None, page=None, ):
+    def create_element(self, tag: str, name: str, parent=None, pub_id=None, page_number: int = None, ):
         """
-        UNTESTED
-        Creates a new element with ID, and adds it to the appropriate indexes. If
+        Creates a new element with ID, and adds it to the appropriate indexes.
+        If there's no parent, add to sharedTag
         :param tag:
         :param name:
         :param parent: defaults to shared<tag>s
-        :param pub:
-        :param page:
+        :param pub_id: if not set, will not set publicationId attribute
+        :param page_number: if not set, will not set page attribute
         :return:
         """
         if parent is None:
-            shared_element_root_name = f"shared{tag[0].upper()}{tag[1:]}s"
-            parent = self.source_tree.getroot().find(shared_element_root_name)
+            parent_tag = tag
+            if parent_tag.endswith('y'):
+                parent_tag = parent_tag[:-1] + "ie"
+            shared_element_root_tag = f"{self.get_namespace_tag()}shared{parent_tag[0].upper()}{parent_tag[1:]}s"
+            parent = self.source_tree.getroot().find(shared_element_root_tag)
             if parent is None:
-                raise Exception(f"Cannot find {shared_element_root_name} in {self.name}")
+                print(shared_element_root_tag)
+                parent = ET.SubElement(self.source_tree.getroot(), shared_element_root_tag)
+                # raise Exception(f"Cannot find {shared_element_root_name} in {self.name}")
 
-        new_element = ET.SubElement(parent, tag, attrib={'name': name, 'hidden': "false",
-                                                         'id': get_random_bs_id(), 'page': page,
-                                                         'publicationId': pub})
-        self.create_node_from_element(new_element)
+        attribs = {'name': name, 'hidden': "false", 'id': get_random_bs_id()}
+        if page_number is not None:
+            attribs['page'] = str(page_number)
+        if pub_id is not None:
+            attribs['publicationId'] = pub_id
+        new_element = ET.SubElement(parent, tag, attrib=attribs)
         self.parent_map[parent] = new_element
+        self.create_node_from_element(new_element)
         return new_element
 
 
