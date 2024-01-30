@@ -372,7 +372,7 @@ class PdfPage(Page):
         if not self.special_rules_text:
             return
 
-        print_styled("Unprocessed special rules Text:", STYLES.GREEN)
+        print_styled("Unprocessed non-unit text:", STYLES.GREEN)
         print_styled(self.special_rules_text, STYLES.YELLOW)
 
         non_weapon_lines = []
@@ -490,6 +490,9 @@ class PdfPage(Page):
                 in_table = False
                 in_note = False
                 name_prefix = ""
+                if line.strip().isdigit():
+                    # Probably a page number, skip this line.
+                    continue
                 non_weapon_lines.append(line)
 
         # rejoin stats and name components.
