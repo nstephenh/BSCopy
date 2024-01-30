@@ -1,6 +1,8 @@
 import json
 import os
 
+import xml.etree.ElementTree as ET
+
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
 from system.game.games_list import get_game
@@ -283,6 +285,8 @@ class System:
             print('\r', end="")
             print(f"Saving file ({i}/{count}): {system_file.path}", end="")
             set_namespace_from_file(system_file.path)
+
+            ET.indent(system_file.source_tree)
             # utf-8 to keep special characters un-escaped.
             system_file.source_tree.write(system_file.path, encoding="utf-8")
             cleanup_file_match_bs_whitespace(system_file.path)

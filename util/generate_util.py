@@ -140,13 +140,7 @@ def get_mod_and_con_ids(nodes):
     return ids
 
 
-WINDOWS_LINE_ENDING = b'\r\n'
-UNIX_LINE_ENDING = b'\n'
-
-
 def cleanup_file_match_bs_whitespace(filepath):
-    content = ""
-    in_tag = False
     with open(filepath, 'r', encoding="utf-8") as f:
         content = f.read()
         content = re.sub(' />', '/>', content)  # BS leaves out this space, so we need to replace them all
@@ -156,6 +150,8 @@ def cleanup_file_match_bs_whitespace(filepath):
         # That is also the reason we're not mocking _escape_cdata
         content = re.sub("'", "&apos;", content)
         content = re.sub(' ', " ", content)  # Strip NBSP (as NR does on save now)
+
+        in_tag = False
         # Go through and find all the quotes not inside of tags.
         new_content = ""
         for char in content:
@@ -173,4 +169,5 @@ def cleanup_file_match_bs_whitespace(filepath):
     with open(filepath, 'w', encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')  # Files start with this line always
         f.write(content)
-        f.write('\n')  # Newline at end of file
+        if not content.endswith("\n"):
+            f.write('\n')  # Newline at end of file, if not from tag tail
