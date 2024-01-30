@@ -257,7 +257,10 @@ class System:
             print_styled("\t\t\tCannot create a unit without a file to create them in")
             return
 
-        default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number)
+        default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number,
+                                        attributes={
+                                            'type': 'unit'
+                                        })
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

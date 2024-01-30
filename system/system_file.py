@@ -68,7 +68,8 @@ class SystemFile:
     def get_namespace_tag(self) -> str:
         return "{" + self.namespace + "}"
 
-    def create_element(self, tag: str, name: str, parent=None, pub_id=None, page_number: int = None, ):
+    def create_element(self, tag: str, name: str, parent=None, pub_id=None, page_number: int = None,
+                       attributes: dict = None) -> ET.Element:
         """
         Creates a new element with ID, and adds it to the appropriate indexes.
         If there's no parent, add to sharedTag
@@ -77,6 +78,9 @@ class SystemFile:
         :param parent: defaults to shared<tag>s
         :param pub_id: if not set, will not set publicationId attribute
         :param page_number: if not set, will not set page attribute
+        :param attributes: Dict of attributes to set, such as type.
+                            Will overwrite name, page, and publicationId.
+
         :return:
         """
         if parent is None:
@@ -95,6 +99,8 @@ class SystemFile:
             attribs['page'] = str(page_number)
         if pub_id is not None:
             attribs['publicationId'] = pub_id
+        if attributes is not None:
+            attribs.update(attributes)  # Can overwrite name, hidden, id, etc
         new_element = ET.SubElement(parent, tag, attrib=attribs)
         self.parent_map[parent] = new_element
         self.create_node_from_element(new_element)
