@@ -10,6 +10,7 @@ class Actions(StrEnum):
     DUMP_TO_JSON = 'Dump To JSON'
     LOAD_SPECIAL_RULES = 'Load Special Rules'
     LOAD_WEAPON_PROFILES = 'Load Weapon Profiles'
+    LOAD_UNITS = 'Load Units'
 
 
 class PageTypes(StrEnum):

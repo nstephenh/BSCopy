@@ -163,9 +163,9 @@ class System:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
                                                       default_sys_file=sys_file_for_pub)
-                if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
+                if Actions.LOAD_UNITS in actions_to_take:
                     for unit in page.units:
-                        print(f"\t\tWeapon: {unit.name}")
+                        print(f"\t\tUnit: {unit.name}")
                         self.create_or_update_unit(page, pub_id, unit,
                                                       default_sys_file=sys_file_for_pub)
         if Actions.DUMP_TO_JSON in actions_to_take:
