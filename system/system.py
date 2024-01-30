@@ -114,37 +114,41 @@ class System:
                 continue  # Skip this iteration
             books_to_read.append(file_name)
 
+        name_to_pub_id = {}
+
         json_config = self.read_books_json_config()
         i = 1
         for file_name in books_to_read:
-            pub_id = os.path.splitext(file_name)[0]
+            file_no_ext = os.path.splitext(file_name)[0]
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
             print('\r', end="")
             print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
             # Assumes that each raw file is either named as a bs unique ID corresponding to a publication,
             # Or has a publication defined in book_json_config
             book_json_config = {}
+            name_to_pub_id[file_no_ext] = file_no_ext
             for book in [book for book in json_config if book['file_name'] == file_name]:
-                pub_id = book['pub_id']
+                name_to_pub_id[file_no_ext] = book['pub_id']
                 book_json_config = book
                 break  # Should only be one
-            self.raw_files[pub_id] = Book(filepath, self, settings=raw_import_settings, book_config=book_json_config)
+            self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings, book_config=book_json_config)
             i += 1
         print()
         export_dict = {}
         actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
 
-        for pub_id, book in self.raw_files.items():
-            export_dict[pub_id] = {}
-
+        for file_name, book in self.raw_files.items():
+            export_dict[file_name] = {}
+            pub_id = name_to_pub_id[file_name]
             skip_non_dump_actions = False
             sys_file_for_pub = self.gst
             publication_node = self.nodes_by_id.get(pub_id)
             if not publication_node:
-                print(f"Please create a publication with ID {pub_id},"
-                      f" or rename that file to be an existing publication ID")
+                print(f"Please create a publication for {file_name} and define it in books.json,"
+                      f" or rename that file to be a publication ID")
                 skip_non_dump_actions = True
             else:
+                export_dict[file_name]['pub_id'] = pub_id
                 print_styled(publication_node.name, STYLES.CYAN)
                 sys_file_for_pub = publication_node.system_file
             if skip_non_dump_actions:
@@ -153,7 +157,7 @@ class System:
             for page in book.pages:
                 print(f"\t{page.page_number} {str(page.page_type or '')}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
-                    export_dict[pub_id][page.page_number] = page.serialize()
+                    export_dict[file_name][page.page_number] = page.serialize()
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take:
                     for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
