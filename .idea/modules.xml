@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/BSCopy.iml" filepath="$PROJECT_DIR$/.idea/BSCopy.iml" />
+      <module fileurl="file://$USER_HOME$/BattleScribe/data/Warhammer-The-Old-World/.idea/Warhammer-The-Old-World.iml" filepath="$USER_HOME$/BattleScribe/data/Warhammer-The-Old-World/.idea/Warhammer-The-Old-World.iml" />
+      <module fileurl="file://$USER_HOME$/BattleScribe/data/moreus-heresy/.idea/panoptica-heresy.iml" filepath="$USER_HOME$/BattleScribe/data/moreus-heresy/.idea/panoptica-heresy.iml" />
     </modules>
   </component>
 </project>

@@ -6,5 +6,7 @@
     </content>
     <orderEntry type="jdk" jdkName="BSCopy-Conda" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="Warhammer-The-Old-World" />
+    <orderEntry type="module" module-name="panoptica-heresy" />
   </component>
 </module>
