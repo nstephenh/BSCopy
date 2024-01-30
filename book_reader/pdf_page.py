@@ -1,6 +1,7 @@
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile
+from system.game.game import Game
 from text_to_rules import text_to_rules_dict
 from util import text_utils
 from util.log_util import style_text, STYLES, print_styled
@@ -49,7 +50,7 @@ class PdfPage(Page):
             self.special_rules_text = col_1 + "\n" + col_2
 
     @property
-    def game(self):
+    def game(self) -> 'Game':
         return self.book.system.game
 
     def get_number_of_units(self):
@@ -60,10 +61,28 @@ class PdfPage(Page):
                 units += 1
         return units
 
-    def does_line_contain_profile_header(self, line, header_index=0):
-        if self.game.UNIT_PROFILE_TABLE_HEADERS is None:
+    def does_line_contain_profile_header(self, line) -> bool:
+        if not len(self.game.UNIT_PROFILE_TABLE_HEADERS):
             raise Exception("No UNIT PROFILE HEADERS")
-        return text_utils.does_line_contain_header(line, self.game.UNIT_PROFILE_TABLE_HEADERS)
+        profile_header_types = [self.game.UNIT_PROFILE_TABLE_HEADERS]
+        if len(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
+            profile_header_types.append(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS)
+        for header in profile_header_types:
+            if text_utils.does_line_contain_header(line, header):
+                return True
+        return False
+
+    def get_unit_profile_headers(self, text: str) -> [str]:
+        if not len(self.game.UNIT_PROFILE_TABLE_HEADERS):
+            raise Exception("No UNIT PROFILE HEADERS")
+        profile_header_types = [self.game.UNIT_PROFILE_TABLE_HEADERS]
+        if len(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
+            profile_header_types.append(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS)
+        for line in text.splitlines():
+            for header in profile_header_types:
+                if text_utils.does_line_contain_header(line, header):
+                    return header
+        return
 
     def does_contain_stagger(self, headers):
         indexes = []
@@ -90,14 +109,19 @@ class PdfPage(Page):
             return
 
         if self.game.COULD_HAVE_STAGGERED_HEADERS:
-            print("Has Stagger!")
+            print("Could have Stagger!")
             # TODO make this more generic
-            line_with_wargear_header = text_utils.get_index_of_line_with_headers(self.raw_text,
-                                                                                 ["Wargear"])
+            header_that_may_be_staggered = None
+            for staggered_row_header_option in ["Wargear", "Options", "Unit Composition"]:  # Wargear might not exist
+                line_with_wargear_header = text_utils.get_index_of_line_with_headers(self.raw_text,
+                                                                                     [staggered_row_header_option])
+                if line_with_wargear_header is not None:
+                    header_that_may_be_staggered = staggered_row_header_option
+                    break
 
             lines = self.raw_text.splitlines()
 
-            left_sidebar_divider_index = lines[line_with_wargear_header].index("Wargear")
+            left_sidebar_divider_index = lines[line_with_wargear_header].index(header_that_may_be_staggered)
             if left_sidebar_divider_index:  # Left flavor text
                 _, self.flavor_text_col, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
                                                                                                   left_sidebar_divider_index,
@@ -108,8 +132,12 @@ class PdfPage(Page):
                     split_into_columns(self.raw_text, debug_print_level=0)[0]
                 rules_text = page_header + rules_text
 
-            line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
-                                                                                 ["Wargear"])
+            if "Wargear" in rules_text:
+                line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
+                                                                                     ["Wargear"])
+            else:  # May not have wargear, may only have special rules
+                line_with_wargear_header = text_utils.get_index_of_line_with_headers(rules_text,
+                                                                                     ["Special Rules"])
             lines = rules_text.splitlines()
 
             top_half = "\n".join(lines[:line_with_wargear_header])
@@ -318,7 +346,9 @@ class PdfPage(Page):
         names = []
         stats = []
         # Then, get the table out of the header.
-        num_data_cells = len(self.game.UNIT_PROFILE_TABLE_HEADERS)
+        unit_profile_headers = self.get_unit_profile_headers(unit_text)
+
+        num_data_cells = len(unit_profile_headers)
         in_table = False
         in_note = False
         profile_index = -1
@@ -354,7 +384,7 @@ class PdfPage(Page):
         # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
-            raw_profile = RawProfile(name=name, stats=dict(zip(self.game.UNIT_PROFILE_TABLE_HEADERS + ['Note'],
+            raw_profile = RawProfile(name=name, stats=dict(zip(unit_profile_headers + ['Note'],
                                                                stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
 

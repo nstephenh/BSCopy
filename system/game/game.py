@@ -9,7 +9,9 @@ class Game:
 
     default_settings = settings.default_settings
 
-    UNIT_PROFILE_TABLE_HEADERS: list[str] = None
+    UNIT_PROFILE_TABLE_HEADERS: list[str] = []
+
+    ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = []
 
     WEAPON_PROFILE_TABLE_HEADERS: list[str] = []
 
