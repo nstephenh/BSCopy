@@ -399,7 +399,7 @@ class PdfPage(Page):
         name_col_index = 0
 
         for line in self.special_rules_text.split("\n"):
-            print(f"{line}, In Table: {in_table}, In Note: {in_note}")
+            # print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if text_utils.does_line_contain_header(line, ["R", "S", "Special Rules", "AP"]):
                 print("Malformed table line!")
                 self.weapons.append(RawProfile(name=f"Unable to read profile from {self.special_rules_text}", stats={}))
@@ -444,13 +444,13 @@ class PdfPage(Page):
                 if len(line) > sr_col_index:
                     name_and_stats = line[:sr_col_index]
                     if name_and_stats.strip() == "":
-                        print(f"Profile index: {profile_index} Weapons dicts: {str(weapons_dicts)}")
+                        # print(f"Profile index: {profile_index} Weapons dicts: {str(weapons_dicts)}")
                         weapons_dicts[profile_index][last_header] += line[sr_col_index:]
                         continue  # Not a full line, just a continuation of special rules.
                     special_rules = line[sr_col_index:]
 
-                print("Name and stats: ", name_and_stats)
-                print("Special Rules:  ", special_rules)
+                # print("Name and stats: ", name_and_stats)
+                # print("Special Rules:  ", special_rules)
 
                 # Name and stats
                 cells = name_and_stats.split()
@@ -464,14 +464,14 @@ class PdfPage(Page):
                 name = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
                 if cells[-num_data_cells][0] in ["B", "M"]:  # If Breath Weapon or Magical Attack, scoot it over one
-                    print(cells)
+                    # print(cells)
                     name = cells[:-num_data_cells - 1]  # Shift over one
                     stats_for_line = cells[-num_data_cells - 1:]  # Shift over one
                     # This was cropped off the start of special rules, so re-append it
                     special_rules = cells[-num_data_cells] + special_rules
                 if ")" in cells[-num_data_cells] and self.game.COMBINED_ARTILLERY_PROFILE:
                     # Special handling for artillery
-                    print(cells)
+                    # print(cells)
                     name = cells[:-(num_data_cells + 2)]
 
                     stats_for_line = [cells[-5],
