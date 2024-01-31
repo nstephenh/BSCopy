@@ -5,6 +5,7 @@ from xml.etree import ElementTree as ET
 from system.node import Node
 from system.node_collection import NodeCollection
 from util.generate_util import get_random_bs_id
+from util.text_utils import make_plural
 
 if TYPE_CHECKING:
     from system.system import System
@@ -85,9 +86,7 @@ class SystemFile:
         """
         if parent is None:
             parent_tag = tag
-            if parent_tag.endswith('y'):
-                parent_tag = parent_tag[:-1] + "ie"
-            shared_element_root_tag = f"{self.get_namespace_tag()}shared{parent_tag[0].upper()}{parent_tag[1:]}s"
+            shared_element_root_tag = f"{self.get_namespace_tag()}shared{parent_tag[0].upper()}{make_plural(parent_tag[1:])}"
             parent = self.source_tree.getroot().find(shared_element_root_tag)
             if parent is None:
                 print(shared_element_root_tag)

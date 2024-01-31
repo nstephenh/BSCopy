@@ -25,6 +25,13 @@ def remove_plural(model_name):
         model_name = model_name[:-1]
     return model_name
 
+def make_plural(model_name):
+    if model_name.endswith('s'):
+        return model_name
+    if model_name.endswith('y'):
+        model_name = model_name[:-1] + "ie"
+    return model_name + "s"
+
 
 def get_generic_rule_name(rule_name, after_dash=False):
     # Special handling for some rules:
