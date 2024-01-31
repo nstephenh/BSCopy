@@ -356,7 +356,9 @@ def un_justify(text, move_bullets=False):
     index = None
     new_text_array = []
     for line in text.splitlines():
-        if index is None and not line.strip() == "":
+        if index is None:
+            if line.strip() == "":
+                continue  # skip over blank lines at the start
             stripped_line = line.lstrip()
             if move_bullets:
                 for bullet in bullet_options:
