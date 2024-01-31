@@ -25,6 +25,7 @@ def remove_plural(model_name):
         model_name = model_name[:-1]
     return model_name
 
+
 def make_plural(model_name):
     if model_name.endswith('s'):
         return model_name
@@ -353,6 +354,7 @@ def get_first_non_list_or_header_line(text, headers):
     """
     Get the first non-list entry or header line after the initial line.
     If the indent is the same, it counts it as a continuation of the existing entry.
+    If a line starts with a parenthesis we also assume it's a continuation of an existing line.
     :param text: text to search
     :param headers: list of headers
     :return:
@@ -361,7 +363,7 @@ def get_first_non_list_or_header_line(text, headers):
     for index, line in enumerate(text.splitlines()[1:]):
         if line.strip() == "":
             continue
-        if not (line.lstrip()[0] in bullet_options
+        if not (line.lstrip()[0] in bullet_options + ["("]
                 or line.strip() in headers
                 or last_indent == get_line_indent(line)):
             return index + 1
