@@ -137,8 +137,8 @@ class RawUnit:
             self.subheadings.pop("Wargear")
 
             # Going through all the options also gets us the points per model we wil use later.
-        if "Options" in self.subheadings:
-            option_groups_text = text_utils.un_justify(self.subheadings.pop("Options"), move_bullets=True)
+        if "Options:" in self.subheadings:
+            option_groups_text = text_utils.un_justify(self.subheadings.pop("Options:"), move_bullets=True)
             print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
                 self.process_option_group(line)
