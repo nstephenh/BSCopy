@@ -9,14 +9,29 @@ def split_at_dot(lines):
     :param lines:
     :return:
     """
-    space_string = " ".join(lines)
-    bullet_entries = space_string.split("● ")
+    text_to_split = ""
+    prev_line_ends_in_dash = False
+    for line in lines:
+        line = line.strip()
+        if prev_line_ends_in_dash:
+            prev_line_ends_in_dash = False
+            text_to_split += line  # Skip the space we add in.
+            continue
+        if line.endswith("-"):
+            prev_line_ends_in_dash = True
+        text_to_split += " " + line
+
+    bullet_entries = text_to_split.split("● ")
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
-def split_at_dash(line):
+def split_at_dash(line, has_starting_whitespace=False):
+    # set space string to avoid issues when there is a line break and a left indent, and a word is split at a -
     # print("Split at dash this: ", line)
-    dash_entries = line.split("- ")
+    delimiter = "- "
+    if has_starting_whitespace:
+        delimiter = " - "
+    dash_entries = line.split(delimiter)
     return [entry.strip() for entry in dash_entries if entry.strip() != ""]
 
 
@@ -337,16 +352,26 @@ def get_index_of_line_with_headers(text, stagger_row_headers):
                     return index
 
 
-def un_justify(text):
+def un_justify(text, move_bullets=False):
     index = None
     new_text_array = []
     for line in text.splitlines():
         if index is None and not line.strip() == "":
-            index = len(line) - len(line.lstrip())
+            stripped_line = line.lstrip()
+            if move_bullets:
+                for bullet in bullet_options:
+                    stripped_line = stripped_line.lstrip(bullet).lstrip()
+            index = len(line) - len(stripped_line)
         if len(line) < index:
             new_text_array.append("")
         else:
-            new_text_array.append(line[index:])
+            un_justified_line = line[index:]
+            if move_bullets:
+                for bullet in bullet_options:
+                    if bullet in line[:index]:  # If we cut off a bullet, re-add it to the start of the line.
+                        un_justified_line = bullet + " " + line[index:]
+                        break
+            new_text_array.append(un_justified_line)
     return "\n".join(new_text_array)
 
 

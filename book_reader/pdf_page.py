@@ -404,7 +404,11 @@ class PdfPage(Page):
         for header in reversed(self.game.UNIT_SUBHEADINGS):
             was_split, unit_text, content = split_at_header(header, unit_text, header_at_end_of_line=False)
             if was_split:
-                constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
+                if content[len(header):].splitlines()[0].strip() == ":":
+                    constructed_unit.subheadings[header] = "\n".join(content.splitlines()[1:])  # Cut the header label off.
+
+                else:
+                    constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
         constructed_unit.process_subheadings()
         self.units.append(constructed_unit)

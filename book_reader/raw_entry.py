@@ -1,3 +1,5 @@
+from util import text_utils
+from util.log_util import STYLES, print_styled
 from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural
 
 
@@ -116,19 +118,16 @@ class RawUnit:
 
     def process_subheadings(self):
         # Set the default with unit composition.
-        for line in split_at_dot(self.subheadings["Unit Composition"].splitlines()):
-            print(line)
-            print("In unit composition")
-            first_space = line.index(' ')
-            default_number = int(line[:first_space])
-            model_name = line[first_space:].strip()
-            model_profile = self.get_profile_for_name(model_name)
-            if model_profile is None:
-                return
-            model_profile.min = default_number
-            model_profile.max = default_number
-            print(self.subheadings)
-        self.subheadings.pop("Unit Composition")
+        if "Unit Composition" in self.subheadings:
+            for line in split_at_dot(self.subheadings.pop("Unit Composition").splitlines()):
+                first_space = line.index(' ')
+                default_number = int(line[:first_space])
+                model_name = line[first_space:].strip()
+                model_profile = self.get_profile_for_name(model_name)
+                if model_profile is None:
+                    return
+                model_profile.min = default_number
+                model_profile.max = default_number
 
         if "Wargear" in self.subheadings:
             for model in self.model_profiles:
@@ -139,18 +138,17 @@ class RawUnit:
 
             # Going through all the options also gets us the points per model we wil use later.
         if "Options" in self.subheadings:
-            for line in split_at_dot(self.subheadings["Options"].splitlines()):
+            option_groups_text = text_utils.un_justify(self.subheadings.pop("Options"), move_bullets=True)
+            print_styled(option_groups_text, STYLES.PURPLE)
+            for line in split_at_dot(option_groups_text.splitlines()):
                 self.process_option_group(line)
-            self.subheadings.pop("Options")
 
         if "Special Rules" in self.subheadings:
-            self.special_rules = split_at_dot(self.subheadings["Special Rules"].splitlines())
-            self.subheadings.pop("Special Rules")
+            self.special_rules = split_at_dot(self.subheadings.pop("Special Rules").splitlines())
 
         if "Unit Type" in self.subheadings:
-            for line in split_at_dot(self.subheadings["Unit Type"].splitlines()):
+            for line in split_at_dot(self.subheadings.pop("Unit Type").splitlines()):
                 self.process_unit_types(line)
-            self.subheadings.pop("Unit Type")
 
     def get_profile_for_name(self, model_name):
         if model_name.endswith("*"):
@@ -172,7 +170,8 @@ class RawUnit:
         return model_profile
 
     def process_option_group(self, line):
-        this_option_lines = split_at_dash(line)
+        # Since we import with whitespace before the entries, we need to enable has starting whitespace to avoid splitting on a word with a dash in it.
+        this_option_lines = split_at_dash(line, has_starting_whitespace=True)
         option_title = this_option_lines[0]
         options = this_option_lines[1:]
         print(option_title)
@@ -191,7 +190,7 @@ class RawUnit:
                             additional_models = 8
                         else:
                             raise ValueError("Unexpected number word")
-                    model_name = remove_plural(name.split('additional ')[1])
+                    model_name = name.split('additional ')[1]
                     print(f"{model_name} x{additional_models} at {pts} each")
                     profile = self.get_profile_for_name(model_name)
                     profile.pts = pts
