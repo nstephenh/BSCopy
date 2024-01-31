@@ -139,6 +139,13 @@ class RawUnit:
             # Going through all the options also gets us the points per model we wil use later.
         if "Options:" in self.subheadings:
             option_groups_text = text_utils.un_justify(self.subheadings.pop("Options:"), move_bullets=True)
+            extra_special_options = ["Aspect Shrines", "Legiones Consularis", "Pater Consularis"]
+            for extra_special_option in extra_special_options:
+                if extra_special_option in option_groups_text:
+                    index = option_groups_text.index(extra_special_option)
+                    option_groups_text = option_groups_text[:index]
+                    self.errors += "This unit has an extra special option not yet handled.\n"
+                    break
             print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
                 self.process_option_group(line)
