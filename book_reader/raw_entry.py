@@ -1,4 +1,4 @@
-from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line
+from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural
 
 
 class RawProfile:
@@ -118,14 +118,17 @@ class RawUnit:
         # Set the default with unit composition.
         for line in split_at_dot(self.subheadings["Unit Composition"].splitlines()):
             print(line)
+            print("In unit composition")
             first_space = line.index(' ')
             default_number = int(line[:first_space])
-            model_name = remove_plural(line[first_space:].strip())
-            print(model_name)
-            profile = [profile for profile in self.model_profiles if profile.name == model_name][0]
-            profile.min = default_number
-            profile.max = default_number
-            self.subheadings.pop("Unit Composition")
+            model_name = line[first_space:].strip()
+            model_profile = self.get_profile_for_name(model_name)
+            if model_profile is None:
+                return
+            model_profile.min = default_number
+            model_profile.max = default_number
+            print(self.subheadings)
+        self.subheadings.pop("Unit Composition")
 
         if "Wargear" in self.subheadings:
             for model in self.model_profiles:
@@ -149,6 +152,25 @@ class RawUnit:
                 self.process_unit_types(line)
             self.subheadings.pop("Unit Type")
 
+    def get_profile_for_name(self, model_name):
+        if model_name.endswith("*"):
+            model_name = model_name[:-1]
+            self.errors += f"{model_name} has an asterisk! What does it mean?!? \n"
+        model_name_options = [model_name, remove_plural(model_name), make_plural(model_name)]
+        model_profile = None
+        for option in model_name_options:
+            for profile in self.model_profiles:
+                if profile.name == option:
+                    model_profile = profile
+                    break
+        if model_profile is None:
+            self.errors += \
+                f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]} \n"
+            # raise Exception(
+            #     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]}"
+            # )
+        return model_profile
+
     def process_option_group(self, line):
         this_option_lines = split_at_dash(line)
         option_title = this_option_lines[0]
@@ -171,7 +193,7 @@ class RawUnit:
                             raise ValueError("Unexpected number word")
                     model_name = remove_plural(name.split('additional ')[1])
                     print(f"{model_name} x{additional_models} at {pts} each")
-                    profile = [profile for profile in self.model_profiles if profile.name == model_name][0]
+                    profile = self.get_profile_for_name(model_name)
                     profile.pts = pts
                     profile.max += additional_models
             return  # this section was points per model options, so we don't need to generate an options group.
@@ -222,6 +244,7 @@ class RawUnit:
 
         # Read name and points from the source text
         for option in options:
+            print(option)
             name, pts = option_process_line(option)
             if line.endswith(" each"):
                 self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
