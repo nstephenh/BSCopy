@@ -3,6 +3,7 @@ import os
 
 import xml.etree.ElementTree as ET
 
+from book_reader.raw_entry import RawUnit
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
 from system.game.games_list import get_game
@@ -11,6 +12,7 @@ from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
+from util.text_utils import split_at_dot, remove_plural
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
                          'characteristicType']
@@ -236,7 +238,12 @@ class System:
         # Then create any we couldn't find
         pass
 
-    def create_or_update_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
+    def create_or_update_unit(self, page, pub_id, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
+        unit_element = self.get_unit(page, pub_id, raw_unit, default_sys_file)
+        if unit_element is not None:
+            return
+
+    def get_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
 
         nodes = self.nodes.filter(lambda node: (
                 node.get_type() == f"selectionEntry:unit"
@@ -251,16 +258,16 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tUnit exists in data files: {node.id}")
-            return
+            return node.element
         # Then create any we couldn't find
         if not default_sys_file:
             print_styled("\t\t\tCannot create a unit without a file to create them in")
             return
 
-        default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number,
-                                        attributes={
-                                            'type': 'unit'
-                                        })
+        return default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number,
+                                               attributes={
+                                                   'type': 'unit'
+                                               })
 
     def get_duplicates(self) -> dict[str, list['Node']]:
 

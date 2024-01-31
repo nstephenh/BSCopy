@@ -1,3 +1,6 @@
+from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line
+
+
 class RawProfile:
     def __init__(self, name: str, stats: dict[str: str], special_rules: list[str] = None):
         self.name: str = name
@@ -26,15 +29,72 @@ class RawProfile:
         return {'Name': self.name, 'Stats': self.stats}
 
 
+class RawModel(RawProfile):
+
+    def __init__(self, name: str, stats: dict[str: str], special_rules: list[str] = None):
+        super().__init__(name, stats, special_rules)
+        self.min = None
+        self.max = None
+        self.default_wargear: [str] = []
+        self.original_wargear: [str] = []
+        self.options_groups: [OptionGroup] = []
+        self.pts = None
+
+    def serialize(self):
+        dict_to_return = super().serialize()
+        dict_to_return.update(
+            {
+                "min": self.min,
+                "max": self.max,
+                "Wargear": self.default_wargear,
+                "Option Groups": [group.serialize() for group in self.options_groups],
+            }
+        )
+        return dict_to_return
+
+
+class Option:
+    def __init__(self, name, pts=0):
+        self.name = name
+        self.pts = pts
+        self.default = False  # Not yet implemented
+
+    def serialize(self):
+        return {"Name": self.name, "pts": self.pts}
+
+
+class OptionGroup:
+    def __init__(self):
+        self.max = 1
+        self.min = 0
+        self.options: [Option] = []
+
+    def remove(self, name):
+        # Get all options that don't have a name equal to the existing option.
+        self.options = [option for option in self.options if option.name != name]
+
+    def option_names(self):
+        return [option for option in self.options]
+
+    def serialize(self):
+        return {
+            "Options": [option.serialize() for option in self.options],
+            "min": self.min,
+            "max": self.max,
+        }
+
+
 class RawUnit:
     def __init__(self, name: str, points: int = None):
         self.name = name
         self.points = points
         self.force_org: str | None = None
-        self.model_profiles: list[RawProfile] = []
+        self.model_profiles: list[RawModel] = []
         self.special_rules: list[str] = []
         self.subheadings: {str: str} = {}
         self.max = None
+        self.errors = ""
+        self.unit_options: [OptionGroup] = []
 
     def serialize(self) -> dict:
         dict_to_return = {'Name': self.name}
@@ -45,4 +105,110 @@ class RawUnit:
         dict_to_return.update({'Profiles': [profile.serialize() for profile in self.model_profiles],
                                'Subheadings': self.subheadings,
                                })
+        if len(self.unit_options) > 0:
+            dict_to_return["Unit Options"] = [group.serialize() for group in self.unit_options]
         return dict_to_return
+
+    def process_subheadings(self):
+        # Set the default with unit composition.
+        for line in split_at_dot(self.subheadings["Unit Composition"].splitlines()):
+            print(line)
+            first_space = line.index(' ')
+            default_number = int(line[:first_space])
+            model_name = remove_plural(line[first_space:].strip())
+            print(model_name)
+            profile = [profile for profile in self.model_profiles if profile.name == model_name][0]
+            profile.min = default_number
+            profile.max = default_number
+            self.subheadings.pop("Unit Composition")
+
+        if "Wargear" in self.subheadings:
+            for model in self.model_profiles:
+                for line in split_at_dot(self.subheadings["Wargear"].splitlines()):
+                    model.original_wargear.append(line)
+                    model.default_wargear.append(line)
+            self.subheadings.pop("Wargear")
+
+            # Going through all the options also gets us the points per model we wil use later.
+        if "Options" in self.subheadings:
+            for line in split_at_dot(self.subheadings["Options"].splitlines()):
+                self.process_option_group(line)
+            self.subheadings.pop("Options")
+
+    def process_option_group(self, line):
+        this_option_lines = split_at_dash(line)
+        option_title = this_option_lines[0]
+        options = this_option_lines[1:]
+        print(option_title)
+
+        # This is an "additional models" line
+        if "may include" in option_title:
+            for option in options:
+                print("\t", option)
+                name, pts = option_process_line(option)  # set points, don't do anything with entries
+                if name.startswith("Up to"):
+                    additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
+                    model_name = remove_plural(name.split('additional ')[1])
+                    print(f"{model_name} x{additional_models} at {pts} each")
+                    profile = [profile for profile in self.model_profiles if profile.name == model_name][0]
+                    profile.pts = pts
+                    profile.max += additional_models
+            return  # this section was points per model options, so we don't need to generate an options group.
+
+        option_group = OptionGroup()
+
+        option_group.max = 1
+        if "and/or" in option_title or "up to two" in option_title:
+            option_group.max = 2
+
+        option_models = []  # Temporary list of models that this option group applies to.
+
+        for model in self.model_profiles:
+            model_name = model.name
+            if "Any model" in option_title or \
+                    (not option_title.startswith("One") and model_name in option_title):
+                # If the option is a "One model may" we leave this on the
+                option_models.append(model)
+        if len(option_models) > 0:
+            print(f"\tApplies to {', '.join([model.name for model in option_models])}")
+
+        from_wargear_list = False  # If the first entry is from the wargear list, and thus the default
+
+        if "exchange" in option_title:
+            # For wargear that gets exchanged, remove it from the default wargear, and add it to this list.
+            add_to_options_list = []
+            for model in option_models:
+                wargear_removed_by_this_option = []
+                for wargear in model.original_wargear:
+                    # Default wargear shouldn't have 'and' in it, so we can pull straight from the list.
+                    if wargear in option_title:
+                        wargear_removed_by_this_option.append(wargear)
+                for wargear in wargear_removed_by_this_option:
+                    if wargear not in model.default_wargear:
+                        self.errors += (f"{wargear} is in two option lists for {model.name}, you will need to combine "
+                                        f"them by hand \n")
+                        continue  # We can't remove it from the list because we already have
+                    model.default_wargear.remove(wargear)
+                    if wargear not in add_to_options_list:  # To ensure we don't add it to our shared list twice.
+                        add_to_options_list.append(wargear)
+            for option in add_to_options_list:  # Add the option to the start of the options list
+                options = [option + " ... "] + options
+                # It'll be listed as free in the options list for that dropdown
+                from_wargear_list = True  # use this to set the default
+        elif "up to" in option_title:
+            option_group.min = 0
+        defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
+
+        # Read name and points from the source text
+        for option in options:
+            name, pts = option_process_line(option)
+            if line.endswith(" each"):
+                self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
+            print(f"\t\t{name} for {pts} pts{defaulted_message}")
+            defaulted_message = ""  # Clear our defaulted message now that we've shown it.
+            option_group.options.append(Option(name=name, pts=pts))
+
+        for model in option_models:
+            model.options_groups.append(option_group)
+        if len(option_models) == 0 and len(option_group.options):
+            self.unit_options.append(option_group)

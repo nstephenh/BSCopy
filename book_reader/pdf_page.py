@@ -1,6 +1,8 @@
+import json
+
 from book_reader.constants import PageTypes
 from book_reader.page import Page
-from book_reader.raw_entry import RawUnit, RawProfile
+from book_reader.raw_entry import RawUnit, RawProfile, RawModel
 from system.game.game import Game
 from text_to_rules import text_to_rules_dict
 from util import text_utils
@@ -392,8 +394,8 @@ class PdfPage(Page):
         # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
-            raw_profile = RawProfile(name=name, stats=dict(zip(unit_profile_headers + ['Note'],
-                                                               stats[index])))
+            raw_profile = RawModel(name=name, stats=dict(zip(unit_profile_headers + ['Note'],
+                                                             stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])
@@ -404,7 +406,10 @@ class PdfPage(Page):
             if was_split:
                 constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
+        constructed_unit.process_subheadings()
         self.units.append(constructed_unit)
+        print(json.dumps(constructed_unit.serialize(), indent=2))
+        exit()
 
     def process_weapon_profiles(self):
         if not self.special_rules_text:

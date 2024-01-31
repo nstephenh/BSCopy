@@ -12,6 +12,9 @@ class Game:
     UNIT_PROFILE_TABLE_HEADERS: list[str] = []
 
     ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = []
+    ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = []
+
+    ALT_PROFILE_NAME = None
 
     WEAPON_PROFILE_TABLE_HEADERS: list[str] = []
 

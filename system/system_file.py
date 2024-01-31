@@ -81,7 +81,7 @@ class SystemFile:
         :param attributes: Dict of attributes to set, such as type.
                             Will overwrite name, page, and publicationId.
 
-        :return:
+        :return: The created element
         """
         if parent is None:
             parent_tag = tag
