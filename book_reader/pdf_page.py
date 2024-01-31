@@ -409,7 +409,6 @@ class PdfPage(Page):
         constructed_unit.process_subheadings()
         self.units.append(constructed_unit)
         print(json.dumps(constructed_unit.serialize(), indent=2))
-        exit()
 
     def process_weapon_profiles(self):
         if not self.special_rules_text:

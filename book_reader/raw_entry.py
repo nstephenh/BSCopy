@@ -38,14 +38,16 @@ class RawModel(RawProfile):
         self.default_wargear: [str] = []
         self.original_wargear: [str] = []
         self.options_groups: [OptionGroup] = []
+        self.type_and_subtypes: [str] = []
         self.pts = None
 
     def serialize(self):
         dict_to_return = super().serialize()
         dict_to_return.update(
             {
-                "min": self.min,
-                "max": self.max,
+                "Type and Subtypes": self.type_and_subtypes,
+                "Min": self.min,
+                "Max": self.max,
                 "Wargear": self.default_wargear,
                 "Option Groups": [group.serialize() for group in self.options_groups],
             }
@@ -102,11 +104,14 @@ class RawUnit:
             dict_to_return['Points'] = self.points
         if self.force_org is not None:
             dict_to_return['Force Org'] = self.force_org
-        dict_to_return.update({'Profiles': [profile.serialize() for profile in self.model_profiles],
-                               'Subheadings': self.subheadings,
-                               })
+        if len(self.model_profiles) > 0:
+            dict_to_return['Profiles'] = [profile.serialize() for profile in self.model_profiles]
         if len(self.unit_options) > 0:
             dict_to_return["Unit Options"] = [group.serialize() for group in self.unit_options]
+        if len(self.special_rules) > 0:
+            dict_to_return["Special Rules"] = self.special_rules
+        if len(self.subheadings) > 0:
+            dict_to_return["Subheadings"] = self.subheadings
         return dict_to_return
 
     def process_subheadings(self):
@@ -135,6 +140,15 @@ class RawUnit:
                 self.process_option_group(line)
             self.subheadings.pop("Options")
 
+        if "Special Rules" in self.subheadings:
+            self.special_rules = split_at_dot(self.subheadings["Special Rules"].splitlines())
+            self.subheadings.pop("Special Rules")
+
+        if "Unit Type" in self.subheadings:
+            for line in split_at_dot(self.subheadings["Unit Type"].splitlines()):
+                self.process_unit_types(line)
+            self.subheadings.pop("Unit Type")
+
     def process_option_group(self, line):
         this_option_lines = split_at_dash(line)
         option_title = this_option_lines[0]
@@ -147,7 +161,14 @@ class RawUnit:
                 print("\t", option)
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
                 if name.startswith("Up to"):
-                    additional_models = int(name.split('Up to')[1].split('additional')[0].strip())
+                    additional_models_str = name.split('Up to')[1].split('additional')[0].strip()
+                    if additional_models_str.isdigit():
+                        additional_models = int(additional_models_str)
+                    else:
+                        if additional_models_str == "eight":
+                            additional_models = 8
+                        else:
+                            raise ValueError("Unexpected number word")
                     model_name = remove_plural(name.split('additional ')[1])
                     print(f"{model_name} x{additional_models} at {pts} each")
                     profile = [profile for profile in self.model_profiles if profile.name == model_name][0]
@@ -212,3 +233,25 @@ class RawUnit:
             model.options_groups.append(option_group)
         if len(option_models) == 0 and len(option_group.options):
             self.unit_options.append(option_group)
+
+    def process_unit_types(self, line):
+        model_name = None
+        if ":" in line:
+            model_name = line.split(":")[0].strip()
+            unit_type_text = line.split(":")[1].strip()
+        else:
+            # Unit type should apply to all models
+            unit_type_text = line.strip()
+
+        print(unit_type_text)
+        if "(" in unit_type_text:
+            type_and_subtypes = [unit_type_text.split("(")[0].strip()]
+            type_and_subtypes += [text.strip() for text in unit_type_text.split("(")[1][:-1].strip().split(",")]
+        else:
+            type_and_subtypes = [unit_type_text]
+
+        # Apply the type and subtypes to the profile
+        for model in self.model_profiles:
+            if model_name and model_name != model.name:
+                continue
+            model.type_and_subtypes = type_and_subtypes
