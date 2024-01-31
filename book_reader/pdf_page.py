@@ -335,7 +335,15 @@ class PdfPage(Page):
                 points = None
                 print_styled("Was not able to read points", STYLES.RED)
 
+        max_selections_of_unit = None
+        if unit_name.startswith("0-"):
+            first_space = unit_name.index(" ")
+            max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
+            unit_name = unit_name[first_space + 1:]
+
         constructed_unit = RawUnit(name=unit_name, points=points)
+        if max_selections_of_unit:
+            constructed_unit.max = int(max_selections_of_unit)
 
         if self.game.FORCE_ORG_IN_FLAVOR:
             for line in self.flavor_text_col.splitlines():

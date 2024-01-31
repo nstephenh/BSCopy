@@ -34,6 +34,7 @@ class RawUnit:
         self.model_profiles: list[RawProfile] = []
         self.special_rules: list[str] = []
         self.subheadings: {str: str} = {}
+        self.max = None
 
     def serialize(self) -> dict:
         dict_to_return = {'Name': self.name}
