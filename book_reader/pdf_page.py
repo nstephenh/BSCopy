@@ -246,16 +246,13 @@ class PdfPage(Page):
         # print_styled("Upper Half", STYLES.GREEN)
         _, upper_half, wargear_and_on = split_at_header("Wargear", upper_half, header_at_end_of_line=False)
 
-        # Go through sections in reverse order now:
-        headers = ["Dedicated Transport:",
-                   "Access Points:",
-                   "Options:"
-                   ]
-        end_of_bullets = text_utils.get_first_non_list_or_header_line(wargear_and_on, headers)
+        # Find the fist section after special rules
+        headers = self.game.UNIT_SUBHEADINGS[self.game.UNIT_SUBHEADINGS.index("Special Rules")+1:]
+        end_of_wargear_sr_bullets = text_utils.get_first_non_list_or_header_line(wargear_and_on, headers)
         lines = wargear_and_on.splitlines()
-        if end_of_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc
-            self.special_rules_text = "\n".join(lines[end_of_bullets:])
-            wargear_and_on = "\n".join(lines[:end_of_bullets])
+        if end_of_wargear_sr_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc
+            self.special_rules_text = "\n".join(lines[end_of_wargear_sr_bullets:])
+            wargear_and_on = "\n".join(lines[:end_of_wargear_sr_bullets])
             # print_styled(f"Lines from wargear and special rules + the following sections: {headers}", STYLES.GREEN)
             # print(wargear_and_on)
             # print_styled("Special Rules", STYLES.GREEN)
@@ -288,7 +285,7 @@ class PdfPage(Page):
         # Now lets put everything together:
         new_text = "".join(
             [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
-                                                                   header_sections.keys()]
+                                                                   reversed(header_sections.keys())]
         )
         return new_text
 

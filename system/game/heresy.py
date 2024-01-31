@@ -24,9 +24,9 @@ class Heresy(Game):
     COULD_HAVE_STAGGERED_HEADERS = True  # In some fan supplements, the headers may not line up because of images.
 
     UNIT_SUBHEADINGS: list[str] = ["Unit Composition", "Unit Type", "Wargear", "Special Rules",
-                                   "Dedicated Transport",
-                                   "Access Points",
-                                   "Options"]
+                                   "Dedicated Transport:",
+                                   "Access Points:",
+                                   "Options:"]
 
     SUBHEADINGS_ON_SAME_LINE = True
 
