@@ -61,7 +61,7 @@ class SystemFile:
             self.nodes_by_name[node.name].append(node)
 
         if node.target_id:
-            if node.target_id not in self.nodes_by_name.keys():
+            if node.target_id not in self.nodes_by_target_id.keys():
                 self.nodes_by_target_id[node.target_id] = []
             self.nodes_by_target_id[node.target_id].append(node)
 
