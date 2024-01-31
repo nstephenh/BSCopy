@@ -36,8 +36,10 @@ def split_at_dash(line, has_starting_whitespace=False):
 
 
 def remove_plural(model_name):
+    if model_name.endswith('naires'):
+        return model_name.replace('naires', 'ary')
     if model_name.endswith('s'):
-        model_name = model_name[:-1]
+        return model_name[:-1]
     return model_name
 
 
