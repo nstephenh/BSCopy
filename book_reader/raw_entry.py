@@ -146,7 +146,6 @@ class RawUnit:
                     option_groups_text = option_groups_text[:index]
                     self.errors += "This unit has an extra special option not yet handled.\n"
                     break
-            print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
                 self.process_option_group(line)
 
@@ -169,11 +168,17 @@ class RawUnit:
                     model_profile = profile
                     break
         if model_profile is None:
-            self.errors += \
-                f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]} \n"
-            # raise Exception(
-            #     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]}"
-            # )
+            for option in model_name_options:
+                for profile in self.model_profiles:
+                    if profile.name.endswith(option):
+                        model_profile = profile
+                        break
+            if model_profile is None:
+                self.errors += \
+                    f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]} \n"
+                # raise Exception(
+                #     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]}"
+                # )
         return model_profile
 
     def process_option_group(self, line):
