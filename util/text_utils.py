@@ -392,10 +392,10 @@ def get_first_non_list_or_header_line(text, headers):
     :return:
     """
     in_options = False
+    in_option_line = False
     in_option_header = False
     last_indent = 0
     for index, line in enumerate(text.splitlines()[1:]):
-        print(line)
         if line.strip() == "":
             continue
         if not in_options:
@@ -409,10 +409,14 @@ def get_first_non_list_or_header_line(text, headers):
             continue
         if not in_option_header and line.lstrip()[0] == "●":
             in_option_header = True
-        if (line.lstrip()[0] not in bullet_options) and (not in_option_header):
-            return index
+        if not in_option_line and line.lstrip()[0] == "-":
+            in_option_line = True
+        if (line.lstrip()[0] not in bullet_options) and (not in_option_header) and (not in_option_line):
+            return index + 1
         if in_option_header and line.strip().endswith(":"):
             in_option_header = False
+        if in_option_line and line.strip().endswith("points"):
+            in_option_line = False
 
 
 

@@ -183,6 +183,9 @@ class RawUnit:
         return model_profile
 
     def process_option_group(self, line):
+        if ":" not in line:
+            self.errors += f"{line} is not an option group\n" + "There could be invisible text on the page\n"
+            return
         first_colon = line.index(":")
         option_title = line[:first_colon] + ":"
         options = split_at_dash(line[first_colon + 1:])
@@ -253,6 +256,9 @@ class RawUnit:
 
         # Read name and points from the source text
         for option in options:
+            print("Option:", option)
+            if option.strip() == "":
+                continue
             name, pts = option_process_line(option)
             if line.endswith(" each"):
                 self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
