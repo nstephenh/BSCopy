@@ -527,8 +527,9 @@ class PdfPage(Page):
                                       " ".join(cells[-2:]), ]
                 if name and not name_col_index:
                     name_col_index = line.index(name[0])
-                if name_prefix:
-                    name = [name_prefix + " - "] + name
+                if (name_prefix and
+                        name_prefix not in " ".join(name)):  # Don't append the name prefix if it's already in the name
+                    name = [name_prefix, "-"] + name
                 stats_for_line.append(special_rules)
                 weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
                                               stats_for_line)))
