@@ -3,9 +3,10 @@ import os
 
 import xml.etree.ElementTree as ET
 
-from book_reader.raw_entry import RawUnit
+from book_reader.raw_entry import RawUnit, OptionGroup
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
+from system.element import SystemElement
 from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
@@ -243,36 +244,20 @@ class System:
         # Then create any we couldn't find
         pass
 
+    def element_as_system_element(self, element):
+        return SystemElement(self, element)
+
     def create_or_update_unit(self, page, pub_id, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
-        unit_element = self.get_unit(page, pub_id, raw_unit, default_sys_file)
+        unit_element = self.element_as_system_element(self.get_unit(page, pub_id, raw_unit, default_sys_file))
         if unit_element is None:
             return
-        selection_entries = get_or_create_sub_element(unit_element, 'selectionEntries')
 
-        category_links = get_or_create_sub_element(unit_element, 'categoryLinks')
-        get_or_create_sub_element(category_links, 'categoryLink',
-                                  attrib={'targetId': '36c3-e85e-97cc-c503',
-                                          'name': 'Unit:',
-                                          'primary': 'false',
-                                          }, assign_id=True)
-        if raw_unit.force_org:
-            if raw_unit.force_org in self.game.category_book_to_full_name_map:
-                category_name = self.game.category_book_to_full_name_map[raw_unit.force_org]
-                if category_name:  # Could be none for dedicated transport.
-                    if category_name not in self.categories:
-                        self.errors.append(f"Could not find '{category_name}' for '{raw_unit.name}'")
-                        return
-                    target_id = self.categories[category_name]
-                    get_or_create_sub_element(category_links, 'categoryLink',
-                                              attrib={'targetId': target_id,
-                                                      'name': category_name,
-                                                      # Won't actually be the real name, need update script
-                                                      'primary': 'true',
-                                                      }, assign_id=True)
+        unit_element.set_force_org(raw_unit)
 
-        option_entries = get_or_create_sub_element(unit_element, 'selectionEntryGroups')
-        rule_links = get_or_create_sub_element(unit_element, 'infoLinks')
-        rules = get_or_create_sub_element(unit_element, 'rules')
+        unit_element.set_models(raw_unit)
+        unit_element.set_options(raw_unit.unit_options)
+        unit_element.set_info_links(raw_unit.special_rules)
+        unit_element.set_rules(raw_unit.special_rule_descriptions)
 
     def get_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
 
