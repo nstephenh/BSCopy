@@ -17,6 +17,9 @@ class SystemElement:
         return self.system.game.category_book_to_full_name_map
 
     def get_or_create(self, tag, attrib: dict[str:str] = None, assign_id: bool = False, defaults: dict[str:str] = None):
+        if attrib:
+            for attr, value in attrib.items():
+                attrib[attr] = str(value)  # All values must be strings to serialize properly.
         element, created = get_or_create_sub_element(self.element, tag, attrib, assign_id)
         if created and defaults:
             element.attrib.update(defaults)
@@ -64,10 +67,34 @@ class SystemElement:
         for raw_model in raw_unit.model_profiles:
             model_se = selection_entries.get_or_create('selectionEntry',
                                                        attrib={
-                                                           "type": "model"
-
-                                                       })
+                                                           "type": "model",
+                                                           "name": raw_model.name,
+                                                       }, assign_id=True)
             model_se.update_pub_and_page(raw_unit.page)
+            model_se.set_constraints(raw_model)
+
+    def set_constraints(self, object_with_min_max):
+        if not (hasattr(object_with_min_max, 'min') and hasattr(object_with_min_max, 'max')):
+            raise ValueError("The object must have min and max to set constraints")
+        constraints_el = self.get_or_create('constraints')
+        constraint_attributes = {'field': "selections",
+                                 'scope': "parent",
+                                 'shared': "True",
+                                 }
+        if object_with_min_max.min is not None:
+            constraints_el.get_or_create('constraint',
+                                         assign_id=True,
+                                         attrib={'type': 'min',
+                                                 'value': object_with_min_max.min,
+                                                 } | constraint_attributes,
+                                         )
+        if object_with_min_max.max is not None:
+            constraints_el.get_or_create('constraint',
+                                         assign_id=True,
+                                         attrib={'type': 'max',
+                                                 'value': object_with_min_max.max,
+                                                 } | constraint_attributes,
+                                         )
 
     def set_info_links(self, target_list: list):
         if len(target_list) == 0:
