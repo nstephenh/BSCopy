@@ -146,6 +146,7 @@ class RawUnit:
                     option_groups_text = option_groups_text[:index]
                     self.errors += "This unit has an extra special option not yet handled.\n"
                     break
+            # print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
                 self.process_option_group(line)
 
@@ -182,16 +183,14 @@ class RawUnit:
         return model_profile
 
     def process_option_group(self, line):
-        # Since we import with whitespace before the entries, we need to enable has starting whitespace to avoid splitting on a word with a dash in it.
-        this_option_lines = split_at_dash(line, has_starting_whitespace=True)
-        option_title = this_option_lines[0]
-        options = this_option_lines[1:]
+        first_colon = line.index(":")
+        option_title = line[:first_colon] + ":"
+        options = split_at_dash(line[first_colon+1:])
         print(option_title)
 
         # This is an "additional models" line
         if "may include" in option_title:
             for option in options:
-                print("\t", option)
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
                 if name.startswith("Up to"):
                     additional_models_str = name.split('Up to')[1].split('additional')[0].strip()
@@ -252,7 +251,6 @@ class RawUnit:
 
         # Read name and points from the source text
         for option in options:
-            print(option)
             name, pts = option_process_line(option)
             if line.endswith(" each"):
                 self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier"

@@ -25,12 +25,8 @@ def split_at_dot(lines):
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
-def split_at_dash(line, has_starting_whitespace=False):
-    # set space string to avoid issues when there is a line break and a left indent, and a word is split at a -
-    # print("Split at dash this: ", line)
+def split_at_dash(line):
     delimiter = "- "
-    if has_starting_whitespace:
-        delimiter = " - "
     dash_entries = line.split(delimiter)
     return [entry.strip() for entry in dash_entries if entry.strip() != ""]
 
