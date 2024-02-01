@@ -219,6 +219,24 @@ class System:
         # Then create any we couldn't find
         pass
 
+    def get_characteristic_id(self, profile_type: str, characteristic_name: str):
+        characteristic_list = self.game.WEAPON_PROFILE_TABLE_HEADERS
+        full_characteristic_list = self.game.WEAPON_PROFILE_TABLE_HEADERS
+        if profile_type == 'Unit':
+            characteristic_list = self.game.UNIT_PROFILE_TABLE_HEADERS
+            full_characteristic_list = self.game.UNIT_PROFILE_TABLE_HEADERS_FULL
+        elif profile_type == self.game.ALT_PROFILE_NAME:
+            characteristic_list = self.game.ALT_UNIT_PROFILE_TABLE_HEADERS
+            full_characteristic_list = self.game.ALT_UNIT_PROFILE_TABLE_HEADERS_FULL
+
+        full_name = characteristic_name
+        if characteristic_name in characteristic_list:
+            i = characteristic_list.index(characteristic_name)
+            full_name = full_characteristic_list[i]
+        if full_name not in self.profile_characteristics[profile_type]:
+            raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
+        return self.profile_characteristics[profile_type][full_name]
+
     def create_or_update_profile(self, page, pub_id, raw_profile, profile_type, default_sys_file):
         # A profile should also be in a selection entry with special rules,
         # so once we find the profile, we'll want to find selection entries for it.

@@ -1,16 +1,26 @@
+from xml.etree import ElementTree as ET
+
 from book_reader.page import Page
-from book_reader.raw_entry import OptionGroup, RawUnit
+from book_reader.raw_entry import OptionGroup, RawUnit, RawProfile, RawModel
 from util.element_util import get_or_create_sub_element
 
 
 class SystemElement:
-    def __init__(self, system, element):
+    def __init__(self, system, element: ET.Element):
         self.system = system
-        self.element = element
+        self._element = element
 
     @property
     def attrib(self):
-        return self.element.attrib
+        return self._element.attrib
+
+    @property
+    def text(self):
+        return self._element.text
+
+    @text.setter
+    def text(self, value):
+        self._element.text = value
 
     @property
     def category_book_to_full_name_map(self):
@@ -20,7 +30,7 @@ class SystemElement:
         if attrib:
             for attr, value in attrib.items():
                 attrib[attr] = str(value)  # All values must be strings to serialize properly.
-        element, created = get_or_create_sub_element(self.element, tag, attrib, assign_id)
+        element, created = get_or_create_sub_element(self._element, tag, attrib, assign_id)
         if created and defaults:
             element.attrib.update(defaults)
         return self.system.element_as_system_element(element)
@@ -71,7 +81,36 @@ class SystemElement:
                                                            "name": raw_model.name,
                                                        }, assign_id=True)
             model_se.update_pub_and_page(raw_unit.page)
+            model_se.set_model_profile(raw_model)
             model_se.set_constraints(raw_model)
+
+    def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
+        # There should only be one profile per entrylink, so don't filter by name.
+        # In the future we may want to consider breaking if we find an infolink that's the name of the profile
+        profiles_element = self.get_or_create('profiles')
+        profile_element = profiles_element.get_or_create('profile')
+        profile_element.update_attributes({'name': profile.name})
+
+        profile_type = "Weapon"  # assume weapon by default
+        characteristics_dict = dict(profile.stats)
+        if type(profile) is RawModel:
+            profile_type = "Unit"  # Default to unit.
+            if set(characteristics_dict.keys()) == set(self.system.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
+                profile_type = self.system.game.ALT_PROFILE_NAME
+            characteristics_dict.update({
+                "Unit Type": profile.unit_type_text
+            })
+        profile_element.set_characteristics_from_dict(characteristics_dict, profile_type)
+
+    def set_characteristics_from_dict(self, profile: dict, profile_type: str):
+        characteristics_by_id = {}
+        for characteristic, value in profile.items():
+            characteristics_by_id[self.system.get_characteristic_id(profile_type, characteristic)] = value
+        characteristics = self.get_or_create('characteristics')
+        for characteristic_id, value in characteristics_by_id.items():
+            # This will not set the characteristic name, we'll want to do that in post-processing
+            char_element = characteristics.get_or_create('characteristic', attrib={'typeId': characteristic_id})
+            char_element.text = value
 
     def set_constraints(self, object_with_min_max):
         if not (hasattr(object_with_min_max, 'min') and hasattr(object_with_min_max, 'max')):

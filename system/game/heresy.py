@@ -9,9 +9,10 @@ class Heresy(Game):
     ProfileLocator = "Unit Composition"
 
     UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Sv"]
+    UNIT_PROFILE_TABLE_HEADERS_FULL = ["Move", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Save"]
 
     ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = ["M", "BS", "Front", "Side", "Rear", "HP", "Capacity"]
-    ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = ["M", "BS", "Front", "Side", "Rear", "HP", "Transport Capacity"]
+    ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = ["Move", "BS", "Front", "Side", "Rear", "HP", "Transport Capacity"]
 
     ALT_PROFILE_NAME = "Vehicle"
 

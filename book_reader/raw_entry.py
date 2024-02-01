@@ -47,6 +47,7 @@ class RawModel(RawProfile):
         self.wargear_descriptions: {str: str} = {}
         self.wargear_profiles: [RawProfile] = []
         self.options_groups: [OptionGroup] = []
+        self.unit_type_text: str = ""  # We use this as part of heresy characteristics
         self.type_and_subtypes: [str] = []
         self.pts = None
 
@@ -112,6 +113,7 @@ class RawUnit:
         self.points = points
         self.force_org: str | None = None
         self.model_profiles: list[RawModel] = []
+        self.unit_type_text = None
         self.special_rules: list[str] = []
         self.special_rule_descriptions: {str: str} = {}
         self.subheadings: {str: str} = {}
@@ -322,7 +324,6 @@ class RawUnit:
             # Unit type should apply to all models
             unit_type_text = line.strip()
 
-        print(unit_type_text)
         if "(" in unit_type_text:
             type_and_subtypes = [unit_type_text.split("(")[0].strip()]
             type_and_subtypes += [text.strip() for text in unit_type_text.split("(")[1][:-1].strip().split(",")]
@@ -333,4 +334,5 @@ class RawUnit:
         for model in self.model_profiles:
             if model_name and model_name != model.name:
                 continue
+            model.unit_type_text = unit_type_text
             model.type_and_subtypes = type_and_subtypes

@@ -10,6 +10,8 @@ class Game:
     default_settings = settings.default_settings
 
     UNIT_PROFILE_TABLE_HEADERS: list[str] = []
+    UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = []
+
 
     ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = []
     ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = []
