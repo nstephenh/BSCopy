@@ -175,17 +175,17 @@ class RawUnit:
                         model_profile = profile
                         break
             if model_profile is None:
-                self.errors += \
+                error_message = \
                     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]} \n"
-                # raise Exception(
-                #     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]}"
-                # )
+                print_styled(error_message, STYLES.RED)
+                self.errors += error_message
+                # raise Exception(error_message)
         return model_profile
 
     def process_option_group(self, line):
         first_colon = line.index(":")
         option_title = line[:first_colon] + ":"
-        options = split_at_dash(line[first_colon+1:])
+        options = split_at_dash(line[first_colon + 1:])
         print(option_title)
 
         # This is an "additional models" line
@@ -201,6 +201,8 @@ class RawUnit:
                     model_name = name.split('additional ')[1]
                     print(f"{model_name} x{additional_models} at {pts} each")
                     profile = self.get_profile_for_name(model_name)
+                    if profile is None:
+                        continue  # get_profile_for_name will have added the error.
                     profile.pts = pts
                     profile.max += additional_models
             return  # this section was points per model options, so we don't need to generate an options group.

@@ -138,10 +138,8 @@ class System:
             self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings,
                                                book_config=book_json_config)
             i += 1
-        print()
         export_dict = {}
         actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
-
         for file_name, book in self.raw_files.items():
             export_dict[file_name] = {}
             pub_id = name_to_pub_id[file_name]
