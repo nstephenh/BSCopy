@@ -39,6 +39,8 @@ class RawModel(RawProfile):
         self.max = None
         self.default_wargear: [str] = []
         self.original_wargear: [str] = []
+        self.wargear_descriptions: {str: str} = {}
+        self.wargear_profiles: [RawProfile] = []
         self.options_groups: [OptionGroup] = []
         self.type_and_subtypes: [str] = []
         self.pts = None
@@ -50,10 +52,17 @@ class RawModel(RawProfile):
                 "Type and Subtypes": self.type_and_subtypes,
                 "Min": self.min,
                 "Max": self.max,
-                "Wargear": self.default_wargear,
-                "Option Groups": [group.serialize() for group in self.options_groups],
-            }
-        )
+                "Wargear": self.default_wargear
+            })
+        if len(self.wargear_descriptions) > 0:
+            dict_to_return["Wargear Descriptions"] = self.wargear_descriptions
+
+        if len(self.wargear_profiles) > 0:
+            dict_to_return["Wargear Profiles"] = [profile.serialize() for profile in self.wargear_profiles]
+
+        if len(self.options_groups) > 0:
+            dict_to_return["Option Groups"] = [group.serialize() for group in self.options_groups]
+
         return dict_to_return
 
 
@@ -90,6 +99,7 @@ class OptionGroup:
 
         }
 
+
 class RawUnit:
     def __init__(self, name: str, points: int = None):
         self.name = name
@@ -97,10 +107,13 @@ class RawUnit:
         self.force_org: str | None = None
         self.model_profiles: list[RawModel] = []
         self.special_rules: list[str] = []
+        self.special_rule_descriptions: {str: str} = {}
         self.subheadings: {str: str} = {}
         self.max = None
         self.errors = ""
         self.unit_options: [OptionGroup] = []
+        self.page_special_rules = {}  # Can also include some wargear
+        self.page_weapons = []
 
     def serialize(self) -> dict:
         dict_to_return = {'Name': self.name}
@@ -114,6 +127,8 @@ class RawUnit:
             dict_to_return["Unit Options"] = [group.serialize() for group in self.unit_options]
         if len(self.special_rules) > 0:
             dict_to_return["Special Rules"] = self.special_rules
+        if len(self.special_rule_descriptions) > 0:
+            dict_to_return["Special Rule Descriptions"] = self.special_rule_descriptions
         if len(self.subheadings) > 0:
             dict_to_return["Subheadings"] = self.subheadings
         if len(self.errors):
@@ -142,9 +157,17 @@ class RawUnit:
                         line = line.split("(")[0].strip()
                     model.original_wargear.append(line)
                     model.default_wargear.append(line)
+
+                # Check the special rules list for wargear in case it's not in the shared list.
+                for special_rule_name, text in self.page_special_rules.items():
+                    print(special_rule_name)
+                    if special_rule_name in model.original_wargear:
+                        model.wargear_descriptions[special_rule_name] = text
+                for weapon in filter(lambda x: x.name in model.original_wargear, self.page_weapons):
+                    model.wargear_profiles.append(weapon)
             self.subheadings.pop("Wargear")
 
-            # Going through all the options also gets us the points per model we wil use later.
+        # Going through all the options also gets us the points per model we wil use later.
         if "Options:" in self.subheadings:
             option_groups_text = text_utils.un_justify(self.subheadings.pop("Options:"), move_bullets=True)
             extra_special_options = ["Aspect Shrines", "Legiones Consularis", "Pater Consularis"]
@@ -160,6 +183,10 @@ class RawUnit:
 
         if "Special Rules" in self.subheadings:
             self.special_rules = split_at_dot(self.subheadings.pop("Special Rules").splitlines())
+
+            for special_rule_name, text in self.page_special_rules.items():
+                if special_rule_name in self.special_rules:
+                    self.special_rule_descriptions[special_rule_name] = text
 
         if "Unit Type" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Type").splitlines()):
