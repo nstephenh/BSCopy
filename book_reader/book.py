@@ -5,13 +5,14 @@ from book_reader.pdf_page import PdfPage
 
 
 class Book:
-    def __init__(self, file_path, system, settings: {str: bool | str} = None, book_config: dict = None):
+    def __init__(self, file_path, system, settings: {str: bool | str} = None, book_config: dict = None, pub_id=None):
         if settings is None:
             settings = {}
         self.settings = settings
         if book_config is None:
             book_config = {}
         self.book_config = book_config
+        self.pub_id = pub_id
 
         self.file_path = file_path
         self.system = system

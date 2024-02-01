@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural
+
+if TYPE_CHECKING:
+    from book_reader.page import Page
 
 
 class RawProfile:
@@ -101,8 +106,9 @@ class OptionGroup:
 
 
 class RawUnit:
-    def __init__(self, name: str, points: int = None):
+    def __init__(self, name: str, page: 'Page' = None, points: int = None):
         self.name = name
+        self.page = page
         self.points = points
         self.force_org: str | None = None
         self.model_profiles: list[RawModel] = []

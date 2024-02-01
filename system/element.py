@@ -1,3 +1,4 @@
+from book_reader.page import Page
 from book_reader.raw_entry import OptionGroup, RawUnit
 from util.element_util import get_or_create_sub_element
 
@@ -8,6 +9,10 @@ class SystemElement:
         self.element = element
 
     @property
+    def attrib(self):
+        return self.element.attrib
+
+    @property
     def category_book_to_full_name_map(self):
         return self.system.game.category_book_to_full_name_map
 
@@ -16,6 +21,17 @@ class SystemElement:
         if created and defaults:
             element.attrib.update(defaults)
         return self.system.element_as_system_element(element)
+
+    def update_attributes(self, attrib: {}):
+        for attr, value in attrib.items():
+            attrib[attr] = str(value)  # All values must be strings to serialize properly.
+        self.attrib.update(attrib)
+
+    def update_pub_and_page(self, page: 'Page'):
+        self.update_attributes({
+            'page': page.page_number,
+            'publicationId': page.book.pub_id
+        })
 
     def set_force_org(self, raw_unit: 'RawUnit'):
         category_links = self.get_or_create('categoryLinks')
@@ -45,6 +61,13 @@ class SystemElement:
         if len(raw_unit.model_profiles) == 0:
             return
         selection_entries = self.get_or_create('selectionEntries')
+        for raw_model in raw_unit.model_profiles:
+            model_se = selection_entries.get_or_create('selectionEntry',
+                                                       attrib={
+                                                           "type": "model"
+
+                                                       })
+            model_se.update_pub_and_page(raw_unit.page)
 
     def set_info_links(self, target_list: list):
         if len(target_list) == 0:

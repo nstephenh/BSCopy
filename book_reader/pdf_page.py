@@ -349,7 +349,7 @@ class PdfPage(Page):
             max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
             unit_name = unit_name[first_space + 1:]
 
-        constructed_unit = RawUnit(name=unit_name, points=points)
+        constructed_unit = RawUnit(name=unit_name, points=points, page=self)
         if max_selections_of_unit:
             constructed_unit.max = int(max_selections_of_unit)
 

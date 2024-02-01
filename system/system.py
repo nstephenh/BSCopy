@@ -138,13 +138,15 @@ class System:
             # Assumes that each raw file is either named as a bs unique ID corresponding to a publication,
             # Or has a publication defined in book_json_config
             book_json_config = {}
+            pub_id = None
             name_to_pub_id[file_no_ext] = file_no_ext
             for book in [book for book in json_config if book['file_name'] == file_name]:
                 name_to_pub_id[file_no_ext] = book['pub_id']
+                pub_id = book['pub_id']
                 book_json_config = book
                 break  # Should only be one
             self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings,
-                                               book_config=book_json_config)
+                                               book_config=book_json_config, pub_id=pub_id)
             i += 1
         export_dict = {}
         actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
@@ -252,6 +254,7 @@ class System:
         if unit_element is None:
             return
 
+        unit_element.update_pub_and_page(page)
         unit_element.set_force_org(raw_unit)
 
         unit_element.set_models(raw_unit)
