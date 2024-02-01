@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 
 import util.system_globals
 from settings import default_system, default_data_directory
-from system.system_file import set_namespace_from_file
+from system.system_file import set_namespace_from_file, read_categories
 from util.log_util import style_text, STYLES
 from util.system_globals import files_in_system, system
 from util.text_utils import cleanup_disallowed_bs_characters
@@ -63,24 +63,9 @@ def read_wargear_from_system(source_tree):
         util.system_globals.wargear_list[name] = id
 
 
+
 def read_categories_from_system(source_tree):
-    rules_node = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}categoryEntries")
-    if not rules_node:
-        rules_node = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}categoryEntries")
-        if not rules_node:
-            return
-    for node in rules_node:
-        name = node.get('name')
-        if name.endswith(":"):
-            name = name[:-1]
-        if name.lower().endswith(" sub-type"):
-            name = name[:-len(" sub-type")]
-            if name.lower().endswith(" unit"):
-                name = name[:-len(" unit")]
-        elif name.lower().endswith(" unit-type"):
-            name = name[:-len(" unit-type")]
-        id = node.get('id')
-        util.system_globals.category_list[name] = id
+    util.system_globals.category_list = read_categories(source_tree)
 
 
 def all_nodes_for_tree(source_tree: ET.ElementTree, tag=''):

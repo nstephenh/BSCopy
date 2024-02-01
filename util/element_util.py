@@ -1,4 +1,6 @@
+from util.generate_util import get_random_bs_id
 from util.log_util import print_styled
+import xml.etree.ElementTree as ET
 
 
 def get_description(element):
@@ -24,3 +26,18 @@ def get_tag(element):
     if "}" in tag:
         return tag.split("}")[1]
     return tag
+
+
+def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None, assign_id=False):
+    attrib_path_str = "{*}" + tag  # Any namespace
+    if attrib:
+        for key, value in attrib.items():
+            attrib_path_str += f"[@{key}='{value}']"
+    sub_element = element.find(attrib_path_str)
+    if sub_element is not None:
+        return sub_element
+    if assign_id:
+        attrib.update({'id': get_random_bs_id()})
+    if attrib:
+        return ET.SubElement(element, tag, attrib)
+    return ET.SubElement(element, tag)

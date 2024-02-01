@@ -33,3 +33,16 @@ class Heresy(Game):
     NAME_HAS_DOTS: bool = True
 
     FORCE_ORG_IN_FLAVOR: bool = True
+
+    category_book_to_full_name_map: dict[str, str] = {
+        # Drop the trailing colon because we strip that from categories
+        "HQ": "HQ",
+        "ELITES": "Elites",
+        "TROOPS": "Troops",
+        "DEDICATED": None,  # Dedicated transport doesn't get a primary category
+        "FAST ATTACK": "Fast Attack",
+        "HEAVY SUPPORT": "Heavy Support",
+        "LORDS OF WAR": "Lords of War",
+        "PRIMARCH": "Primarch",
+        "FORTIFICATION": "Fortification",
+    }

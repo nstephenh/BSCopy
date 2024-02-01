@@ -118,3 +118,25 @@ def set_namespace_from_file(filename):
     namespace = get_namespace_from_file(filename)
     ET.register_namespace("", namespace)
     return namespace
+
+
+def read_categories(source_tree):
+    category_map = {}
+    categories_element = source_tree.find("{http://www.battlescribe.net/schema/catalogueSchema}categoryEntries")
+    if not categories_element:
+        categories_element = source_tree.find("{http://www.battlescribe.net/schema/gameSystemSchema}categoryEntries")
+        if not categories_element:
+            return
+    for category_element in categories_element:
+        name = category_element.get('name')
+        if name.endswith(":"):
+            name = name[:-1]
+        if name.lower().endswith(" sub-type"):
+            name = name[:-len(" sub-type")]
+            if name.lower().endswith(" unit"):
+                name = name[:-len(" unit")]
+        elif name.lower().endswith(" unit-type"):
+            name = name[:-len(" unit-type")]
+        id = category_element.get('id')
+        category_map[name] = id
+    return category_map

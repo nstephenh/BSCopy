@@ -247,7 +247,7 @@ class PdfPage(Page):
         _, upper_half, wargear_and_on = split_at_header("Wargear", upper_half, header_at_end_of_line=False)
 
         # Find the fist section after special rules
-        headers = self.game.UNIT_SUBHEADINGS[self.game.UNIT_SUBHEADINGS.index("Special Rules")+1:]
+        headers = self.game.UNIT_SUBHEADINGS[self.game.UNIT_SUBHEADINGS.index("Special Rules") + 1:]
         end_of_wargear_sr_bullets = text_utils.get_first_non_list_or_header_line(wargear_and_on, headers)
         lines = wargear_and_on.splitlines()
         if end_of_wargear_sr_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc
@@ -402,12 +402,17 @@ class PdfPage(Page):
             was_split, unit_text, content = split_at_header(header, unit_text, header_at_end_of_line=False)
             if was_split:
                 if content[len(header):].splitlines()[0].strip() == ":":
-                    constructed_unit.subheadings[header] = "\n".join(content.splitlines()[1:])  # Cut the header label off.
+                    constructed_unit.subheadings[header] = "\n".join(
+                        content.splitlines()[1:])  # Cut the header label off.
 
                 else:
                     constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
         constructed_unit.process_subheadings()
+        if constructed_unit.errors:
+            self.book.system.errors.append(
+                "\n".join([constructed_unit.name] + ["\t" + line for line in constructed_unit.errors.splitlines()]
+                          ))
         self.units.append(constructed_unit)
         print(json.dumps(constructed_unit.serialize(), indent=2))
 

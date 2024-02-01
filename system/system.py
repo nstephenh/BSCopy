@@ -9,7 +9,8 @@ from system.constants import SystemSettingsKeys
 from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
-from system.system_file import SystemFile, set_namespace_from_file
+from system.system_file import SystemFile, set_namespace_from_file, read_categories
+from util.element_util import get_or_create_sub_element
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
 from util.text_utils import split_at_dot, remove_plural
@@ -27,6 +28,7 @@ class System:
                  settings=None,
                  include_raw=False, raw_import_settings=None):
         print(f"Initializing {system_name}")
+        self.errors = []
         print(settings)
         if settings is None:
             settings = {}
@@ -48,6 +50,8 @@ class System:
 
         # profileType name: {characteristicType name: typeId}
         self.profile_characteristics: dict[str: dict[str: str]] = {}
+
+        self.categories: dict[str: str] = {}
 
         self.system_name = system_name
         self.game_system_location = os.path.join(data_directory, system_name)
@@ -88,6 +92,9 @@ class System:
                 if target_id not in self.nodes_by_target_id.keys():
                     self.nodes_by_target_id[target_id] = []
                 self.nodes_by_target_id[target_id].extend(nodes)
+
+            if file.is_gst:
+                self.categories = read_categories(file.source_tree)
 
         self.define_profile_characteristics()
 
@@ -161,11 +168,11 @@ class System:
                 print(f"\t{page.page_number} {str(page.page_type or '')}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[file_name][page.page_number] = page.serialize()
-                if Actions.LOAD_SPECIAL_RULES in actions_to_take:
+                if Actions.LOAD_SPECIAL_RULES in actions_to_take and not page.units:
                     for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
                         self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
-                if Actions.LOAD_WEAPON_PROFILES in actions_to_take:
+                if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
@@ -238,8 +245,34 @@ class System:
 
     def create_or_update_unit(self, page, pub_id, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
         unit_element = self.get_unit(page, pub_id, raw_unit, default_sys_file)
-        if unit_element is not None:
+        if unit_element is None:
             return
+        selection_entries = get_or_create_sub_element(unit_element, 'selectionEntries')
+
+        category_links = get_or_create_sub_element(unit_element, 'categoryLinks')
+        get_or_create_sub_element(category_links, 'categoryLink',
+                                  attrib={'targetId': '36c3-e85e-97cc-c503',
+                                          'name': 'Unit:',
+                                          'primary': 'false',
+                                          }, assign_id=True)
+        if raw_unit.force_org:
+            if raw_unit.force_org in self.game.category_book_to_full_name_map:
+                category_name = self.game.category_book_to_full_name_map[raw_unit.force_org]
+                if category_name:  # Could be none for dedicated transport.
+                    if category_name not in self.categories:
+                        self.errors.append(f"Could not find '{category_name}' for '{raw_unit.name}'")
+                        return
+                    target_id = self.categories[category_name]
+                    get_or_create_sub_element(category_links, 'categoryLink',
+                                              attrib={'targetId': target_id,
+                                                      'name': category_name,
+                                                      # Won't actually be the real name, need update script
+                                                      'primary': 'true',
+                                                      }, assign_id=True)
+
+        option_entries = get_or_create_sub_element(unit_element, 'selectionEntryGroups')
+        rule_links = get_or_create_sub_element(unit_element, 'infoLinks')
+        rules = get_or_create_sub_element(unit_element, 'rules')
 
     def get_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
 

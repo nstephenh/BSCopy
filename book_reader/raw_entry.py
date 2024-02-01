@@ -270,7 +270,7 @@ class RawUnit:
                 continue
             name, pts = option_process_line(option)
             if line.endswith(" each"):
-                self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
+                self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier\n"
             print(f"\t\t{name} for {pts} pts{defaulted_message}")
             defaulted_message = ""  # Clear our defaulted message now that we've shown it.
             option_group.options.append(Option(name=name, pts=pts))

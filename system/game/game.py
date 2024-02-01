@@ -40,3 +40,5 @@ class Game:
     NAME_HAS_DOTS: bool = False
 
     FORCE_ORG_IN_FLAVOR: bool = False
+
+    category_book_to_full_name_map: dict[str, str] = {}

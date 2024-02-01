@@ -18,3 +18,5 @@ if __name__ == '__main__':
                         ],
                     })
     system.save_system()
+    for error in system.errors:
+        print(error)
