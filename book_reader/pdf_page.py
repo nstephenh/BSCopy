@@ -30,6 +30,15 @@ class PdfPage(Page):
         self.process_weapon_profiles()
         self.process_special_rules()
 
+        for unit in self.units:
+            unit.page_special_rules = self.special_rules_dict
+            unit.page_weapons = self.weapons
+            unit.process_subheadings()
+            if unit.errors:
+                self.book.system.errors.append(
+                    "\n".join([unit.name] + ["\t" + line for line in unit.errors.splitlines()]
+                              ))
+
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
             self.get_text_units()
@@ -408,13 +417,7 @@ class PdfPage(Page):
                 else:
                     constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
-        constructed_unit.process_subheadings()
-        if constructed_unit.errors:
-            self.book.system.errors.append(
-                "\n".join([constructed_unit.name] + ["\t" + line for line in constructed_unit.errors.splitlines()]
-                          ))
         self.units.append(constructed_unit)
-        print(json.dumps(constructed_unit.serialize(), indent=2))
 
     def process_weapon_profiles(self):
         if not self.special_rules_text:
