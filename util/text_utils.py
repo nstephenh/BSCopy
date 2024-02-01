@@ -391,15 +391,31 @@ def get_first_non_list_or_header_line(text, headers):
     :param headers: list of headers
     :return:
     """
+    in_options = False
+    in_option_header = False
     last_indent = 0
     for index, line in enumerate(text.splitlines()[1:]):
+        print(line)
         if line.strip() == "":
             continue
-        if not (line.lstrip()[0] in bullet_options + ["("]
-                or line.strip() in headers
-                or last_indent == get_line_indent(line)):
-            return index + 1
-        last_indent = get_line_indent(line, 1)
+        if not in_options:
+            if not (line.lstrip()[0] in bullet_options + ["("]
+                    or line.strip() in headers
+                    or last_indent == get_line_indent(line)):
+                return index + 1
+            last_indent = get_line_indent(line, 1)
+            if line.strip() == "Options:":
+                in_options = True
+            continue
+        if not in_option_header and line.lstrip()[0] == "●":
+            in_option_header = True
+        if (line.lstrip()[0] not in bullet_options) and (not in_option_header):
+            return index
+        if in_option_header and line.strip().endswith(":"):
+            in_option_header = False
+
+
+
 
 
 def get_line_indent(line, offset=0):
