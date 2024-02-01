@@ -198,10 +198,7 @@ class RawUnit:
                     if additional_models_str.isdigit():
                         additional_models = int(additional_models_str)
                     else:
-                        if additional_models_str == "eight":
-                            additional_models = 8
-                        else:
-                            raise ValueError("Unexpected number word")
+                        additional_models = text_utils.number_word_to_int(additional_models_str)
                     model_name = name.split('additional ')[1]
                     print(f"{model_name} x{additional_models} at {pts} each")
                     profile = self.get_profile_for_name(model_name)

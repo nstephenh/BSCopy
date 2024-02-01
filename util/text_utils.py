@@ -51,6 +51,13 @@ def make_plural(model_name):
     return model_name + "s"
 
 
+def number_word_to_int(word):
+    units = [
+        "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+        "nine", "ten"]
+    return units.index(word)
+
+
 def get_generic_rule_name(rule_name, after_dash=False):
     # Special handling for some rules:
     if rule_name.startswith('Blast (') or rule_name.startswith('Large Blast (') \
