@@ -89,7 +89,6 @@ class SystemElement:
         # In the future we may want to consider breaking if we find an infolink that's the name of the profile
         profiles_element = self.get_or_create('profiles')
         profile_element = profiles_element.get_or_create('profile')
-        profile_element.update_attributes({'name': profile.name})
 
         profile_type = "Weapon"  # assume weapon by default
         characteristics_dict = dict(profile.stats)
@@ -100,16 +99,19 @@ class SystemElement:
             characteristics_dict.update({
                 "Unit Type": profile.unit_type_text
             })
+        profile_element.update_attributes({'name': profile.name,
+                                           'typeId': self.system.get_profile_type_id(profile_type)})
+
         profile_element.set_characteristics_from_dict(characteristics_dict, profile_type)
 
     def set_characteristics_from_dict(self, profile: dict, profile_type: str):
-        characteristics_by_id = {}
-        for characteristic, value in profile.items():
-            characteristics_by_id[self.system.get_characteristic_id(profile_type, characteristic)] = value
         characteristics = self.get_or_create('characteristics')
-        for characteristic_id, value in characteristics_by_id.items():
-            # This will not set the characteristic name, we'll want to do that in post-processing
-            char_element = characteristics.get_or_create('characteristic', attrib={'typeId': characteristic_id})
+        for characteristic, value in profile.items():
+            name, characteristic_id = self.system.get_characteristic_name_and_id(profile_type, characteristic)
+            char_element = characteristics.get_or_create('characteristic',
+                                                         attrib={'typeId': characteristic_id,
+                                                                 'name': name,
+                                                                 })
             char_element.text = value
 
     def set_constraints(self, object_with_min_max):
