@@ -35,9 +35,9 @@ def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None, assign
             attrib_path_str += f"[@{key}='{value}']"
     sub_element = element.find(attrib_path_str)
     if sub_element is not None:
-        return sub_element
+        return sub_element, False
     if assign_id:
         attrib.update({'id': get_random_bs_id()})
     if attrib:
-        return ET.SubElement(element, tag, attrib)
-    return ET.SubElement(element, tag)
+        return ET.SubElement(element, tag, attrib), True
+    return ET.SubElement(element, tag), True

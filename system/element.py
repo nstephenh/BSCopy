@@ -11,8 +11,11 @@ class SystemElement:
     def category_book_to_full_name_map(self):
         return self.system.game.category_book_to_full_name_map
 
-    def get_or_create(self, tag, attrib: dict[str:str] = None, assign_id: bool = False):
-        return self.system.element_as_system_element(get_or_create_sub_element(self.element, tag, attrib, assign_id))
+    def get_or_create(self, tag, attrib: dict[str:str] = None, assign_id: bool = False, defaults: dict[str:str] = None):
+        element, created = get_or_create_sub_element(self.element, tag, attrib, assign_id)
+        if created and defaults:
+            element.attrib.update(defaults)
+        return self.system.element_as_system_element(element)
 
     def set_force_org(self, raw_unit: 'RawUnit'):
         category_links = self.get_or_create('categoryLinks')
@@ -31,11 +34,12 @@ class SystemElement:
                     target_id = self.system.categories[category_name]
                     category_links.get_or_create('categoryLink',
                                                  attrib={'targetId': target_id,
-                                                         'name': category_name,
-                                                         # Won't actually be the real name, need update script
                                                          'primary': 'true',
                                                          },
-                                                 assign_id=True)
+                                                 assign_id=True,
+                                                 # Won't actually be the real name, may need an update script
+                                                 defaults={'name': category_name},
+                                                 )
 
     def set_models(self, raw_unit: 'RawUnit'):
         if len(raw_unit.model_profiles) == 0:
