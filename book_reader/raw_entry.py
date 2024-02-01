@@ -68,7 +68,8 @@ class Option:
 
 
 class OptionGroup:
-    def __init__(self):
+    def __init__(self, title):
+        self.title = title
         self.max = 1
         self.min = 0
         self.options: [Option] = []
@@ -82,11 +83,12 @@ class OptionGroup:
 
     def serialize(self):
         return {
-            "Options": [option.serialize() for option in self.options],
+            "Title": self.title,
             "min": self.min,
             "max": self.max,
-        }
+            "Options": [option.serialize() for option in self.options],
 
+        }
 
 class RawUnit:
     def __init__(self, name: str, points: int = None):
@@ -216,7 +218,7 @@ class RawUnit:
                     profile.max += additional_models
             return  # this section was points per model options, so we don't need to generate an options group.
 
-        option_group = OptionGroup()
+        option_group = OptionGroup(title=option_title)
 
         option_group.max = 1
         if "and/or" in option_title or "up to two" in option_title:
@@ -246,8 +248,9 @@ class RawUnit:
                         wargear_removed_by_this_option.append(wargear)
                 for wargear in wargear_removed_by_this_option:
                     if wargear not in model.default_wargear:
-                        self.errors += (f"{wargear} is in two option lists for {model.name}, you will need to combine "
-                                        f"them by hand \n")
+                        self.errors += (
+                            f"{wargear} is in two option lists for {model.name}, you will need to combine "
+                            f"them by hand.\n")
                         continue  # We can't remove it from the list because we already have
                     model.default_wargear.remove(wargear)
                     if wargear not in add_to_options_list:  # To ensure we don't add it to our shared list twice.
