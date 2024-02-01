@@ -45,7 +45,6 @@ class Page:
             'Units': [
                 unit.serialize() for unit in self.units
             ],
-            "Special Rules Text": self.special_rules_text,
             'Special Rules': self.special_rules_dict,
             'Weapons': [
                 profile.serialize() for profile in self.weapons
