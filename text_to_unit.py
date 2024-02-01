@@ -197,7 +197,7 @@ for line in split_at_dot(options_lines):
     for option in options:
         name, pts = option_process_line(option)
         if line.endswith(" each"):
-            errors += f"The option '{name}' may need a 'multiply by number of models' modifier"
+            errors += f"The option '{name}' may need a 'multiply by number of models' modifier\n"
         print(f"\t{name} for {pts} pts{defaulted_message}")
         defaulted_message = ""  # Clear our defaulted message now that we've shown it.
         option_tuples.append((name, pts))

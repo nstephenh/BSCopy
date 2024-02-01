@@ -114,6 +114,8 @@ class RawUnit:
             dict_to_return["Special Rules"] = self.special_rules
         if len(self.subheadings) > 0:
             dict_to_return["Subheadings"] = self.subheadings
+        if len(self.errors):
+            dict_to_return["Errors"] = self.errors
         return dict_to_return
 
     def process_subheadings(self):
