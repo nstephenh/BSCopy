@@ -26,11 +26,11 @@ class SystemElement:
     def category_book_to_full_name_map(self):
         return self.system.game.category_book_to_full_name_map
 
-    def get_or_create(self, tag, attrib: dict[str:str] = None, assign_id: bool = False, defaults: dict[str:str] = None):
+    def get_or_create(self, tag, attrib: dict[str:str] = None, defaults: dict[str:str] = None):
         if attrib:
             for attr, value in attrib.items():
                 attrib[attr] = str(value)  # All values must be strings to serialize properly.
-        element, created = get_or_create_sub_element(self._element, tag, attrib, assign_id)
+        element, created = get_or_create_sub_element(self._element, tag, attrib)
         if created and defaults:
             element.attrib.update(defaults)
         return self.system.element_as_system_element(element)
@@ -53,7 +53,7 @@ class SystemElement:
                                              'name': 'Unit:',
                                              'primary': 'false',
                                              },
-                                     assign_id=True)
+                                     )
         if raw_unit.force_org:
             if raw_unit.force_org in self.category_book_to_full_name_map:
                 category_name = self.category_book_to_full_name_map[raw_unit.force_org]
@@ -65,7 +65,7 @@ class SystemElement:
                                                  attrib={'targetId': target_id,
                                                          'primary': 'true',
                                                          },
-                                                 assign_id=True,
+
                                                  # Won't actually be the real name, may need an update script
                                                  defaults={'name': category_name},
                                                  )
@@ -79,7 +79,7 @@ class SystemElement:
                                                        attrib={
                                                            "type": "model",
                                                            "name": raw_model.name,
-                                                       }, assign_id=True)
+                                                       }, )
             model_se.update_pub_and_page(raw_unit.page)
             model_se.set_model_profile(raw_model)
             model_se.set_constraints(raw_model)
@@ -124,14 +124,14 @@ class SystemElement:
                                  }
         if object_with_min_max.min is not None:
             constraints_el.get_or_create('constraint',
-                                         assign_id=True,
+
                                          attrib={'type': 'min',
                                                  'value': object_with_min_max.min,
                                                  } | constraint_attributes,
                                          )
         if object_with_min_max.max is not None:
             constraints_el.get_or_create('constraint',
-                                         assign_id=True,
+
                                          attrib={'type': 'max',
                                                  'value': object_with_min_max.max,
                                                  } | constraint_attributes,
@@ -163,7 +163,7 @@ class SystemElement:
         for group in option_groups:
             group_entry = option_entries.get_or_create('selectionEntryGroup', attrib={
                 'name': group.title,
-            }, assign_id=True)
+            }, )
             info_links = group_entry.get_or_create('infoLinks')
             selection_entries = group_entry.get_or_create('selectionEntries')
             for option in group.options:

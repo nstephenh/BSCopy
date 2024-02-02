@@ -28,7 +28,14 @@ def get_tag(element):
     return tag
 
 
-def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None, assign_id=False):
+elements_that_get_id = [
+    'entryLink', 'categoryLink', 'constraint', 'selectionEntry', 'rule', 'profile', 'infoLink', 'selectionEntryGroup',
+    'catalogueLink', 'repeat', 'categoryEntry', 'publication', 'profileType', 'characteristicType', 'condition',
+    'forceEntry', 'costType', 'modifier', 'association', 'infoGroup', 'catalogue', 'gameSystem'
+]
+
+
+def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None):
     attrib_path_str = "{*}" + tag  # Any namespace
     if attrib:
         for key, value in attrib.items():
@@ -36,7 +43,7 @@ def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None, assign
     sub_element = element.find(attrib_path_str)
     if sub_element is not None:
         return sub_element, False
-    if assign_id:
+    if tag in elements_that_get_id:
         attrib.update({'id': get_random_bs_id()})
     if attrib:
         return ET.SubElement(element, tag, attrib), True
