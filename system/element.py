@@ -83,7 +83,8 @@ class SystemElement:
                                                        }, )
             model_se.update_pub_and_page(raw_unit.page)
             model_se.set_model_profile(raw_model)
-            model_se.set_constraints(raw_model)
+            model_se.set_constraints_from_object(raw_model)
+            model_se.set_options(raw_model.options_groups)
 
     def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
         # There should only be one profile per entrylink, so don't filter by name.
@@ -115,26 +116,29 @@ class SystemElement:
                                                                  })
             char_element.text = value
 
-    def set_constraints(self, object_with_min_max):
+    def set_constraints_from_object(self, object_with_min_max):
         if not (hasattr(object_with_min_max, 'min') and hasattr(object_with_min_max, 'max')):
             raise ValueError("The object must have min and max to set constraints")
+        self.set_constraints(minimum=object_with_min_max.min, maximum=object_with_min_max.max)
+
+    def set_constraints(self, minimum=None, maximum=None):
         constraints_el = self.get_or_create('constraints')
         constraint_attributes = {'field': "selections",
                                  'scope': "parent",
                                  'shared': "true",
                                  }
-        if object_with_min_max.min is not None:
+        if minimum is not None and minimum > 0:
             constraints_el.get_or_create('constraint',
 
                                          attrib={'type': 'min',
-                                                 'value': object_with_min_max.min,
+                                                 'value': minimum,
                                                  } | constraint_attributes,
                                          )
-        if object_with_min_max.max is not None:
+        if maximum is not None:
             constraints_el.get_or_create('constraint',
 
                                          attrib={'type': 'max',
-                                                 'value': object_with_min_max.max,
+                                                 'value': maximum,
                                                  } | constraint_attributes,
                                          )
 
@@ -185,15 +189,31 @@ class SystemElement:
         for group in option_groups:
             group_entry = option_entries.get_or_create('selectionEntryGroup', attrib={
                 'name': group.title,
-            }, )
-            info_links = group_entry.get_or_create('infoLinks')
-            selection_entries = group_entry.get_or_create('selectionEntries')
+            })
             for option in group.options:
                 # Lookup option in page and get local options
+                found_locally = False
+                if found_locally:
+                    continue
                 # Lookup option in system
-
-                # Create links:
-                option_entry = info_links.get_or_create('infoLink', attrib={
-                    'targetId': ''
+                found_name, wargear_id = self.system.get_wargear_name_and_id(option.name)
+                if wargear_id is None:
+                    continue
+                # Create link:
+                if option.name == "Combi-Bolter":
+                    pass
+                entry_links = group_entry.get_or_create('entryLinks')
+                option_link = entry_links.get_or_create('entryLink', attrib={
+                    'name': found_name,  # Name *should* be accurate as we're looking for it in the list
+                    'hidden': 'false',
+                    'type': 'selectionEntry',
+                    'targetId': wargear_id,
+                    # TODO: Set as default if should be default (need to set that in RawEntry)
                 })
-            group_entry.set_constraints(group)
+                if option.pts > 0:
+                    option_link.set_cost(option.pts)
+                if found_name != option.name:
+                    option_link.set_name_modifier(option.name)
+                option_link.set_constraints(0, group.max)
+
+            group_entry.set_constraints_from_object(group)

@@ -13,7 +13,7 @@ from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file, read_categories
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
-from util.text_utils import get_generic_rule_name
+from util.text_utils import get_generic_rule_name, remove_plural, check_alt_names
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
                          'characteristicType']
@@ -242,6 +242,20 @@ class System:
             return rule_name, self.rules_ids[rule_name]
         print(f"Could not find rule: {rule_name}")
         self.errors.append(f"Could not find rule: {rule_name}")
+        return None, None
+
+    def get_wargear_name_and_id(self, wargear_name: str) -> (str, str) or (None, None):
+        lookup_name = check_alt_names(wargear_name)
+        if "Two" in lookup_name:
+            lookup_name = lookup_name.split("Two")[1].strip()
+            lookup_name = remove_plural(lookup_name)
+        if "Mounted" in lookup_name:
+            lookup_name = lookup_name.split("Mounted")[1].strip()
+        if lookup_name in self.wargear_ids:
+            return lookup_name, self.wargear_ids[lookup_name]
+        self.errors.append(f"Could not find wargear for: {wargear_name}")
+        if lookup_name != wargear_name:
+            self.errors.append(f"\t Checked under {lookup_name}")
         return None, None
 
     def get_profile_type_id(self, profile_type: str):

@@ -1,3 +1,4 @@
+from settings import name_synonyms
 from util.log_util import style_text, STYLES, print_styled
 
 errors = ""
@@ -52,6 +53,12 @@ def number_word_to_int(word):
         "zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
         "nine", "ten"]
     return units.index(word)
+
+
+def check_alt_names(name):
+    if name in name_synonyms:
+        return name_synonyms[name]
+    return name
 
 
 def get_generic_rule_name(rule_name, after_dash=False):
@@ -417,9 +424,6 @@ def get_first_non_list_or_header_line(text, headers):
             in_option_header = False
         if in_option_line and line.strip().endswith("points"):
             in_option_line = False
-
-
-
 
 
 def get_line_indent(line, offset=0):
