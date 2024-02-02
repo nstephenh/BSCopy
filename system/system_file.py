@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
 from system.node import Node
+from util.generate_util import cleanup_file_match_bs_whitespace
 from util.text_utils import make_plural
 
 if TYPE_CHECKING:
@@ -30,6 +31,12 @@ class SystemFile:
 
         self._parent_map = {c: p for p in self._source_tree.iter() for c in p}
         self.root_node = Node(self, self._source_tree.getroot())
+
+    def save(self):
+        ET.indent(self._source_tree)
+        # utf-8 to keep special characters un-escaped.
+        self._source_tree.write(self.path, encoding="utf-8")
+        cleanup_file_match_bs_whitespace(self.path)
 
     def __str__(self):
         return self.name

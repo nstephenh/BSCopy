@@ -1,8 +1,6 @@
 import json
 import os
 
-import xml.etree.ElementTree as ET
-
 from book_reader.raw_entry import RawUnit, RawProfile
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
@@ -10,7 +8,6 @@ from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file, read_categories
-from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
 from util.text_utils import get_generic_rule_name, remove_plural, check_alt_names
 
@@ -354,9 +351,5 @@ class System:
             print('\r', end="")
             print(f"Saving file ({i}/{count}): {system_file.path}", end="")
             set_namespace_from_file(system_file.path)
-
-            ET.indent(system_file._source_tree)
-            # utf-8 to keep special characters un-escaped.
-            system_file._source_tree.write(system_file.path, encoding="utf-8")
-            cleanup_file_match_bs_whitespace(system_file.path)
+            system_file.save()
         print()  # newline to clean up
