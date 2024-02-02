@@ -32,8 +32,8 @@ class Node:
         self.shared = False
         if self.parent:
             parent_tag = self.parent.tag
-            if "}" in self.tag:
-                parent_tag = self.tag.split('}')[1]
+            if "}" in parent_tag:
+                parent_tag = parent_tag.split('}')[1]
             self.shared = parent_tag.startswith('shared')
 
     def __str__(self):
