@@ -120,7 +120,7 @@ class SystemElement:
         constraints_el = self.get_or_create('constraints')
         constraint_attributes = {'field': "selections",
                                  'scope': "parent",
-                                 'shared': "True",
+                                 'shared': "true",
                                  }
         if object_with_min_max.min is not None:
             constraints_el.get_or_create('constraint',
@@ -137,6 +137,15 @@ class SystemElement:
                                                  } | constraint_attributes,
                                          )
 
+    def set_cost(self, points: int or str):
+        costs = self.get_or_create('costs')
+        cost = costs.get_or_create('cost')
+        cost.update_attributes({
+            'name': "Pts",
+            'typeId': "d2ee-04cb-5f8a-2642",
+            'value': points,
+        })
+
     def set_info_links(self, target_list: list):
         if len(target_list) == 0:
             return
@@ -147,7 +156,22 @@ class SystemElement:
             return
         rules = self.get_or_create('rules')
 
-    def set_options(self, options: list['OptionGroup']):
-        if len(options) == 0:
+    def set_options(self, option_groups: list['OptionGroup']):
+        if len(option_groups) == 0:
             return
         option_entries = self.get_or_create('selectionEntryGroups')
+        for group in option_groups:
+            group_entry = option_entries.get_or_create('selectionEntryGroup', attrib={
+                'name': group.title,
+            }, assign_id=True)
+            info_links = group_entry.get_or_create('infoLinks')
+            selection_entries = group_entry.get_or_create('selectionEntries')
+            for option in group.options:
+                # Lookup option in page and get local options
+                # Lookup option in system
+
+                # Create links:
+                option_entry = info_links.get_or_create('infoLink', attrib={
+                    'targetId': ''
+                })
+            group_entry.set_constraints(group)
