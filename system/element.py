@@ -3,6 +3,7 @@ from xml.etree import ElementTree as ET
 from book_reader.page import Page
 from book_reader.raw_entry import OptionGroup, RawUnit, RawProfile, RawModel
 from util.element_util import get_or_create_sub_element
+from util.text_utils import get_generic_rule_name
 
 
 class SystemElement:
@@ -146,10 +147,31 @@ class SystemElement:
             'value': points,
         })
 
-    def set_info_links(self, target_list: list):
-        if len(target_list) == 0:
+    def set_name_modifier(self, name: str):
+        mods = self.get_or_create('modifiers')
+        name_mod = mods.get_or_create('modifier', attrib={
+            'type': "set",
+            'field': "name",
+        })
+        name_mod.update_attributes({'value': name})
+
+    def set_rule_info_links(self, rule_names: list):
+        if len(rule_names) == 0:
             return
         info_links = self.get_or_create('infoLinks')
+
+        for rule_name in rule_names:
+            found_name, rule_id = self.system.get_rule_name_and_id(rule_name)
+            if rule_id is None:
+                continue
+            rule_link = info_links.get_or_create('infoLink', attrib={
+                'name': found_name,  # Name *should* be accurate as we're looking for it in the list
+                'hidden': 'false',
+                'type': 'rule',
+                'targetId': rule_id,
+            })
+            if found_name != rule_name:
+                rule_link.set_name_modifier(rule_name)
 
     def set_rules(self, rules_dict: dict):
         if len(rules_dict) == 0:

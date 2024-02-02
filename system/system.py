@@ -3,7 +3,7 @@ import os
 
 import xml.etree.ElementTree as ET
 
-from book_reader.raw_entry import RawUnit, OptionGroup
+from book_reader.raw_entry import RawUnit
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
 from system.element import SystemElement
@@ -11,10 +11,9 @@ from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file, read_categories
-from util.element_util import get_or_create_sub_element
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.log_util import STYLES, print_styled, get_diff
-from util.text_utils import split_at_dot, remove_plural
+from util.text_utils import get_generic_rule_name
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
                          'characteristicType']
@@ -48,6 +47,9 @@ class System:
         self.nodes_by_type: dict[str, list[Node]] = {}
         self.nodes_by_name: dict[str, list[Node]] = {}  # can use nodes by name
         self.nodes_by_target_id: dict[str, list[Node]] = {}
+
+        self.rules_ids = {}
+        self.wargear_ids = {}
 
         # profileType name: {characteristicType name: typeId}
         self.profile_characteristics: dict[str: dict[str: str]] = {}
@@ -98,6 +100,7 @@ class System:
                 self.categories = read_categories(file.source_tree)
 
         self.define_profile_characteristics()
+        self.read_rules_and_wargear()
 
         self.raw_files = {}
         if include_raw:
@@ -108,6 +111,16 @@ class System:
             self.profile_characteristics[node.name] = {}
             for element in node.get_sub_elements_with_tag('characteristicType'):
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
+
+    def read_rules_and_wargear(self):
+        for sharedRulesNode in self.nodes_by_type['rule']:
+            if not sharedRulesNode.shared:
+                continue
+            self.rules_ids[sharedRulesNode.name] = sharedRulesNode.id
+        for sharedEntryNode in self.nodes_by_type['selectionEntry:upgrade']:
+            if not sharedEntryNode.shared:
+                continue
+            self.wargear_ids[sharedEntryNode.name] = sharedEntryNode.id
 
     def read_books_json_config(self):
         expected_location = os.path.join(self.game_system_location, 'raw', 'books.json')
@@ -219,6 +232,18 @@ class System:
         # Then create any we couldn't find
         pass
 
+    def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
+        rule_name = rule_name.strip()
+        rule_name = get_generic_rule_name(rule_name)
+        if rule_name in self.rules_ids:
+            return rule_name, self.rules_ids[rule_name]
+        rule_name = get_generic_rule_name(rule_name, True)
+        if rule_name in self.rules_ids:
+            return rule_name, self.rules_ids[rule_name]
+        print(f"Could not find rule: {rule_name}")
+        self.errors.append(f"Could not find rule: {rule_name}")
+        return None, None
+
     def get_profile_type_id(self, profile_type: str):
         return self.nodes.filter(lambda node: (
                 node.get_type() == f"profileType"
@@ -282,7 +307,7 @@ class System:
 
         unit_element.set_models(raw_unit)
         unit_element.set_options(raw_unit.unit_options)
-        unit_element.set_info_links(raw_unit.special_rules)
+        unit_element.set_rule_info_links(raw_unit.special_rules)
         unit_element.set_rules(raw_unit.special_rule_descriptions)
 
     def get_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
