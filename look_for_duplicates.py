@@ -37,17 +37,17 @@ if __name__ == '__main__':
         rules_texts = {}
         hashes = {}
         for node in nodes:
-            inside_text = "".join([ET.tostring(child, encoding='unicode') for child in node.element])
+            inside_text = "".join([ET.tostring(child, encoding='unicode') for child in node._element])
             fingerprint = hash(inside_text)
             rules_text = None
             if node.tag == 'rule':
-                rules_text = get_description(node.element).text
+                rules_text = node.get_description()
                 fingerprint = hash(rules_text)
 
-            print(f"\t{node.tag} {node.element.attrib['id']} in {node.system_file.name} with hash {fingerprint}")
+            print(f"\t{node.tag} {node._element.attrib['id']} in {node.system_file.name} with hash {fingerprint}")
 
             if fingerprint in hashes.keys():
-                print(f"\t\tContents match exactly with {node.element.attrib['id']} in {node.system_file.name}")
+                print(f"\t\tContents match exactly with {node._element.attrib['id']} in {node.system_file.name}")
                 add_to_confirmed_duplicates(group_name, node, hashes[fingerprint])
             elif node.tag == 'rule':
                 for comparison_text, comparison_node in rules_texts.items():
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     for group_name, nodes in confirmed_duplicates.items():
         print_styled(f"{group_name} has {len(nodes) - 1} confirmed duplicates", STYLES.GREEN)
-        best_option = nodes[0]  # First node
+        best_option: 'Node' = nodes[0]  # First node
         for node in nodes:
             if node.system_file.is_gst:
                 best_option = node
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                 best_option = node
         for node in nodes:
             is_best_option = "*" if node == best_option else " "
-            print(f"\t{is_best_option} {node.tag} {node.element.attrib['id']} in {node.system_file.name}")
+            print(f"\t{is_best_option} {node.tag} {node._element.attrib['id']} in {node.system_file.name}")
 
         for node in nodes:
             if node != best_option:
@@ -95,25 +95,25 @@ if __name__ == '__main__':
                         or best_option.system_file.is_gst
                         or (best_option.system_file.id in node.system_file.import_ids)):
                     print_styled(
-                        f"\tCould not replace {node.tag} {node.element.attrib['id']} "
+                        f"\tCould not replace {node.tag} {node._element.attrib['id']} "
                         f"because {best_option.system_file.name} is not imported by {node.system_file.name}",
                         STYLES.RED)
                     continue
                 children = []
-                for child in node.element:
+                for child in node._element:
                     for tag in ['constraint', 'modifier']:
                         if tag in child.tag:
                             children.append(child)
                 if len(children) > 0:
                     print_styled(
-                        f"\tCould not replace {node.tag} {node.element.attrib['id']} "
+                        f"\tCould not replace {node.tag} {node._element.attrib['id']} "
                         f"because it would orphan the following: "
                         f"{[child.tag.split('}')[1] for child in children]}",
                         STYLES.RED)
                     continue
                 addressed_count += 1
                 print_styled(
-                    f"\tReplacing {node.tag} {node.element.attrib['id']} with an entrylink to {best_option.id}",
+                    f"\tReplacing {node.tag} {node._element.attrib['id']} with an entrylink to {best_option.id}",
                     style=STYLES.PURPLE)
 
                 # Update all nodes pointing to this node.

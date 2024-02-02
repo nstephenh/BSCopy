@@ -59,9 +59,9 @@ if __name__ == '__main__':
             continue
 
         # update revision and gameSystemRevision
-        system_file.source_tree.getroot().attrib['revision'] = revision_map[file_name]
+        system_file._source_tree.getroot().attrib['revision'] = revision_map[file_name]
         if file_name != "GST":
-            system_file.source_tree.getroot().attrib['gameSystemRevision'] = gsrevision_map[file_name]
+            system_file._source_tree.getroot().attrib['gameSystemRevision'] = gsrevision_map[file_name]
 
         id_translation_table[original_id_map[file_name]] = system_file.id
     new_system.save_system()

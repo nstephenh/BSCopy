@@ -3,10 +3,9 @@ import os
 
 import xml.etree.ElementTree as ET
 
-from book_reader.raw_entry import RawUnit
+from book_reader.raw_entry import RawUnit, RawProfile
 from settings import default_system, default_data_directory, default_settings
 from system.constants import SystemSettingsKeys
-from system.element import SystemElement
 from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
@@ -41,15 +40,7 @@ class System:
         self.gst = None
         self.files: [SystemFile] = []
 
-        self.nodes = NodeCollection([])
-        # The goal is to replace the below indexed lists with just filtering this collection
-        self.nodes_by_id: dict[str, Node] = {}
-        self.nodes_by_type: dict[str, list[Node]] = {}
-        self.nodes_by_name: dict[str, list[Node]] = {}  # can use nodes by name
-        self.nodes_by_target_id: dict[str, list[Node]] = {}
-
-        self.rules_ids = {}
-        self.wargear_ids = {}
+        self.nodes_with_ids = NodeCollection([])
 
         # profileType name: {characteristicType name: typeId}
         self.profile_characteristics: dict[str: dict[str: str]] = {}
@@ -76,51 +67,34 @@ class System:
             if file.is_gst:
                 self.gst = file
         print()  # Newline after progress bar
-        for file in self.files:
-            self.nodes = self.nodes + file.nodes
-            self.nodes_by_id.update(file.nodes_by_id)
 
-            for tag, nodes in file.nodes_by_type.items():
-                if tag not in self.nodes_by_type.keys():
-                    self.nodes_by_type[tag] = []
-                for node in nodes:
-                    self.nodes_by_type[tag].append(node)
-            for name, nodes in file.nodes_by_name.items():
+        self.define_profile_characteristics()  # These should not be updated during a session, so it's OK to index them.
 
-                if name not in self.nodes_by_name.keys():
-                    self.nodes_by_name[name] = []
-                self.nodes_by_name[name].extend(nodes)
-
-            for target_id, nodes in file.nodes_by_target_id.items():
-                if target_id not in self.nodes_by_target_id.keys():
-                    self.nodes_by_target_id[target_id] = []
-                self.nodes_by_target_id[target_id].extend(nodes)
-
-            if file.is_gst:
-                self.categories = read_categories(file.source_tree)
-
-        self.define_profile_characteristics()
-        self.read_rules_and_wargear()
+        self.wargear_by_name = {}
+        self.rules_by_name = {}
+        self.categories = {}
+        self.refresh_index()
 
         self.raw_files = {}
         if include_raw:
             self.init_raw_game(raw_import_settings)
 
+    def refresh_index(self):
+        self.rules_by_name = {node.name: node for node in
+                              self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared)}
+        self.wargear_by_name = {node.name: node for node in
+                                self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry' and node.shared)}
+        for file in self.files:
+            if file.is_gst:
+                # TODO: This also needs ported over to the new implementation.
+                # And we need to be able to read non-gst unit types
+                self.categories = read_categories(file._source_tree)
+
     def define_profile_characteristics(self):
-        for node in self.nodes_by_type['profileType']:
+        for node in self.nodes_with_ids.filter(lambda x: x.type == 'profileType'):
             self.profile_characteristics[node.name] = {}
             for element in node.get_sub_elements_with_tag('characteristicType'):
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
-
-    def read_rules_and_wargear(self):
-        for sharedRulesNode in self.nodes_by_type['rule']:
-            if not sharedRulesNode.shared:
-                continue
-            self.rules_ids[sharedRulesNode.name] = sharedRulesNode.id
-        for sharedEntryNode in self.nodes_by_type['selectionEntry:upgrade']:
-            if not sharedEntryNode.shared:
-                continue
-            self.wargear_ids[sharedEntryNode.name] = sharedEntryNode.id
 
     def read_books_json_config(self):
         expected_location = os.path.join(self.game_system_location, 'raw', 'books.json')
@@ -168,7 +142,9 @@ class System:
             pub_id = name_to_pub_id[file_name]
             skip_non_dump_actions = False
             sys_file_for_pub = self.gst
-            publication_node = self.nodes_by_id.get(pub_id)
+            publication_node = self.nodes_with_ids.get(lambda node: (
+                    node.id == pub_id
+            ))
             if not publication_node:
                 print(f"Please create a publication for {file_name} and define it in books.json,"
                       f" or rename that file to be a publication ID")
@@ -187,30 +163,30 @@ class System:
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take and not page.units:
                     for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
-                        self.create_or_update_special_rule(page, pub_id, rule_name, rule_text, sys_file_for_pub)
+                        self.create_or_update_special_rule(page, rule_name, rule_text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        self.create_or_update_profile(page, pub_id, weapon, profile_type="Weapon",
+                        self.create_or_update_profile(page, weapon, profile_type="Weapon",
                                                       default_sys_file=sys_file_for_pub)
                 if Actions.LOAD_UNITS in actions_to_take:
                     for unit in page.units:
                         print(f"\t\tUnit: {unit.name}")
-                        self.create_or_update_unit(page, pub_id, unit,
+                        self.create_or_update_unit(unit,
                                                    default_sys_file=sys_file_for_pub)
         if Actions.DUMP_TO_JSON in actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
                       encoding='utf-8') as outfile:
                 outfile.write(json.dumps(export_dict, ensure_ascii=False, indent=2))
 
-    def create_or_update_special_rule(self, page, pub_id, rule_name, rule_text, default_sys_file):
+    def create_or_update_special_rule(self, page, rule_name, rule_text, default_sys_file):
         # First look for existing special rules
         node_type = self.settings.get(SystemSettingsKeys.SPECIAL_RULE_TYPE)
         if node_type is None:
             raise Exception("Special rule type is not defined for system")
 
-        nodes = self.nodes.filter(lambda node: (
-                node.get_type() == node_type
+        nodes = self.nodes_with_ids.filter(lambda node: (
+                node.type == node_type
                 and (node.name and node.name.lower() == rule_name.lower())
         ))
         if len(nodes) > 0:
@@ -220,7 +196,7 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tRule exists in data files: {node.id}")
-            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
+            node.update_pub_and_page(page)
             existing_rule_text = node.get_rules_text()
             diff = get_diff(existing_rule_text, rule_text, 3)
             if diff:
@@ -230,16 +206,19 @@ class System:
             return
 
         # Then create any we couldn't find
-        pass
+        rule_node = default_sys_file.create_shared_node('rule', attrib={
+            'name': rule_name
+        })
+        rule_node.update_pub_and_page(page)
 
     def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
         rule_name = rule_name.strip()
         rule_name = get_generic_rule_name(rule_name)
-        if rule_name in self.rules_ids:
-            return rule_name, self.rules_ids[rule_name]
+        if rule_name in self.rules_by_name:
+            return rule_name, self.rules_by_name[rule_name].id
         rule_name = get_generic_rule_name(rule_name, True)
-        if rule_name in self.rules_ids:
-            return rule_name, self.rules_ids[rule_name]
+        if rule_name in self.rules_by_name:
+            return rule_name, self.rules_by_name[rule_name].id
         print(f"Could not find rule: {rule_name}")
         self.errors.append(f"Could not find rule: {rule_name}")
         return None, None
@@ -251,16 +230,17 @@ class System:
             lookup_name = remove_plural(lookup_name)
         if "Mounted" in lookup_name:
             lookup_name = lookup_name.split("Mounted")[1].strip()
-        if lookup_name in self.wargear_ids:
-            return lookup_name, self.wargear_ids[lookup_name]
+
+        if lookup_name in self.wargear_by_name:
+            return lookup_name, self.wargear_by_name[lookup_name].id
         self.errors.append(f"Could not find wargear for: {wargear_name}")
         if lookup_name != wargear_name:
             self.errors.append(f"\t Checked under {lookup_name}")
         return None, None
 
     def get_profile_type_id(self, profile_type: str):
-        return self.nodes.filter(lambda node: (
-                node.get_type() == f"profileType"
+        return self.nodes_with_ids.filter(lambda node: (
+                node.type == f"profileType"
                 and (node.name == profile_type)))[0].id
 
     def get_characteristic_name_and_id(self, profile_type: str, characteristic_name: str):
@@ -281,12 +261,12 @@ class System:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
 
-    def create_or_update_profile(self, page, pub_id, raw_profile, profile_type, default_sys_file):
+    def create_or_update_profile(self, page, raw_profile: 'RawProfile', profile_type, default_sys_file):
         # A profile should also be in a selection entry with special rules,
         # so once we find the profile, we'll want to find selection entries for it.
 
-        nodes = self.nodes.filter(lambda node: (
-                node.get_type() == f"profile:{profile_type}"
+        nodes = self.nodes_with_ids.filter(lambda node: (
+                node.type == f"profile:{profile_type}"
                 and (node.name and node.name.lower() == raw_profile.name.lower())
         ))
         if len(nodes) > 0:
@@ -296,7 +276,7 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tProfile exists in data files: {node.id}")
-            node.update_attributes({'page': str(page.page_number), 'publicationId': pub_id})
+            node.update_pub_and_page(page)
             existing_profile_text = node.get_diffable_profile()
             new_profile_text = raw_profile.get_diffable_profile()
             diff = get_diff(existing_profile_text, new_profile_text, 3)
@@ -308,29 +288,26 @@ class System:
         # Then create any we couldn't find
         pass
 
-    def element_as_system_element(self, element):
-        return SystemElement(self, element)
-
-    def create_or_update_unit(self, page, pub_id, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
-        unit_element = self.element_as_system_element(self.get_unit(page, pub_id, raw_unit, default_sys_file))
-        if unit_element is None:
+    def create_or_update_unit(self, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
+        node = self.get_or_create_unit(raw_unit, default_sys_file)
+        if node is None:
             return
 
-        unit_element.update_pub_and_page(page)
-        unit_element.set_force_org(raw_unit)
+        node.update_pub_and_page(raw_unit.page)
+        node.set_force_org(raw_unit)
 
-        unit_element.set_models(raw_unit)
-        unit_element.set_options(raw_unit.unit_options)
-        unit_element.set_rule_info_links(raw_unit.special_rules)
-        unit_element.set_rules(raw_unit.special_rule_descriptions)
+        node.set_models(raw_unit)
+        node.set_options(raw_unit.unit_options)
+        node.set_rule_info_links(raw_unit.special_rules)
+        node.set_rules(raw_unit.special_rule_descriptions)
 
-    def get_unit(self, page, pub_id, raw_unit, default_sys_file: 'SystemFile'):
+    def get_or_create_unit(self, raw_unit, default_sys_file: 'SystemFile'):
+        raw_unit.name = raw_unit.name.title()
 
-        nodes = self.nodes.filter(lambda node: (
-                node.get_type() == f"selectionEntry:unit"
+        nodes = self.nodes_with_ids.filter(lambda node: (
+                node.type == f"selectionEntry:unit"
                 and (node.name and node.name.lower() == raw_unit.name.lower())
         ))
-        name = raw_unit.name.title()
         # Find existing units
         if len(nodes) > 0:
             if len(nodes) > 1:
@@ -339,33 +316,34 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tUnit exists in data files: {node.id}")
-            return node.element
+            return node
+
         # Then create any we couldn't find
         if not default_sys_file:
             print_styled("\t\t\tCannot create a unit without a file to create them in")
             return
 
-        return default_sys_file.create_element('selectionEntry', name, pub_id=pub_id, page_number=page.page_number,
-                                               attributes={
-                                                   'type': 'unit'
-                                               })
+        print_styled(f"\t\t\tCreating unit in {default_sys_file.name}", STYLES.GREEN)
+        return default_sys_file.create_shared_node('selectionEntry',
+                                                   attrib={
+                                                       'name': raw_unit.name,
+                                                       'type': 'unit',
+                                                   })
 
     def get_duplicates(self) -> dict[str, list['Node']]:
-
-        nodes_with_duplicates = {}
-        for name, nodes in self.nodes_by_name.items():
-            by_tag = {}
-            if len(nodes) > 1:
-                for node in nodes:
-                    if node.tag not in by_tag.keys():
-                        by_tag[node.tag] = []
-                    by_tag[node.tag].append(node)
-                for tag, tag_nodes in by_tag.items():
-                    if tag in IGNORE_FOR_DUPE_CHECK or tag.endswith('Link'):
-                        continue
-                    if len(tag_nodes) > 1:
-                        nodes_with_duplicates[f"{name} - {tag}"] = tag_nodes
-        return nodes_with_duplicates
+        duplicate_groups = {}
+        nodes_to_check = self.nodes_with_ids.filter(lambda x: not (x.tag in IGNORE_FOR_DUPE_CHECK
+                                                                   or x.is_link()
+                                                                   ))
+        number_of_nodes = len(nodes_to_check)
+        for i, node in enumerate(nodes_to_check):
+            print('\r', end="")
+            print(f"Checking node ({i}/{number_of_nodes}): {node}", end="")
+            duplicates = nodes_to_check.filter(lambda x: x.tag == node.tag and x.name == node.name)
+            if len(duplicates) > 1:
+                duplicate_groups[f"{node.name} - {node.tag}"] = duplicates
+        print()
+        return duplicate_groups
 
     def save_system(self):
         print(f"Saving {self.system_name}")
@@ -377,8 +355,8 @@ class System:
             print(f"Saving file ({i}/{count}): {system_file.path}", end="")
             set_namespace_from_file(system_file.path)
 
-            ET.indent(system_file.source_tree)
+            ET.indent(system_file._source_tree)
             # utf-8 to keep special characters un-escaped.
-            system_file.source_tree.write(system_file.path, encoding="utf-8")
+            system_file._source_tree.write(system_file.path, encoding="utf-8")
             cleanup_file_match_bs_whitespace(system_file.path)
         print()  # newline to clean up
