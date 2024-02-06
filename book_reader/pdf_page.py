@@ -14,7 +14,9 @@ class PdfPage(Page):
         super().__init__(book, page_number)
         self.raw_text = raw_text
         self.page_number = page_number
-        if self.raw_text.strip() == "":
+        if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
+            self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]
+        if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
             self.page_type = PageTypes.BLANK_OR_IGNORED
             return
         if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
