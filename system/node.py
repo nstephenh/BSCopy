@@ -139,13 +139,18 @@ class Node:
                         f"The node's child list is not properly being updated")
 
     def get_description(self):
+        element = self.get_description_element()
+        if element is not None:
+            return element.text
+
+    def get_description_element(self):
         for child in self._element:
             if child.tag.endswith('description'):
-                return child.text
+                return child
 
     def get_rules_text_element(self):
         if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
-            return self.get_description()
+            return self.get_description_element()
         else:
             for child_l1 in self._element:
                 if child_l1.tag.endswith('characteristics'):
