@@ -1,12 +1,10 @@
-import json
-
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile, RawModel
 from system.game.game import Game
 from text_to_rules import text_to_rules_dict
 from util import text_utils
-from util.log_util import style_text, STYLES, print_styled
+from util.log_util import STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header
 
 
@@ -48,17 +46,20 @@ class PdfPage(Page):
                 self.page_type = PageTypes.UNIT_PROFILES
 
     def handle_special_rules_page(self, prev_page_type):
-        if any([("Special Rules" in line) for line in self.raw_text.splitlines()[:5]]) \
-                or prev_page_type is PageTypes.SPECIAL_RULES:
-            # Special rules pages are two-column format, and the header of the page is irrelevant
-            header_text, col_1, col_2, _ = split_into_columns(self.raw_text)[0]
-            if prev_page_type is PageTypes.SPECIAL_RULES:
-                if header_text.strip() != "":
-                    return  # If the next page has a header, then it's not a special rules page
+        print(f"Checking if page {self.page_number} is a special rules page.")
+        print(f"\tThe previous page was {prev_page_type}")
+        # Special rules pages are two-column format
+        header_text, col_1, col_2, _ = split_into_columns(self.raw_text)[0]
+        has_special_rules_header = "Special Rules".lower() in header_text.lower()
+        # If page doesn't have a special rules header and isn't after a previous special rules page,
+        # it's not a special rules page.
+        if not has_special_rules_header and not prev_page_type == PageTypes.SPECIAL_RULES:
+            return
 
-            self.page_type = PageTypes.SPECIAL_RULES
+        self.page_type = PageTypes.SPECIAL_RULES
+        print_styled(f"\tThis is a special rules page", STYLES.CYAN)
 
-            self.special_rules_text = col_1 + "\n" + col_2
+        self.special_rules_text = col_1 + "\n" + col_2
 
     @property
     def game(self) -> 'Game':
