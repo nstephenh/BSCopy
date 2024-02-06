@@ -51,10 +51,10 @@ class PdfPage(Page):
         print(f"Checking if page {self.page_number} is a special rules page.")
         print(f"\tThe previous page was {prev_page_type}")
         # Special rules pages are two-column format
-        header_text, col_1, col_2, _ = split_into_columns(self.raw_text)[0]
+        header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
         has_special_rules_header = "Special Rules".lower() in header_text.lower()
         # If page doesn't have a special rules header and isn't after a previous special rules page,
-        # it's not a special rules page.
+        # then it's not a special rules page.
         if not has_special_rules_header and not prev_page_type == PageTypes.SPECIAL_RULES:
             return
 
@@ -139,11 +139,10 @@ class PdfPage(Page):
             if left_sidebar_divider_index:  # Left flavor text
                 _, self.flavor_text_col, rules_text, _ = text_utils.split_into_columns_at_divider(self.raw_text,
                                                                                                   left_sidebar_divider_index,
-                                                                                                  debug_print_level=0)[
-                    0]
+                                                                                                  debug_print_level=0)
             else:  # Right flavor text, column detection should work.
                 page_header, rules_text, self.flavor_text_col, _ = \
-                    split_into_columns(self.raw_text, debug_print_level=0)[0]
+                    split_into_columns(self.raw_text, debug_print_level=0)
                 rules_text = page_header + rules_text
 
             if "Wargear" in rules_text:
@@ -172,7 +171,7 @@ class PdfPage(Page):
             ut_index = uc_and_ut.index("Unit Type")
 
             _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index,
-                                                                    debug_print_level=0)[0]
+                                                                    debug_print_level=0)
 
             rules_text = "".join([profiles, uc, ut, bottom_half])
 
@@ -180,7 +179,7 @@ class PdfPage(Page):
                 self.units_text = [self.cleanup_unit_text(rules_text)]
             return
         else:
-            page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=0)[0]
+            page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=0)
 
             # If a datasheet, it should have two columns in the center of the page.
             if self.book.system.game.ProfileLocator not in col_1_text and self.book.system.game.ProfileLocator not in col_2_text:
@@ -292,7 +291,7 @@ class PdfPage(Page):
             # At this point, wargear and on is just wargear and special rules,
             # So we can split it with our two-column split code.
             _, wargear, special_rules_list, _ = \
-                text_utils.split_into_columns_at_divider(wargear_and_on, sr_col_index, debug_print_level=0)[0]
+                text_utils.split_into_columns_at_divider(wargear_and_on, sr_col_index, debug_print_level=0)
 
         # Now lets put everything together:
         new_text = "".join(

@@ -177,8 +177,9 @@ def print_heatmap_thresholds(heatmap, indicate_columns=None, debug_print=None):
         print()
 
 
-def get_col_dividers(heatmap):
-    margins = 10  # Margins prevent us from cutting off the start of a bulleted list.
+def get_col_dividers(heatmap, margins=None):
+    if margins is None:
+        margins = 10  # Margins prevent us from cutting off the start of a bulleted list.
     min_width = 2
     # A section can't be smaller than this defined margin.
 
@@ -210,11 +211,15 @@ def get_col_dividers(heatmap):
     return section_start, section_end
 
 
-def split_into_columns(text, debug_print_level=0):
+def split_into_columns(text, ensure_middle=False, debug_print_level=0):
     if text.strip() == "":
         raise Exception("No text passed to split_into_columns")
     heatmap = get_section_heatmap(text)
-    divider_start, divider_end = get_col_dividers(heatmap)
+    margins = None
+    if ensure_middle:
+        middle = len(max(text.splitlines(), key=len))/2
+        margins = middle - 10 # 20char wide section in the center.
+    divider_start, divider_end = get_col_dividers(heatmap, margins=margins)
 
     if debug_print_level > 2:
         print_heatmap_thresholds(heatmap,
@@ -227,13 +232,11 @@ def split_into_columns(text, debug_print_level=0):
 def split_into_columns_at_divider(text: str, divider_end, divider_start=None, debug_print_level=0):
     if divider_start is None:
         divider_start = divider_end - 2
-    # 3 lists of lists, which we can rejoin in non-col[0], col1[0], col2[0], non-col[1], etc.
     original_text: list[str] = [""]
-    non_column_lines: list[list[str]] = [[]]
-    col_1_lines: list[list[str]] = [[]]
-    col_2_lines: list[list[str]] = [[]]
+    non_column_lines: list[str] = []
+    col_1_lines: list[str] = []
+    col_2_lines: list[str] = []
     prev_line_had_col_brake = False
-    section = 0
     for line in text.split('\n'):
         has_col_break = False
         col_1_only = False
@@ -243,10 +246,10 @@ def split_into_columns_at_divider(text: str, divider_end, divider_start=None, de
             if debug_print_level > 1:
                 print(style_text("EMPTY LINE", STYLES.CYAN))
             if prev_line_had_col_brake:
-                col_1_lines[section].append("")
-                col_2_lines[section].append("")
+                col_1_lines.append("")
+                col_2_lines.append("")
             else:
-                non_column_lines[section].append("")
+                non_column_lines.append("")
 
             # Allow col break to persist across the linebreak
             continue
@@ -264,45 +267,34 @@ def split_into_columns_at_divider(text: str, divider_end, divider_start=None, de
             if not col_1_only:
                 col_2 = line[divider_end:].rstrip()  # Leftover trailing space can mess us up.
             if col_1:
-                col_1_lines[section].append(col_1)
+                col_1_lines.append(col_1)
             if col_2:
-                col_2_lines[section].append(col_2)
+                col_2_lines.append(col_2)
         else:
-            if prev_line_had_col_brake:  # Start a new section
-                non_column_lines.append([])
-                col_1_lines.append([])
-                col_2_lines.append([])
-                col_2_lines.append([])
-                original_text.append("")
-                section += 1
-            non_column_lines[section].append(line)
+            non_column_lines.append(line)
         if debug_print_level > 0:
             print(f"{style_text('█', STYLES.GREEN if has_col_break else STYLES.RED)}\t", end="")
             print(
                 f"{line[:divider_start]}{style_text(line[divider_start:divider_end], STYLES.UNDERLINE)}{line[divider_end:]}")
-        original_text[section] += line + "\n"
+        original_text += line + "\n"
         prev_line_had_col_brake = has_col_break
 
-    sections = []
-    for section in range(len(non_column_lines)):
+    non_column_text = "\n".join(non_column_lines) + "\n"
+    if debug_print_level > 0:
+        print_styled("Non-column text:", STYLES.PURPLE)
+        print(non_column_text)
 
-        non_column_text = "\n".join(non_column_lines[section]) + "\n"
-        if debug_print_level > 0:
-            print_styled("Non-column text:", STYLES.PURPLE)
-            print(non_column_text)
+    col_1_text = "\n".join(col_1_lines).rstrip() + "\n"
+    if debug_print_level > 0:
+        print_styled("Column 1 text:", STYLES.PURPLE)
+        print(col_1_text)
 
-        col_1_text = "\n".join(col_1_lines[section]).rstrip() + "\n"
-        if debug_print_level > 0:
-            print_styled("Column 1 text:", STYLES.PURPLE)
-            print(col_1_text)
+    col_2_text = "\n".join(col_2_lines).rstrip() + "\n"
+    if debug_print_level > 0:
+        print_styled("Column 2 text:", STYLES.PURPLE)
+        print(col_2_text)
 
-        col_2_text = "\n".join(col_2_lines[section]).rstrip() + "\n"
-        if debug_print_level > 0:
-            print_styled("Column 2 text:", STYLES.PURPLE)
-            print(col_2_text)
-
-        sections.append((non_column_text, col_1_text, col_2_text, original_text[section]))
-    return sections
+    return (non_column_text, col_1_text, col_2_text, original_text)
 
 
 def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool, str, str):
