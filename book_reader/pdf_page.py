@@ -516,12 +516,13 @@ class PdfPage(Page):
 
                 name = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
-                if cells[-num_data_cells][0] in ["B", "M"]:  # If Breath Weapon or Magical Attack, scoot it over one
-                    # print(cells)
+                if special_rules and special_rules[0].islower():
+                    # If our headers are misaligned, we're in the middle of a word,
+                    # scoot over all the cells and re-append the start of the word to the type.
                     name = cells[:-num_data_cells - 1]  # Shift over one
-                    stats_for_line = cells[-num_data_cells - 1:]  # Shift over one
+                    stats_for_line = cells[-num_data_cells - 1:-1]  # Shift over one
                     # This was cropped off the start of special rules, so re-append it
-                    special_rules = cells[-num_data_cells] + special_rules
+                    special_rules = cells[-1] + special_rules
                 if ")" in cells[-num_data_cells] and self.game.COMBINED_ARTILLERY_PROFILE:
                     # Special handling for artillery
                     # print(cells)
