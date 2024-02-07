@@ -80,7 +80,11 @@ class Node:
         return self.system_file.system
 
     def __str__(self):
-        return f"{self.name} ({self.type} {self.id} in {self.system_file})"
+
+        identifier_string = f"{self.type} {self.id} in {self.system_file}"
+        if self.is_link():
+            return f"Link to {self.target_id} ({identifier_string})"
+        return f"{self.name} ({identifier_string})"
 
     @property
     def type(self):
