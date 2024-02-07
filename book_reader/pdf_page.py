@@ -21,11 +21,13 @@ class PdfPage(Page):
             return
         if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
             self.try_handle_units()
+
         if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
-            # If not a unit page, could be a page of special rules.
             self.handle_special_rules_page(prev_page_type)
         if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
             self.handle_weapon_profiles_page(prev_page_type)
+        if not self.page_type or self.page_type == PageTypes.WARGEAR:
+            self.handle_wargear_page(prev_page_type)
 
         # Pull out any special rules or profiles, either the main body of the page, or set from units.
         self.process_weapon_profiles()
@@ -69,6 +71,17 @@ class PdfPage(Page):
             return
         self.page_type = PageTypes.WEAPON_PROFILES
         self.special_rules_text = self.raw_text
+
+    def handle_wargear_page(self, prev_page_type):
+        header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
+        first_line = ""
+        if header_text.lstrip().splitlines():
+            first_line = header_text.lstrip().splitlines()[0].lower()
+        has_wargear_header = "Wargear".lower() in first_line and "ADDITIONAL".lower() not in first_line
+        if not has_wargear_header and not prev_page_type == PageTypes.WARGEAR:
+            return
+        self.page_type = PageTypes.WARGEAR
+        self.special_rules_text = col_1 + "\n" + col_2
 
     @property
     def game(self) -> 'Game':
@@ -577,5 +590,13 @@ class PdfPage(Page):
         # TODO: If there's a weapon profile in one of or before the special rules, pull it out.
         first_paragraph_is_flavor = self.game.IN_DATASHEET_FIRST_PARAGRAPH_IS_FLAVOR if len(self.units) \
             else self.game.FIRST_PARAGRAPH_IS_FLAVOR
-        self.special_rules_dict = text_to_rules_dict(self.special_rules_text, first_paragraph_is_flavor)
-        # print(self.special_rules_dict)
+
+        page_content_as_dict = text_to_rules_dict(self.special_rules_text, first_paragraph_is_flavor)
+
+        # Heresy wargear pages are identical to special rules pages, except they are wargear.
+        # Model-specific wargear can end up in the special rules dict. TODO pull wargear out.
+        if self.page_type == PageTypes.WARGEAR:
+            self.wargear_dict = page_content_as_dict
+            return
+
+        self.special_rules_dict = page_content_as_dict

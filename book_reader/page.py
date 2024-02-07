@@ -20,6 +20,7 @@ class Page:
         self.book = book
         self.page_number = page_number
         self.special_rules_dict: dict[str: str] = {}
+        self.wargear_dict: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
         self.units: list[RawUnit] = []
@@ -40,16 +41,16 @@ class Page:
                         return page_type
 
     def serialize(self):
-        return {
-            'page_type': self.page_type,
-            'Units': [
-                unit.serialize() for unit in self.units
-            ],
-            'Special Rules': self.special_rules_dict,
-            'Weapons': [
-                profile.serialize() for profile in self.weapons
-            ],
-        }
+        dict_to_serialize = {'page_type': self.page_type, }
+        if self.units:
+            dict_to_serialize['Units'] = [unit.serialize() for unit in self.units]
+        if self.special_rules_dict:
+            dict_to_serialize['Special Rules'] = self.special_rules_dict
+        if self.wargear_dict:
+            dict_to_serialize['Wargear'] = self.wargear_dict
+        if self.weapons:
+            dict_to_serialize['Weapons'] = [profile.serialize() for profile in self.weapons]
+        return dict_to_serialize
 
 
 class EpubPage(Page):
