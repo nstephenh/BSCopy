@@ -12,7 +12,7 @@ class PdfPage(Page):
 
     def __init__(self, book, raw_text, page_number, prev_page_type=None):
         super().__init__(book, page_number)
-        self.raw_text = raw_text
+        self.raw_text = text_utils.replace_quote_alikes(raw_text)
         self.page_number = page_number
         if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
             self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]

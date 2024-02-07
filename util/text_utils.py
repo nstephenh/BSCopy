@@ -75,6 +75,15 @@ def get_generic_rule_name(rule_name, after_dash=False):
     return rule_name
 
 
+def replace_quote_alikes(in_str):
+    '''
+    Converts right and left double quote to quote
+    :param in_str:
+    :return:
+    '''
+    return in_str.replace('”', '"').replace('“', '"')
+
+
 def cleanup_disallowed_bs_characters(in_str):
     '''
     Converts double quote, it's right and left variations to &quot,
@@ -217,8 +226,8 @@ def split_into_columns(text, ensure_middle=False, debug_print_level=0):
     heatmap = get_section_heatmap(text)
     margins = None
     if ensure_middle:
-        middle = len(max(text.splitlines(), key=len))/2
-        margins = middle - 10 # 20char wide section in the center.
+        middle = len(max(text.splitlines(), key=len)) / 2
+        margins = middle - 10  # 20char wide section in the center.
     divider_start, divider_end = get_col_dividers(heatmap, margins=margins)
 
     if debug_print_level > 2:
