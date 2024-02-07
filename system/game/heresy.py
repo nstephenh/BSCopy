@@ -17,6 +17,7 @@ class Heresy(Game):
     ALT_PROFILE_NAME = "Vehicle"
 
     WEAPON_PROFILE_TABLE_HEADERS = ["Range", "Str", "AP", "Type"]
+    WEAPON_PROFILE_TABLE_HEADERS_FULL: list[str] = ["Range", "Strength", "AP", "Type"]
 
     MIDDLE_IN_2_COLUMN = True
 

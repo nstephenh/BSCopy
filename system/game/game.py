@@ -12,13 +12,13 @@ class Game:
     UNIT_PROFILE_TABLE_HEADERS: list[str] = []
     UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = []
 
-
     ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = []
     ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = []
 
     ALT_PROFILE_NAME = None
 
     WEAPON_PROFILE_TABLE_HEADERS: list[str] = []
+    WEAPON_PROFILE_TABLE_HEADERS_FULL: list[str] = []
 
     OPTIONS = "Options"
 
@@ -44,3 +44,19 @@ class Game:
     FORCE_ORG_IN_FLAVOR: bool = False
 
     category_book_to_full_name_map: dict[str, str] = {}
+
+    def get_full_characteristic_name(self, characteristic_name, profile_type: str = None):
+        # if profile_type is None or profile_type == "Weapon":
+        characteristic_list = self.WEAPON_PROFILE_TABLE_HEADERS
+        full_characteristic_list = self.WEAPON_PROFILE_TABLE_HEADERS_FULL
+        if profile_type == 'Unit':
+            characteristic_list = self.UNIT_PROFILE_TABLE_HEADERS
+            full_characteristic_list = self.UNIT_PROFILE_TABLE_HEADERS_FULL
+        elif profile_type == self.ALT_PROFILE_NAME:
+            characteristic_list = self.ALT_UNIT_PROFILE_TABLE_HEADERS
+            full_characteristic_list = self.ALT_UNIT_PROFILE_TABLE_HEADERS_FULL
+        full_name = characteristic_name
+        if characteristic_name in characteristic_list and len(full_characteristic_list):
+            i = characteristic_list.index(characteristic_name)
+            full_name = full_characteristic_list[i]
+        return full_name

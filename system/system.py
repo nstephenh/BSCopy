@@ -153,7 +153,7 @@ class System:
             if skip_non_dump_actions:
                 actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in actions_to_take else []
             print("Actions to take: " + ", ".join(actions_to_take))
-            for page in book.pages:
+            for page in reversed(book.pages):
                 print(f"\t{page.page_number} {str(page.page_type or '')}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[file_name][page.page_number] = page.serialize()
@@ -240,20 +240,10 @@ class System:
                 node.type == f"profileType"
                 and (node.name == profile_type)))[0].id
 
-    def get_characteristic_name_and_id(self, profile_type: str, characteristic_name: str):
-        characteristic_list = self.game.WEAPON_PROFILE_TABLE_HEADERS
-        full_characteristic_list = self.game.WEAPON_PROFILE_TABLE_HEADERS
-        if profile_type == 'Unit':
-            characteristic_list = self.game.UNIT_PROFILE_TABLE_HEADERS
-            full_characteristic_list = self.game.UNIT_PROFILE_TABLE_HEADERS_FULL
-        elif profile_type == self.game.ALT_PROFILE_NAME:
-            characteristic_list = self.game.ALT_UNIT_PROFILE_TABLE_HEADERS
-            full_characteristic_list = self.game.ALT_UNIT_PROFILE_TABLE_HEADERS_FULL
-
-        full_name = characteristic_name
-        if characteristic_name in characteristic_list:
-            i = characteristic_list.index(characteristic_name)
-            full_name = full_characteristic_list[i]
+    def get_characteristic_name_and_id(self, characteristic_name: str, profile_type: str = None):
+        if profile_type is None:
+            profile_type = "Weapon"
+        full_name = self.game.get_full_characteristic_name(characteristic_name, profile_type)
         if full_name not in self.profile_characteristics[profile_type]:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
@@ -275,7 +265,7 @@ class System:
             print(f"\t\t\tProfile exists in data files: {node.id}")
             node.update_pub_and_page(page)
             existing_profile_text = node.get_diffable_profile()
-            new_profile_text = raw_profile.get_diffable_profile()
+            new_profile_text = raw_profile.get_diffable_profile(profile_type)
             diff = get_diff(existing_profile_text, new_profile_text, 3)
             if diff:
                 print_styled("\t\t\tText Differs!", STYLES.PURPLE)

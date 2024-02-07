@@ -24,11 +24,13 @@ class PdfPage(Page):
         if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
             # If not a unit page, could be a page of special rules.
             self.handle_special_rules_page(prev_page_type)
-        # TODO: Handle weapons page
+        if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
+            self.handle_weapon_profiles_page(prev_page_type)
 
         # Pull out any special rules or profiles, either the main body of the page, or set from units.
         self.process_weapon_profiles()
-        self.process_special_rules()
+        if self.page_type != PageTypes.WEAPON_PROFILES:  # A weapon page shouldn't have any special rules on it.
+            self.process_special_rules()
 
         for unit in self.units:
             unit.page_special_rules = self.special_rules_dict
@@ -48,8 +50,6 @@ class PdfPage(Page):
                 self.page_type = PageTypes.UNIT_PROFILES
 
     def handle_special_rules_page(self, prev_page_type):
-        print(f"Checking if page {self.page_number} is a special rules page.")
-        print(f"\tThe previous page was {prev_page_type}")
         # Special rules pages are two-column format
         header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
         has_special_rules_header = "Special Rules".lower() in header_text.lower()
@@ -62,6 +62,13 @@ class PdfPage(Page):
         print_styled(f"\tThis is a special rules page", STYLES.CYAN)
 
         self.special_rules_text = col_1 + "\n" + col_2
+
+    def handle_weapon_profiles_page(self, prev_page_type):
+        has_armoury_header = "Armoury".lower() in self.raw_text.lstrip().splitlines()[0].lower()
+        if not has_armoury_header and not prev_page_type == PageTypes.WEAPON_PROFILES:
+            return
+        self.page_type = PageTypes.WEAPON_PROFILES
+        self.special_rules_text = self.raw_text
 
     @property
     def game(self) -> 'Game':
@@ -402,8 +409,8 @@ class PdfPage(Page):
         # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
-            raw_profile = RawModel(name=name, stats=dict(zip(unit_profile_headers + ['Note'],
-                                                             stats[index])))
+            raw_profile = RawModel(name=name, page=self, stats=dict(zip(unit_profile_headers + ['Note'],
+                                                                        stats[index])))
             constructed_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])
@@ -455,7 +462,8 @@ class PdfPage(Page):
             # print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if text_utils.does_line_contain_header(line, ["R", "S", "Special Rules", "AP"]):
                 print("Malformed table line!")
-                self.weapons.append(RawProfile(name=f"Unable to read profile from {self.special_rules_text}", stats={}))
+                self.weapons.append(RawProfile(name=f"Unable to read profile from {self.special_rules_text}",
+                                               page=self, stats={}))
                 self.special_rules_text = "\n".join(line)
                 return
             if text_utils.does_line_contain_header(line, self.game.WEAPON_PROFILE_TABLE_HEADERS):
@@ -533,8 +541,10 @@ class PdfPage(Page):
                                       " ".join(cells[-2:]), ]
                 if name and not name_col_index:
                     name_col_index = line.index(name[0])
-                if (name_prefix and
-                        name_prefix not in " ".join(name)):  # Don't append the name prefix if it's already in the name
+                if (name_prefix
+                        # Don't append the name prefix if it's already in the name
+                        and name_prefix not in " ".join(name)
+                        and name_prefix != "Weapon"):
                     name = [name_prefix, "-"] + name
                 stats_for_line.append(special_rules)
                 weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
@@ -553,7 +563,7 @@ class PdfPage(Page):
         # rejoin stats and name components.
         for weapon_as_dict in weapons_dicts:
             name = ' '.join(weapon_as_dict.pop("Name"))  # Remove the name from the dict
-            raw_profile = RawProfile(name=name, stats=weapon_as_dict)
+            raw_profile = RawProfile(name=name, page=self, stats=weapon_as_dict)
             self.weapons.append(raw_profile)
 
         self.special_rules_text = "\n".join(non_weapon_lines)

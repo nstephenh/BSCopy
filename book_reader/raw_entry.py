@@ -9,21 +9,29 @@ if TYPE_CHECKING:
 
 
 class RawProfile:
-    def __init__(self, name: str, stats: dict[str: str], special_rules: list[str] = None):
+    def __init__(self, name: str, page: 'Page', stats: dict[str: str], special_rules: list[str] = None):
         self.name: str = name
+        self.page = page
         self.stats: dict[str: str] = stats
         self.special_rules: list[str] = []
         if special_rules:
             for rule in special_rules:
                 self.special_rules.append(rule.strip())
 
-    def get_diffable_profile(self):
+    @property
+    def game(self):
+        return self.page.book.system.game
+
+    def get_diffable_profile(self, profile_type: str = None):
         text = ""
         print_dict = {"Name": self.name}
         print_dict.update(self.stats)
         for key, item in print_dict.items():
+            if profile_type:
+                key = self.game.get_full_characteristic_name(key, profile_type)
             text += f"{key}: {item}\n"
-        text += f"Special Rules: {self.get_special_rules_list()}"
+        if self.special_rules:
+            text += f"Special Rules: {self.get_special_rules_list()}"
         # Printing each rule was a good idea but not great in practice for diffing.
         # for rule in self.special_rules:
         #    text += f"Special Rule: {rule}\n"
@@ -38,8 +46,8 @@ class RawProfile:
 
 class RawModel(RawProfile):
 
-    def __init__(self, name: str, stats: dict[str: str], special_rules: list[str] = None):
-        super().__init__(name, stats, special_rules)
+    def __init__(self, page, name: str, stats: dict[str: str], special_rules: list[str] = None):
+        super().__init__(name, page, stats, special_rules)
         self.min = None
         self.max = None
         self.default_wargear: [str] = []

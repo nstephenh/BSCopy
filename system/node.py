@@ -189,7 +189,8 @@ class Node:
         existing_characteristics = []
         # Set existing characteristic fields
         stats = raw_profile.stats
-        stats.update({"Special Rules": raw_profile.get_special_rules_list()})
+        if raw_profile.special_rules:
+            stats.update({"Special Rules": raw_profile.get_special_rules_list()})
 
         if self.system_file.system.settings[SystemSettingsKeys.WEAPON_AS_DESCRIPTION]:
             description_entries = []
@@ -198,25 +199,9 @@ class Node:
                 description_entries.append(f"{newline}{characteristic_type}: {value}")
             stats = {"Description": "\t".join(description_entries)}
 
-        for characteristic_element in self.get_sub_elements_with_tag('characteristic'):
-            characteristic_type = characteristic_element.get('name')
-            existing_characteristics.append(characteristic_type)
+        self.set_characteristics_from_dict(stats)
 
-            if characteristic_type in stats.keys():
-                characteristic_element.text = stats[characteristic_type]
-
-        for characteristic_type, value in stats.items():
-            if characteristic_type in existing_characteristics:
-                continue  # This characteristic already exists, skip
-            # Get the typeId from the system
-            type_id = self.system_file.system.profile_characteristics[profile_type][characteristic_type]
-            # add to the characteristic node
-            self.get_or_create_child('characteristic', attrib={
-                # characteristic nodes don't have an ID because they have a type and a parent with an ID.
-                'name': characteristic_type,
-                'typeId': type_id
-            }).text = value
-            # TODO: Handle multiple profiles
+        # TODO: Handle multiple profiles
 
     def set_force_org(self, raw_unit: 'RawUnit'):
         category_links = self.get_or_create_child('categoryLinks')
@@ -277,10 +262,10 @@ class Node:
 
         profile_element.set_characteristics_from_dict(characteristics_dict, profile_type)
 
-    def set_characteristics_from_dict(self, profile: dict, profile_type: str):
+    def set_characteristics_from_dict(self, profile: dict, profile_type: str = None):
         characteristics = self.get_or_create_child('characteristics')
         for characteristic, value in profile.items():
-            name, characteristic_id = self.system.get_characteristic_name_and_id(profile_type, characteristic)
+            name, characteristic_id = self.system.get_characteristic_name_and_id(characteristic, profile_type)
             char_element = characteristics.get_or_create_child('characteristic',
                                                                attrib={'typeId': characteristic_id,
                                                                        'name': name,
