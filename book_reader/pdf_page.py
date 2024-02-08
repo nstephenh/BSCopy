@@ -22,12 +22,16 @@ class PdfPage(Page):
         if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
             self.try_handle_units()
 
+        if int(page_number) == 82:
+            print(raw_text)
         if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
             self.handle_special_rules_page(prev_page_type)
         if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
             self.handle_weapon_profiles_page(prev_page_type)
         if not self.page_type or self.page_type == PageTypes.WARGEAR:
             self.handle_wargear_page(prev_page_type)
+        if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
+            self.handle_types_page(prev_page_type)
 
         # Pull out any special rules or profiles, either the main body of the page, or set from units.
         self.process_weapon_profiles()
@@ -53,8 +57,9 @@ class PdfPage(Page):
 
     def handle_special_rules_page(self, prev_page_type):
         # Special rules pages are two-column format
+        has_special_rules_header = "Special Rules".lower() in self.raw_text.lower().lstrip().splitlines()[2]
         header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
-        has_special_rules_header = "Special Rules".lower() in header_text.lower()
+
         # If page doesn't have a special rules header and isn't after a previous special rules page,
         # then it's not a special rules page.
         if not has_special_rules_header and not prev_page_type == PageTypes.SPECIAL_RULES:
@@ -82,6 +87,13 @@ class PdfPage(Page):
             return
         self.page_type = PageTypes.WARGEAR
         self.special_rules_text = col_1 + "\n" + col_2
+
+    def handle_types_page(self, prev_page_type):
+        has_types_header = "Unit Types".lower() in self.raw_text.lstrip().splitlines()[0].lower()
+        if not has_types_header and not prev_page_type == PageTypes.TYPES_AND_SUBTYPES:
+            return
+        self.page_type = PageTypes.TYPES_AND_SUBTYPES
+        self.special_rules_text = self.raw_text
 
     @property
     def game(self) -> 'Game':
@@ -597,6 +609,9 @@ class PdfPage(Page):
         # Model-specific wargear can end up in the special rules dict. TODO pull wargear out.
         if self.page_type == PageTypes.WARGEAR:
             self.wargear_dict = page_content_as_dict
+            return
+        if self.page_type == PageTypes.TYPES_AND_SUBTYPES:
+            self.types_and_subtypes_dict = page_content_as_dict
             return
 
         self.special_rules_dict = page_content_as_dict
