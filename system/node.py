@@ -242,6 +242,7 @@ class Node:
             model_se.set_constraints_from_object(raw_model)
             model_se.set_wargear(raw_model)
             model_se.set_options(raw_model.options_groups)
+            model_se.set_types_and_subtypes(raw_model)
 
     def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
         # There should only be one profile per entrylink, so don't filter by name.
@@ -392,3 +393,20 @@ class Node:
         if name_override and name_override != name:
             option_link.set_name_modifier(name_override)
         option_link.set_constraints(min_n, max_n)
+
+    def set_types_and_subtypes(self, raw_model: 'RawModel'):
+        category_links = self.get_or_create_child('categoryLinks')
+
+        for category_name in raw_model.type_and_subtypes:
+            category_name = category_name.strip()
+            if category_name not in self.system.categories:
+                self.system.errors.append(f"Could not find type or subtype '{category_name}' for '{raw_model.name}'")
+                continue
+            target_id = self.system.categories[category_name]
+            category_links.get_or_create_child('categoryLink',
+                                               attrib={'targetId': target_id,
+                                                       'primary': 'true',
+                                                       },
+                                               # Won't actually be the real name, may need an update script
+                                               defaults={'name': category_name},
+                                               )

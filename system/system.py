@@ -81,11 +81,19 @@ class System:
                               self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared)}
         self.wargear_by_name = {node.name: node for node in
                                 self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry' and node.shared)}
-        for file in self.files:
-            if file.is_gst:
-                # TODO: This also needs ported over to the new implementation.
-                # And we need to be able to read non-gst unit types
-                self.categories = read_categories(file._source_tree)
+        categories = {node.name: node for node in
+                      self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
+        for name, category in categories.items():
+            name = name.strip()
+            if name.endswith(":"):
+                name = name[:-1]
+            if name.lower().endswith(" sub-type"):
+                name = name[:-len(" sub-type")]
+                if name.lower().endswith(" unit"):
+                    name = name[:-len(" unit")]
+            elif name.lower().endswith(" unit-type"):
+                name = name[:-len(" unit-type")]
+            self.categories[name] = category
 
     def define_profile_characteristics(self):
         for node in self.nodes_with_ids.filter(lambda x: x.type == 'profileType'):
