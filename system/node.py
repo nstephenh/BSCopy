@@ -240,6 +240,7 @@ class Node:
             model_se.update_pub_and_page(raw_unit.page)
             model_se.set_model_profile(raw_model)
             model_se.set_constraints_from_object(raw_model)
+            model_se.set_wargear(raw_model)
             model_se.set_options(raw_model.options_groups)
 
     def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
@@ -356,20 +357,38 @@ class Node:
                 if wargear_id is None:
                     continue
                 # Create link:
-                if option.name == "Combi-Bolter":
-                    pass
-                entry_links = group_entry.get_or_create_child('entryLinks')
-                option_link = entry_links.get_or_create_child('entryLink', attrib={
-                    'name': found_name,  # Name *should* be accurate as we're looking for it in the list
-                    'hidden': 'false',
-                    'type': 'selectionEntry',
-                    'targetId': wargear_id,
-                    # TODO: Set as default if should be default (need to set that in RawEntry)
-                })
-                if option.pts > 0:
-                    option_link.set_cost(option.pts)
-                if found_name != option.name:
-                    option_link.set_name_modifier(option.name)
-                option_link.set_constraints(0, group.max)
+                group_entry.create_entrylink(found_name, wargear_id, pts=option.pts, name_override=option.name,
+                                             min_n=0, max_n=group.max)
 
             group_entry.set_constraints_from_object(group)
+
+    def set_wargear(self, raw_model: 'RawModel'):
+        if len(raw_model.default_wargear) == 0:
+            return
+        for wargear_name in raw_model.default_wargear:
+            # Lookup option in page and get local options
+            found_locally = False
+            if found_locally:
+                continue
+            # Lookup option in system
+            found_name, wargear_id = self.system.get_wargear_name_and_id(wargear_name)
+            if wargear_id is None:
+                continue
+
+            # Create link:
+            self.create_entrylink(found_name, wargear_id, name_override=wargear_name)
+
+    def create_entrylink(self, name, target_id, pts=None, min_n=1, max_n=1, name_override=None, default_n=None):
+        entry_links = self.get_or_create_child('entryLinks')
+        option_link = entry_links.get_or_create_child('entryLink', attrib={
+            'name': name,
+            'hidden': 'false',
+            'type': 'selectionEntry',
+            'targetId': target_id,
+            # TODO: Set as default if should be default (need to set that in RawEntry)
+        })
+        if pts and pts > 0:
+            option_link.set_cost(pts)
+        if name_override and name_override != name:
+            option_link.set_name_modifier(name_override)
+        option_link.set_constraints(min_n, max_n)
