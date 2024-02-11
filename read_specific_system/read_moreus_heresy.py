@@ -1,5 +1,5 @@
 from book_reader.constants import ReadSettingsKeys, Actions
-from system.constants import SpecialRulesType, SystemSettingsKeys, GameImportSpecs
+from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
 if __name__ == '__main__':
