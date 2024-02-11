@@ -207,7 +207,7 @@ class Node:
                 if category_name:  # Could be none for dedicated transport.
                     if category_name not in self.system.categories:
                         self.system.errors.append(f"Could not find '{category_name}' for '{raw_unit.name}'")
-                    target_id = self.system.categories[category_name]
+                    target_id = self.system.categories[category_name].id
                     category_links.get_or_create_child('categoryLink',
                                                        attrib={'targetId': target_id,
                                                                'primary': 'true',
