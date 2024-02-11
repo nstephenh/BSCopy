@@ -1,6 +1,7 @@
+import xml.etree.ElementTree as ET
+
 from util.generate_util import get_random_bs_id
 from util.log_util import print_styled
-import xml.etree.ElementTree as ET
 
 
 def get_description(element: ET.Element):

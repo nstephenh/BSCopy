@@ -215,15 +215,17 @@ class System:
             if diff:
                 print_styled("\t\t\tText Differs!", STYLES.PURPLE)
                 print(diff)
-                node.set_rules_text(rule_name, rule_text)
+                node.set_rules_text(rule_text)
             return
 
         # Then create any we couldn't find
+        print_styled(f"\t\t\tCreating rule in {default_sys_file}", STYLES.GREEN)
+
         rule_node = default_sys_file.get_or_create_shared_node('rule', attrib={
             'name': rule_name
         })
         rule_node.update_pub_and_page(page)
-        rule_node.set_rules_text(rule_name, rule_text)
+        rule_node.set_rules_text(rule_text)
 
     def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
         rule_name = rule_name.strip()

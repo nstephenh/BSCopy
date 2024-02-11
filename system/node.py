@@ -158,8 +158,7 @@ class Node:
         if element is not None:
             return element.text
 
-    def set_rules_text(self, name, text):
-        self._element.attrib['name'] = name.title()
+    def set_rules_text(self, text):
         element = self.get_rules_text_element()
         if element is not None:
             element.text = text
@@ -422,7 +421,7 @@ class Node:
         rules = self.get_or_create_child('rules')
         rule_node = rules.get_or_create_child('rule', attrib={'name': name})
         rule_node.update_pub_and_page(page)
-        rule_node.set_rules_text(name, text)
+        rule_node.set_rules_text(text)
 
     def set_comments(self, text):
         if not text:
