@@ -7,7 +7,7 @@ from system.constants import SystemSettingsKeys
 from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
-from system.system_file import SystemFile, set_namespace_from_file, read_categories
+from system.system_file import SystemFile, set_namespace_from_file
 from util.log_util import STYLES, print_styled, get_diff
 from util.text_utils import get_generic_rule_name, remove_plural, check_alt_names
 
@@ -172,6 +172,9 @@ class System:
                     for unit_type, text in page.types_and_subtypes_dict.items():
                         print(f"\t\tType: {unit_type}")
                         self.create_or_update_category(page, unit_type, text, sys_file_for_pub)
+                    for unit_type, text in page.wargear_dict.items():
+                        print(f"\t\tWargear: {unit_type}")
+                        self.create_or_update_wargear(page, unit_type, text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
@@ -307,6 +310,37 @@ class System:
             return
         # Then create any we couldn't find
         default_sys_file.root_node.create_category(name, text, page)
+
+    def create_or_update_wargear(self, page, wargear_name, wargear_text, default_sys_file):
+
+        nodes = self.nodes_with_ids.filter(lambda node: (
+                node.type == 'selectionEntry:upgrade'
+                and (node.name and node.name.lower() == wargear_name.lower() and node.shared)
+        ))
+        if len(nodes) > 0:
+            if len(nodes) > 1:
+                nodes_str = ", ".join([str(node) for node in nodes])
+                print_styled(f"\t\t\tWargear exists multiple times in data files: {nodes_str}", STYLES.RED)
+                return
+            node = nodes[0]
+            print(f"\t\t\tWargear exists in data files: {node.id}")
+            node.update_pub_and_page(page)
+            existing_rule_text = node.get_rules_text()
+            diff = get_diff(existing_rule_text, wargear_text, 3)
+            if diff:
+                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
+                print(diff)
+                node.set_rules_text(wargear_name, wargear_text)
+            return
+
+        # Then create any we couldn't find
+        wargear_node = default_sys_file.get_or_create_shared_node('selectionEntry', attrib={
+            'name': wargear_name,
+            'type': 'upgrade',
+        })
+        wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
+
+        wargear_node.set_profile(wargear_as_profile, "Wargear Item")
 
     def create_or_update_unit(self, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
         node = self.get_or_create_unit(raw_unit, default_sys_file)
