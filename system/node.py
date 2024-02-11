@@ -143,18 +143,11 @@ class Node:
                         f"The node's child list is not properly being updated")
 
     def get_description(self):
-        element = self.get_description_element()
-        if element is not None:
-            return element.text
-
-    def get_description_element(self):
-        for child in self._element:
-            if child.tag.endswith('description'):
-                return child
+        return self.get_or_create_child('description').text
 
     def get_rules_text_element(self):
         if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
-            return self.get_description_element()
+            return self.get_or_create_child('description')
         else:
             for child_l1 in self._element:
                 if child_l1.tag.endswith('characteristics'):
@@ -335,10 +328,11 @@ class Node:
             if found_name != rule_name:
                 rule_link.set_name_modifier(rule_name)
 
-    def set_rules(self, rules_dict: dict):
-        if len(rules_dict) == 0:
+    def set_rules(self, raw_unit: 'RawUnit'):
+        if len(raw_unit.special_rule_descriptions) == 0:
             return
-        rules = self.get_or_create_child('rules')
+        for rule, text in raw_unit.special_rule_descriptions.items():
+            self.create_rule(rule, text, raw_unit.page)
 
     def set_options(self, option_groups: list['OptionGroup']):
         if len(option_groups) == 0:
@@ -410,3 +404,25 @@ class Node:
                                                # Won't actually be the real name, may need an update script
                                                defaults={'name': category_name},
                                                )
+
+    def create_category(self, name, text, page):
+        categories = self.get_or_create_child('categoryEntries')
+        category = categories.get_or_create_child('categoryEntry',
+                                                  attrib={'name': name + ":",
+                                                          'hidden': 'false',
+                                                          }
+                                                  )
+        category.create_rule(name, text, page)
+
+    def create_rule(self, name, text, page):
+        """
+        Do not call on a root node as it only creates under the 'rules' subnode and not 'sharedRules'.
+        :param name:
+        :param text:
+        :param page:
+        :return:
+        """
+        rules = self.get_or_create_child('rules')
+        rule_node = rules.get_or_create_child('rule', attrib={'name': name})
+        rule_node.update_pub_and_page(page)
+        rule_node.set_rules_text(name, text)

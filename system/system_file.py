@@ -44,7 +44,7 @@ class SystemFile:
     def get_namespace_tag(self) -> str:
         return "{" + self.namespace + "}"
 
-    def create_shared_node(self, tag: str, attrib: dict = None) -> 'Node':
+    def get_or_create_shared_node(self, tag: str, attrib: dict = None) -> 'Node':
         """
         Create a node under this file's sharedPlural({tag})
         :return: The created node

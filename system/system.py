@@ -169,6 +169,9 @@ class System:
                     for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
                         self.create_or_update_special_rule(page, rule_name, rule_text, sys_file_for_pub)
+                    for unit_type, text in page.types_and_subtypes_dict.items():
+                        print(f"\t\tType: {unit_type}")
+                        self.create_or_update_category(page, unit_type, text, sys_file_for_pub)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
@@ -211,10 +214,11 @@ class System:
             return
 
         # Then create any we couldn't find
-        rule_node = default_sys_file.create_shared_node('rule', attrib={
+        rule_node = default_sys_file.get_or_create_shared_node('rule', attrib={
             'name': rule_name
         })
         rule_node.update_pub_and_page(page)
+        rule_node.set_rules_text(rule_name, rule_text)
 
     def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
         rule_name = rule_name.strip()
@@ -283,6 +287,27 @@ class System:
         # Then create any we couldn't find
         pass
 
+    def create_or_update_category(self, page, name, text, default_sys_file):
+        name = name.title()
+        if len(text) == 0:
+            print_styled(f"\t\t\tCategory has no text: {name}", STYLES.RED)
+            return
+
+        nodes = self.nodes_with_ids.filter(lambda node: (
+                node.type == "category"
+                and (node.name and node.name.lower() == name.lower())
+        ))
+        if len(nodes) > 0:
+            if len(nodes) > 1:
+                nodes_str = ", ".join([str(node) for node in nodes])
+                print_styled(f"\t\t\tCategory exists multiple times in data files: {nodes_str}", STYLES.RED)
+                return
+            node = nodes[0]
+            print(f"\t\t\tCategory exists in data files: {node.id}")
+            return
+        # Then create any we couldn't find
+        default_sys_file.root_node.create_category(name, text, page)
+
     def create_or_update_unit(self, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
         node = self.get_or_create_unit(raw_unit, default_sys_file)
         if node is None:
@@ -294,7 +319,7 @@ class System:
         node.set_models(raw_unit)
         node.set_options(raw_unit.unit_options)
         node.set_rule_info_links(raw_unit.special_rules)
-        node.set_rules(raw_unit.special_rule_descriptions)
+        node.set_rules(raw_unit)
 
     def get_or_create_unit(self, raw_unit, default_sys_file: 'SystemFile'):
         raw_unit.name = raw_unit.name.title()
@@ -319,11 +344,11 @@ class System:
             return
 
         print_styled(f"\t\t\tCreating unit in {default_sys_file.name}", STYLES.GREEN)
-        return default_sys_file.create_shared_node('selectionEntry',
-                                                   attrib={
-                                                       'name': raw_unit.name,
-                                                       'type': 'unit',
-                                                   })
+        return default_sys_file.get_or_create_shared_node('selectionEntry',
+                                                          attrib={
+                                                              'name': raw_unit.name,
+                                                              'type': 'unit',
+                                                          })
 
     def get_duplicates(self) -> dict[str, list['Node']]:
         duplicate_groups = {}
