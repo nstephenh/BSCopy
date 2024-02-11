@@ -123,13 +123,13 @@ class RawUnit:
         self.force_org: str | None = None
         self.model_profiles: list[RawModel] = []
         self.unit_type_text = None
+        self.warlord_traits: {str: str} = {}
         self.special_rules: list[str] = []
         self.special_rule_descriptions: {str: str} = {}
         self.subheadings: {str: str} = {}
         self.max = None
         self.errors: [str] = []
         self.unit_options: [OptionGroup] = []
-        self.page_special_rules = {}  # Can also include some wargear
         self.page_weapons = []
 
     def serialize(self) -> dict:
@@ -148,6 +148,8 @@ class RawUnit:
             dict_to_return["Special Rule Descriptions"] = self.special_rule_descriptions
         if len(self.subheadings) > 0:
             dict_to_return["Subheadings"] = self.subheadings
+        if len(self.warlord_traits) > 0:
+            dict_to_return["Warlord Traits"] = self.warlord_traits
         if len(self.errors):
             dict_to_return["Errors"] = self.errors
         return dict_to_return
@@ -175,11 +177,14 @@ class RawUnit:
                     model.original_wargear.append(line)
                     model.default_wargear.append(line)
 
-                # Check the special rules list for wargear in case it's not in the shared list.
-                for special_rule_name, text in self.page_special_rules.items():
-                    print(special_rule_name)
+                # Check the special rules list for wargear in case it's not in the system.
+                # To avoid modifying the dict while iterating through
+                new_page_dict = dict(self.page.special_rules_dict)
+                for special_rule_name, text in self.page.special_rules_dict.items():
                     if special_rule_name in model.original_wargear:
+                        new_page_dict.pop(special_rule_name)  # Move from the page to this unit
                         model.wargear_descriptions[special_rule_name] = text
+                self.page.special_rules_dict = new_page_dict
                 for weapon in filter(lambda x: x.name in model.original_wargear, self.page_weapons):
                     model.wargear_profiles.append(weapon)
             self.subheadings.pop("Wargear")
@@ -201,9 +206,17 @@ class RawUnit:
         if "Special Rules" in self.subheadings:
             self.special_rules = split_at_dot(self.subheadings.pop("Special Rules").splitlines())
 
-            for special_rule_name, text in self.page_special_rules.items():
+            new_page_dict = dict(self.page.special_rules_dict)  # To avoid modifying the dict while iterating through
+            for special_rule_name, text in self.page.special_rules_dict.items():
                 if special_rule_name in self.special_rules:
-                    self.special_rule_descriptions[special_rule_name] = text
+                    new_page_dict.pop(special_rule_name)  # Move from the page to this unit
+                    if special_rule_name.startswith("Warlord: "):
+                        warlord_trait_name = special_rule_name.split("Warlord: ")[1]
+                        self.warlord_traits[warlord_trait_name] = text
+                        self.special_rules.remove(special_rule_name)  # Move from special rules to warlord traits
+                    else:  # Don't add warlord traits to the page special rules
+                        self.special_rule_descriptions[special_rule_name] = text
+            self.page.special_rules_dict = new_page_dict
 
         if "Unit Type" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Type").splitlines()):

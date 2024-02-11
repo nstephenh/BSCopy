@@ -39,7 +39,6 @@ class PdfPage(Page):
             self.process_special_rules()
 
         for unit in self.units:
-            unit.page_special_rules = self.special_rules_dict
             unit.page_weapons = self.weapons
             unit.process_subheadings()
             if unit.errors:
