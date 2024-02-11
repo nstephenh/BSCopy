@@ -58,6 +58,7 @@ class RawModel(RawProfile):
         self.unit_type_text: str = ""  # We use this as part of heresy characteristics
         self.type_and_subtypes: [str] = []
         self.pts = None
+        self.errors: [str] = []
 
     def serialize(self):
         dict_to_return = super().serialize()
@@ -126,7 +127,7 @@ class RawUnit:
         self.special_rule_descriptions: {str: str} = {}
         self.subheadings: {str: str} = {}
         self.max = None
-        self.errors = ""
+        self.errors: [str] = []
         self.unit_options: [OptionGroup] = []
         self.page_special_rules = {}  # Can also include some wargear
         self.page_weapons = []
@@ -191,7 +192,7 @@ class RawUnit:
                 if extra_special_option in option_groups_text:
                     index = option_groups_text.index(extra_special_option)
                     option_groups_text = option_groups_text[:index]
-                    self.errors += "This unit has an extra special option not yet handled.\n"
+                    self.errors.append("This unit has an extra special option not yet handled.")
                     break
             # print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
@@ -211,7 +212,7 @@ class RawUnit:
     def get_profile_for_name(self, model_name):
         if model_name.endswith("*"):
             model_name = model_name[:-1]
-            self.errors += f"{model_name} has an asterisk! What does it mean?!? \n"
+            self.errors.append("{model_name} has an asterisk! What does it mean?!?")
         model_name_options = [model_name, remove_plural(model_name), make_plural(model_name)]
         model_profile = None
         for option in model_name_options:
@@ -229,13 +230,13 @@ class RawUnit:
                 error_message = \
                     f"Could not find profile for {model_name} in {[profile.name for profile in self.model_profiles]} \n"
                 print_styled(error_message, STYLES.RED)
-                self.errors += error_message
+                self.errors.append(error_message)
                 # raise Exception(error_message)
         return model_profile
 
     def process_option_group(self, line):
         if ":" not in line:
-            self.errors += f"{line} is not an option group\n" + "There could be invisible text on the page\n"
+            self.errors.append(f"{line} is not an option group, there could be invisible text on the page")
             return
         first_colon = line.index(":")
         option_title = line[:first_colon] + ":"
@@ -291,9 +292,9 @@ class RawUnit:
                         wargear_removed_by_this_option.append(wargear)
                 for wargear in wargear_removed_by_this_option:
                     if wargear not in model.default_wargear:
-                        self.errors += (
+                        self.errors.append(
                             f"{wargear} is in two option lists for {model.name}, you will need to combine "
-                            f"them by hand.\n")
+                            f"them by hand.")
                         continue  # We can't remove it from the list because we already have
                     model.default_wargear.remove(wargear)
                     if wargear not in add_to_options_list:  # To ensure we don't add it to our shared list twice.
@@ -313,7 +314,7 @@ class RawUnit:
                 continue
             name, pts = option_process_line(option)
             if line.endswith(" each"):
-                self.errors += f"The option '{name}' may need a 'multiply by number of models' modifier\n"
+                self.errors.append(f"The option '{name}' may need a 'multiply by number of models' modifier")
             print(f"\t\t{name} for {pts} pts{defaulted_message}")
             defaulted_message = ""  # Clear our defaulted message now that we've shown it.
             option_group.options.append(Option(name=name, pts=pts))

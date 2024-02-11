@@ -43,9 +43,7 @@ class PdfPage(Page):
             unit.page_weapons = self.weapons
             unit.process_subheadings()
             if unit.errors:
-                self.book.system.errors.append(
-                    "\n".join([unit.name] + ["\t" + line for line in unit.errors.splitlines()]
-                              ))
+                self.book.system.errors += unit.errors
 
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:

@@ -423,3 +423,9 @@ class Node:
         rule_node = rules.get_or_create_child('rule', attrib={'name': name})
         rule_node.update_pub_and_page(page)
         rule_node.set_rules_text(name, text)
+
+    def set_comments(self, text):
+        if not text:
+            return
+        comment_node = self.get_or_create_child('comment')
+        comment_node.text = text

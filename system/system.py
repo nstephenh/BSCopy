@@ -354,6 +354,7 @@ class System:
         node.set_options(raw_unit.unit_options)
         node.set_rule_info_links(raw_unit.special_rules)
         node.set_rules(raw_unit)
+        node.set_comments("\n".join(raw_unit.errors))
 
     def get_or_create_unit(self, raw_unit, default_sys_file: 'SystemFile'):
         raw_unit.name = raw_unit.name.title()
