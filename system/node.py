@@ -402,7 +402,7 @@ class Node:
             if category_name not in self.system.categories:
                 self.system.errors.append(f"Could not find type or subtype '{category_name}' for '{raw_model.name}'")
                 continue
-            target_id = self.system.categories[category_name]
+            target_id = self.system.categories[category_name].id
             category_links.get_or_create_child('categoryLink',
                                                attrib={'targetId': target_id,
                                                        'primary': 'true',
