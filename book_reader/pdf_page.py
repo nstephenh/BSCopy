@@ -603,10 +603,12 @@ class PdfPage(Page):
         first_paragraph_is_flavor = self.game.IN_DATASHEET_FIRST_PARAGRAPH_IS_FLAVOR if len(self.units) \
             else self.game.FIRST_PARAGRAPH_IS_FLAVOR
 
-        page_content_as_dict = text_to_rules_dict(self.special_rules_text, first_paragraph_is_flavor)
+        no_flavor_if_colon = self.page_type == PageTypes.WARGEAR
+
+        page_content_as_dict = text_to_rules_dict(self.special_rules_text, first_paragraph_is_flavor,
+                                                  no_flavor_if_colon)
 
         # Heresy wargear pages are identical to special rules pages, except they are wargear.
-        # Model-specific wargear can end up in the special rules dict. TODO pull wargear out.
         if self.page_type == PageTypes.WARGEAR:
             self.wargear_dict = page_content_as_dict
             return
@@ -614,4 +616,6 @@ class PdfPage(Page):
             self.types_and_subtypes_dict = page_content_as_dict
             return
 
+        # Model-specific wargear can end up in the special rules dict.
+        # TODO pull wargear out on a model specific page by checking the unit's wargear
         self.special_rules_dict = page_content_as_dict

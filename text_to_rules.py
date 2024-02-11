@@ -17,26 +17,35 @@ Will add a newline if an input line ends in a period.
     """
 
 
-def text_to_rules_dict(text, first_p_is_flavor):
+def text_to_rules_dict(text, first_p_is_flavor=False, no_flavor_if_colon=False):
     special_rule_length_threshold = 30
 
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
+    in_paragraph = False
     for line in text.split("\n"):
         line = line.strip()
         if not line:
             continue
-        if line.strip().isdigit():
+        if line.isdigit():
             # Probably a page number
             continue
         if len(line) < special_rule_length_threshold and not (line.endswith('.')
                                                               or line.endswith("…")
+                                                              or line[0].islower()
+                                                              or in_paragraph
                                                               or line[0] in bullet_options):
             # print(f"{line} is likely a special rule")
             current_rule = line
-            new_rules[current_rule] = ""
             paragraph_count = 0 if first_p_is_flavor else 1
+            if first_p_is_flavor and no_flavor_if_colon and current_rule.endswith(":"):
+                paragraph_count = 1
+            if current_rule.endswith(":"):
+                current_rule = current_rule[:-1]  # Strip colon from name
+
+            new_rules[current_rule] = ""
+            continue
 
         # We now know we are inside a rule.
         if not current_rule:
@@ -46,16 +55,21 @@ def text_to_rules_dict(text, first_p_is_flavor):
         # Skip this line if it's flavor text.
         # print(f"{line} is part of {current_rule}, paragraph {paragraph_count}")
         if paragraph_count >= 1:
-            new_rules[current_rule] += line.strip()
+            if current_rule not in new_rules:
+                print(new_rules)
+                exit()
+            new_rules[current_rule] += line
 
-        if line[-1] in [".", "…"]:
+        if line[-1] in [".", "…", ":"]:
             if paragraph_count > 0:
                 # add linebreaks between paragraphs:
                 new_rules[current_rule] += "\n"
             paragraph_count += 1
+            in_paragraph = False  # Reset in paragraph
         else:
+            in_paragraph = True
             new_rules[current_rule] += " "  # Space instead of a line break.
-    return {name: rule.strip() for name, rule in new_rules.items()}
+    return {name: rule.strip() for name, rule in new_rules.items() if rule.strip()}
 
 
 def text_to_rules(new_rules_dict, rules_node, page, pub_id):
@@ -67,7 +81,7 @@ def text_to_rules(new_rules_dict, rules_node, page, pub_id):
     :param pub_id:
     :return:
     """
-    from util.text_gen_utils import errors, create_rule_node
+    from util.text_gen_utils import create_rule_node
 
     rules_ids = []
     for rule, rule_text in new_rules_dict.items():
