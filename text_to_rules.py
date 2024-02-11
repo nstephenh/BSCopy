@@ -17,13 +17,15 @@ Will add a newline if an input line ends in a period.
     """
 
 
-def text_to_rules_dict(text, first_p_is_flavor=False, no_flavor_if_colon=False):
+def text_to_rules_dict(text, first_p_is_flavor=False, can_have_one_paragraph=False):
     special_rule_length_threshold = 30
 
     new_rules = {}
     current_rule = ""
     paragraph_count = 0
     in_paragraph = False
+
+    first_paragraph_cache = ""
     for line in text.split("\n"):
         line = line.strip()
         if not line:
@@ -37,14 +39,21 @@ def text_to_rules_dict(text, first_p_is_flavor=False, no_flavor_if_colon=False):
                                                               or in_paragraph
                                                               or line[0] in bullet_options):
             # print(f"{line} is likely a special rule")
+
+            if paragraph_count == 1 and can_have_one_paragraph:
+                # If we get here the paragraph we thought was flavor might not be, and we need to handle that.
+                new_rules[current_rule] = first_paragraph_cache
+
             current_rule = line
             paragraph_count = 0 if first_p_is_flavor else 1
-            if first_p_is_flavor and no_flavor_if_colon and current_rule.endswith(":"):
+            if first_p_is_flavor and can_have_one_paragraph and current_rule.endswith(":"):
                 paragraph_count = 1
             if current_rule.endswith(":"):
                 current_rule = current_rule[:-1]  # Strip colon from name
 
             new_rules[current_rule] = ""
+            first_paragraph_cache = ""  # Clear the first paragraph cache
+
             continue
 
         # We now know we are inside a rule.
@@ -59,6 +68,8 @@ def text_to_rules_dict(text, first_p_is_flavor=False, no_flavor_if_colon=False):
                 print(new_rules)
                 exit()
             new_rules[current_rule] += line
+        else:
+            first_paragraph_cache += line
 
         if line[-1] in [".", "…", ":"]:
             if paragraph_count > 0:
