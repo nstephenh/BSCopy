@@ -326,14 +326,8 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tWargear exists in data files: {node.id}")
-            node.update_pub_and_page(page)
-            existing_rule_text = node.get_rules_text()
-            diff = get_diff(existing_rule_text, wargear_text, 3)
-            if diff:
-                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
-                print(diff)
-                node.set_rules_text(wargear_name, wargear_text)
-            return
+
+        # Consider adding nice diff handling here.
 
         # Then create any we couldn't find
         wargear_node = default_sys_file.get_or_create_shared_node('selectionEntry', attrib={
