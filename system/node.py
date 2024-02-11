@@ -189,7 +189,7 @@ class Node:
                 description_entries.append(f"{newline}{characteristic_type}: {value}")
             stats = {"Description": "\t".join(description_entries)}
 
-        self.set_characteristics_from_dict(stats)
+        self.set_characteristics_from_dict(stats, profile_type)
 
         # TODO: Handle multiple profiles
 
