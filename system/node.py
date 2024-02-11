@@ -142,9 +142,6 @@ class Node:
                         f"to exist in {[child.tag for child in self.children]}\n"
                         f"The node's child list is not properly being updated")
 
-    def get_description(self):
-        return self.get_or_create_child('description').text
-
     def get_rules_text_element(self):
         if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
             return self.get_or_create_child('description')

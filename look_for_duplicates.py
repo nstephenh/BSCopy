@@ -41,7 +41,7 @@ if __name__ == '__main__':
             fingerprint = hash(inside_text)
             rules_text = None
             if node.tag == 'rule':
-                rules_text = node.get_description()
+                rules_text = node.get_rules_text()
                 fingerprint = hash(rules_text)
 
             print(f"\t{node.tag} {node._element.attrib['id']} in {node.system_file.name} with hash {fingerprint}")
