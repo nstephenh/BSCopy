@@ -161,7 +161,7 @@ class System:
             if skip_non_dump_actions:
                 actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in actions_to_take else []
             print("Actions to take: " + ", ".join(actions_to_take))
-            for page in reversed(book.pages):
+            for page in book.pages:
                 print(f"\t{page.page_number} {str(page.page_type or '')}")
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[file_name][page.page_number] = page.serialize()
@@ -180,7 +180,9 @@ class System:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_profile(page, weapon, profile_type="Weapon",
                                                       default_sys_file=sys_file_for_pub)
-                if Actions.LOAD_UNITS in actions_to_take:
+            if Actions.LOAD_UNITS in actions_to_take:
+                self.refresh_index()  # We need to update the index before loading units
+                for page in book.pages:
                     for unit in page.units:
                         print(f"\t\tUnit: {unit.name}")
                         self.create_or_update_unit(unit,
