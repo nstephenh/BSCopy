@@ -199,7 +199,7 @@ class System:
                 print_styled(f"\t\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
                 return
             node = nodes[0]
-            print(f"\t\t\tRule exists in data files: {node.id}")
+            print(f"\t\t\tRule exists in data files: {node}")
             node.update_pub_and_page(page)
             existing_rule_text = node.get_rules_text()
             diff = get_diff(existing_rule_text, rule_text, 3)
@@ -271,7 +271,7 @@ class System:
                 print_styled(f"\t\t\tProfile exists multiple times in data files: {nodes_str}", STYLES.RED)
                 return
             node = nodes[0]
-            print(f"\t\t\tProfile exists in data files: {node.id}")
+            print(f"\t\t\tProfile exists in data files: {node}")
             node.update_pub_and_page(page)
             existing_profile_text = node.get_diffable_profile()
             new_profile_text = raw_profile.get_diffable_profile(profile_type)
@@ -300,7 +300,7 @@ class System:
                 print_styled(f"\t\t\tCategory exists multiple times in data files: {nodes_str}", STYLES.RED)
                 return
             node = nodes[0]
-            print(f"\t\t\tCategory exists in data files: {node.id}")
+            print(f"\t\t\tCategory exists in data files: {node}")
             return
         # Then create any we couldn't find
         page.target_system_file.root_node.create_category(name, text, page)
@@ -316,7 +316,7 @@ class System:
                 print_styled(f"\t\t\tWargear exists multiple times in data files: {nodes_str}", STYLES.RED)
                 return
             node = nodes[0]
-            print(f"\t\t\tWargear exists in data files: {node.id}")
+            print(f"\t\t\tWargear exists in data files: {node}")
 
         # Consider adding nice diff handling here.
 
@@ -357,7 +357,7 @@ class System:
                 print_styled(f"\t\t\tUnit exists multiple times in data files: {nodes_str}", STYLES.RED)
                 return
             node = nodes[0]
-            print(f"\t\t\tUnit exists in data files: {node.id}")
+            print(f"\t\t\tUnit exists in data files: {node}")
             return node
 
         # Then create any we couldn't find
