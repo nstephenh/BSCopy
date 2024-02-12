@@ -11,8 +11,8 @@ class NodeCollection(collections.UserList):
     def __str__(self) -> str:
         return str(self.data)
 
-    def filter(self, sort_condition: Callable[[Node], bool]):
+    def filter(self, sort_condition: Callable[[Node], bool]) -> 'NodeCollection':
         return NodeCollection(filter(sort_condition, self.data))
 
-    def get(self, sort_condition: Callable[[Node], bool]):
+    def get(self, sort_condition: Callable[[Node], bool]) -> 'Node' or None:
         return next(filter(sort_condition, self.data), None)
