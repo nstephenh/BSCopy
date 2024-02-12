@@ -190,6 +190,7 @@ class Node:
             stats = {"Description": "\t".join(description_entries)}
 
         self.set_characteristics_from_dict(stats, profile_type)
+        self.update_pub_and_page(raw_profile.page)
 
         # TODO: Handle multiple profiles
 

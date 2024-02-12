@@ -44,6 +44,7 @@ class System:
         self.nodes_with_ids = NodeCollection([])
 
         # profileType name: {characteristicType name: typeId}
+        self.profile_types: dict[str: str] = {}
         self.profile_characteristics: dict[str: dict[str: str]] = {}
 
         self.categories: dict[str: str] = {}
@@ -101,6 +102,7 @@ class System:
 
     def define_profile_characteristics(self):
         for node in self.nodes_with_ids.filter(lambda x: x.type == 'profileType'):
+            self.profile_types[node.name] = node.id
             self.profile_characteristics[node.name] = {}
             for element in node.get_sub_elements_with_tag('characteristicType'):
                 self.profile_characteristics[node.name][element.get('name')] = element.get('id')
@@ -321,13 +323,22 @@ class System:
         # Consider adding nice diff handling here.
 
         # Then create any we couldn't find
-        wargear_node = page.target_system_file.get_or_create_shared_node('selectionEntry', attrib={
-            'name': wargear_name,
+        wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
+        self.create_or_update_upgrade(wargear_as_profile, 'Wargear Item')
+
+    def create_or_update_upgrade(self, upgrade_profile, profile_type):
+        node = upgrade_profile.page.target_system_file.get_or_create_shared_node('selectionEntry', attrib={
+            'name': upgrade_profile.name,
             'type': 'upgrade',
         })
-        wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
-
-        wargear_node.set_profile(wargear_as_profile, "Wargear Item")
+        node = node.get_or_create_child('profiles')
+        node = node.get_or_create_child('profile', attrib={
+            'name': upgrade_profile.name,
+            'typeName': profile_type,
+            'hidden': "false",
+            'typeId': self.profile_types[profile_type]
+        })
+        node.set_profile(upgrade_profile, profile_type)
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)
