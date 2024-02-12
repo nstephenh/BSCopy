@@ -1,26 +1,48 @@
 import os
 import subprocess as sp
+from typing import TYPE_CHECKING
 
 from book_reader.pdf_page import PdfPage
+from util.log_util import print_styled, STYLES
+
+if TYPE_CHECKING:
+    from system.system_file import SystemFile
 
 
 class Book:
-    def __init__(self, file_path, system, settings: {str: bool | str} = None, book_config: dict = None, pub_id=None):
+    def __init__(self, file_path, system, settings: {str: bool | str} = None, book_config: dict = None):
         if settings is None:
             settings = {}
         self.settings = settings
-        if book_config is None:
-            book_config = {}
-        self.book_config = book_config
-        self.pub_id = pub_id
 
         self.file_path = file_path
         self.system = system
+
+        self.page_configs = {}
         self.pages = []
+
+        self.pub_id = None
+        self.target_file_name: str | None = None
+        self.target_system_file: 'SystemFile' or None = None
+        self.read_config(book_config)
+
         if file_path.endswith('.epub'):
             self.read_as_epub()
         if file_path.endswith('.pdf'):
             self.read_as_pdf()
+
+    def read_config(self, book_config: dict or None):
+        if book_config is None:
+            return
+        self.pub_id = book_config.get('pub_id')
+        self.target_system_file = self.get_target_sys_file(book_config.get('target_file_name'))
+
+        page_ranges = book_config.get('page_ranges', [])
+        for page_range in page_ranges:
+            target_system_file = self.get_target_sys_file(page_range.pop('target_file_name', None))
+            page_range['target_system_file'] = target_system_file if target_system_file else self.target_system_file
+            for i in range(page_range.pop('start'), page_range.pop('end') + 1):
+                self.page_configs[i] = page_range
 
     def read_as_epub(self):
         import ebooklib
@@ -94,3 +116,14 @@ class Book:
         start = range_dict["start"]
         end = range_dict["end"]
         return range(start, end + 1)
+
+    def get_target_sys_file(self, target_file_name):
+        if not target_file_name:
+            return
+        target_system_file = next(filter(lambda sf: sf.name == target_file_name, self.system.files),
+                                  None)
+        if target_system_file is None:
+            print_styled(f"\nPlease create a catalogue named {target_file_name} as defined in books.json,"
+                         f" or remove the reference to it. ", STYLES.RED)
+            exit(1)
+        return target_system_file

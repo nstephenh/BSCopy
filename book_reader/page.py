@@ -5,7 +5,9 @@ from bs4 import BeautifulSoup, Tag
 
 if TYPE_CHECKING:
     from book_reader.book import Book
-from book_reader.constants import ReadSettingsKeys, PageTypes
+    from system.system_file import SystemFile
+
+from book_reader.constants import ReadSettingsKeys
 from book_reader.raw_entry import RawProfile, RawUnit
 from util.log_util import print_styled, STYLES
 
@@ -16,30 +18,26 @@ class Page:
      or apply to the game system.
     """
 
-    def __init__(self, book: 'Book', page_number):
+    def __init__(self, book: 'Book', page_number: int):
         self.book = book
         self.page_number = page_number
+
+        config = self.book.page_configs.get(self.page_number, {})
+        self.page_type = config.get('type')
+        self.target_system_file: 'SystemFile' = config.get('target_system_file')
+
         self.special_rules_dict: dict[str: str] = {}
         self.wargear_dict: dict[str: str] = {}
         self.types_and_subtypes_dict: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
         self.units: list[RawUnit] = []
-        self.page_type = self.get_configured_page_type()
         self.special_rules_text = None
         self.flavor_text_col = None
 
     @property
     def settings(self) -> dict[ReadSettingsKeys: str | dict]:
         return self.book.settings
-
-    def get_configured_page_type(self):
-        if len(self.book.book_config):
-            for page_type in PageTypes:
-                if page_type in self.book.book_config:
-                    if self.page_number in self.book.range_dict_to_range(self.book.book_config[page_type]):
-                        self.page_type = page_type  # Cache it
-                        return page_type
 
     def serialize(self):
         dict_to_serialize = {'page_type': self.page_type, }

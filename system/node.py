@@ -23,6 +23,7 @@ class Node:
 
         self.system_file = system_file
         if self.id:
+            self.system_file.nodes_with_ids.append(self)
             self.system_file.system.nodes_with_ids.append(self)
 
         if not self.is_link():

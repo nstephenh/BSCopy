@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
 from system.node import Node
+from system.node_collection import NodeCollection
 from util.generate_util import cleanup_file_match_bs_whitespace
 from util.text_utils import make_plural
 
@@ -20,6 +21,8 @@ class SystemFile:
         self.is_gst = os.path.splitext(path)[1] == ".gst"
 
         self.namespace = set_namespace_from_file(path)
+
+        self.nodes_with_ids = NodeCollection([])
         self._source_tree = ET.parse(path)
 
         self.library = self._source_tree.getroot().get('library') == "true"

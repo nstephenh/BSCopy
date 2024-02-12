@@ -1,5 +1,9 @@
 import json
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from book_reader.page import Page
 
 from book_reader.raw_entry import RawUnit, RawProfile
 from settings import default_system, default_data_directory, default_settings
@@ -118,8 +122,6 @@ class System:
                 continue  # Skip this iteration
             books_to_read.append(file_name)
 
-        name_to_pub_id = {}
-
         json_config = self.read_books_json_config()
         i = 1
         for file_name in books_to_read:
@@ -130,75 +132,64 @@ class System:
             # Assumes that each raw file is either named as a bs unique ID corresponding to a publication,
             # Or has a publication defined in book_json_config
             book_json_config = {}
-            pub_id = None
-            name_to_pub_id[file_no_ext] = file_no_ext
             for book in [book for book in json_config if book['file_name'] == file_name]:
-                name_to_pub_id[file_no_ext] = book['pub_id']
-                pub_id = book['pub_id']
                 book_json_config = book
                 break  # Should only be one
             self.raw_files[file_no_ext] = Book(filepath, self, settings=raw_import_settings,
-                                               book_config=book_json_config, pub_id=pub_id)
+                                               book_config=book_json_config)
             i += 1
         export_dict = {}
-        actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
+        all_actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
         for file_name, book in self.raw_files.items():
             export_dict[file_name] = {}
-            pub_id = name_to_pub_id[file_name]
-            skip_non_dump_actions = False
-            sys_file_for_pub = self.gst
-            publication_node = self.nodes_with_ids.get(lambda node: (
-                    node.id == pub_id
-            ))
-            if not publication_node:
-                print(f"Please create a publication for {file_name} and define it in books.json,"
-                      f" or rename that file to be a publication ID")
-                skip_non_dump_actions = True
-            else:
-                export_dict[file_name]['pub_id'] = pub_id
-                print_styled(publication_node.name, STYLES.CYAN)
-                sys_file_for_pub = publication_node.system_file
-            if skip_non_dump_actions:
-                actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in actions_to_take else []
-            print("Actions to take: " + ", ".join(actions_to_take))
+            print_styled(file_name, STYLES.CYAN)
             for page in book.pages:
                 print(f"\t{page.page_number} {str(page.page_type or '')}")
+
+                actions_to_take = all_actions_to_take
+                if not page.target_system_file:
+                    actions_to_take = [Actions.DUMP_TO_JSON] if Actions.DUMP_TO_JSON in all_actions_to_take else []
+
                 if Actions.DUMP_TO_JSON in actions_to_take:
                     export_dict[file_name][page.page_number] = page.serialize()
                 if Actions.LOAD_SPECIAL_RULES in actions_to_take and not page.units:
                     for rule_name, rule_text in page.special_rules_dict.items():
                         print(f"\t\tRule: {rule_name}")
-                        self.create_or_update_special_rule(page, rule_name, rule_text, sys_file_for_pub)
+                        self.create_or_update_special_rule(page, rule_name, rule_text)
                     for unit_type, text in page.types_and_subtypes_dict.items():
                         print(f"\t\tType: {unit_type}")
-                        self.create_or_update_category(page, unit_type, text, sys_file_for_pub)
+                        self.create_or_update_category(page, unit_type, text)
                     for unit_type, text in page.wargear_dict.items():
                         print(f"\t\tWargear: {unit_type}")
-                        self.create_or_update_wargear(page, unit_type, text, sys_file_for_pub)
+                        self.create_or_update_wargear(page, unit_type, text)
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        self.create_or_update_profile(page, weapon, profile_type="Weapon",
-                                                      default_sys_file=sys_file_for_pub)
-            if Actions.LOAD_UNITS in actions_to_take:
+                        self.create_or_update_profile(page, weapon, profile_type="Weapon")
+            if Actions.LOAD_UNITS in all_actions_to_take:
                 self.refresh_index()  # We need to update the index before loading units
                 for page in book.pages:
+                    print(f"\t{page.page_number} {str(page.page_type or '')}")
                     for unit in page.units:
                         print(f"\t\tUnit: {unit.name}")
-                        self.create_or_update_unit(unit,
-                                                   default_sys_file=sys_file_for_pub)
+                        if page.target_system_file is None:
+                            print_styled(f"\t\tNo target file, skipping",
+                                         STYLES.YELLOW)
+                            continue
+                        self.create_or_update_unit(unit)
+
         if Actions.DUMP_TO_JSON in actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
                       encoding='utf-8') as outfile:
                 outfile.write(json.dumps(export_dict, ensure_ascii=False, indent=2))
 
-    def create_or_update_special_rule(self, page, rule_name, rule_text, default_sys_file):
+    def create_or_update_special_rule(self, page: 'Page', rule_name, rule_text):
         # First look for existing special rules
         node_type = self.settings.get(SystemSettingsKeys.SPECIAL_RULE_TYPE)
         if node_type is None:
             raise Exception("Special rule type is not defined for system")
 
-        nodes = self.nodes_with_ids.filter(lambda node: (
+        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
                 node.type == node_type
                 and (node.name and node.name.lower() == rule_name.lower())
         ))
@@ -215,13 +206,12 @@ class System:
             if diff:
                 print_styled("\t\t\tText Differs!", STYLES.PURPLE)
                 print(diff)
-                node.set_rules_text(rule_text)
             return
 
         # Then create any we couldn't find
-        print_styled(f"\t\t\tCreating rule in {default_sys_file}", STYLES.GREEN)
+        print_styled(f"\t\t\tCreating rule in {page.target_system_file}", STYLES.GREEN)
 
-        rule_node = default_sys_file.get_or_create_shared_node('rule', attrib={
+        rule_node = page.target_system_file.get_or_create_shared_node('rule', attrib={
             'name': rule_name
         })
         rule_node.update_pub_and_page(page)
@@ -267,11 +257,11 @@ class System:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
 
-    def create_or_update_profile(self, page, raw_profile: 'RawProfile', profile_type, default_sys_file):
+    def create_or_update_profile(self, page, raw_profile: 'RawProfile', profile_type):
         # A profile should also be in a selection entry with special rules,
         # so once we find the profile, we'll want to find selection entries for it.
 
-        nodes = self.nodes_with_ids.filter(lambda node: (
+        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
                 node.type == f"profile:{profile_type}"
                 and (node.name and node.name.lower() == raw_profile.name.lower())
         ))
@@ -294,13 +284,13 @@ class System:
         # Then create any we couldn't find
         pass
 
-    def create_or_update_category(self, page, name, text, default_sys_file):
+    def create_or_update_category(self, page, name, text):
         name = name.title()
         if len(text) == 0:
             print_styled(f"\t\t\tCategory has no text: {name}", STYLES.RED)
             return
 
-        nodes = self.nodes_with_ids.filter(lambda node: (
+        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
                 node.type == "category"
                 and (node.name and node.name.lower() == name.lower())
         ))
@@ -313,11 +303,10 @@ class System:
             print(f"\t\t\tCategory exists in data files: {node.id}")
             return
         # Then create any we couldn't find
-        default_sys_file.root_node.create_category(name, text, page)
+        page.target_system_file.root_node.create_category(name, text, page)
 
-    def create_or_update_wargear(self, page, wargear_name, wargear_text, default_sys_file):
-
-        nodes = self.nodes_with_ids.filter(lambda node: (
+    def create_or_update_wargear(self, page, wargear_name, wargear_text):
+        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
                 node.type == 'selectionEntry:upgrade'
                 and (node.name and node.name.lower() == wargear_name.lower() and node.shared)
         ))
@@ -332,7 +321,7 @@ class System:
         # Consider adding nice diff handling here.
 
         # Then create any we couldn't find
-        wargear_node = default_sys_file.get_or_create_shared_node('selectionEntry', attrib={
+        wargear_node = page.target_system_file.get_or_create_shared_node('selectionEntry', attrib={
             'name': wargear_name,
             'type': 'upgrade',
         })
@@ -340,9 +329,9 @@ class System:
 
         wargear_node.set_profile(wargear_as_profile, "Wargear Item")
 
-    def create_or_update_unit(self, raw_unit: 'RawUnit', default_sys_file: 'SystemFile'):
-        node = self.get_or_create_unit(raw_unit, default_sys_file)
-        if node is None:
+    def create_or_update_unit(self, raw_unit: 'RawUnit'):
+        node = self.get_or_create_unit(raw_unit)
+        if node is None:  # May be null if there are two instances of the unit in the target file.
             return
 
         node.update_pub_and_page(raw_unit.page)
@@ -354,10 +343,10 @@ class System:
         node.set_rules(raw_unit)
         node.set_comments("\n".join(raw_unit.errors))
 
-    def get_or_create_unit(self, raw_unit, default_sys_file: 'SystemFile'):
+    def get_or_create_unit(self, raw_unit):
         raw_unit.name = raw_unit.name.title()
 
-        nodes = self.nodes_with_ids.filter(lambda node: (
+        nodes = raw_unit.page.target_system_file.nodes_with_ids.filter(lambda node: (
                 node.type == f"selectionEntry:unit"
                 and (node.name and node.name.lower() == raw_unit.name.lower())
         ))
@@ -372,16 +361,12 @@ class System:
             return node
 
         # Then create any we couldn't find
-        if not default_sys_file:
-            print_styled("\t\t\tCannot create a unit without a file to create them in")
-            return
-
-        print_styled(f"\t\t\tCreating unit in {default_sys_file.name}", STYLES.GREEN)
-        return default_sys_file.get_or_create_shared_node('selectionEntry',
-                                                          attrib={
-                                                              'name': raw_unit.name,
-                                                              'type': 'unit',
-                                                          })
+        print_styled(f"\t\t\tCreating unit in {raw_unit.page.target_system_file.name}", STYLES.GREEN)
+        return raw_unit.page.target_system_file.get_or_create_shared_node('selectionEntry',
+                                                                          attrib={
+                                                                              'name': raw_unit.name,
+                                                                              'type': 'unit',
+                                                                          })
 
     def get_duplicates(self) -> dict[str, list['Node']]:
         duplicate_groups = {}
