@@ -80,6 +80,7 @@ def text_to_rules_dict(text, first_p_is_flavor=False, can_have_one_paragraph=Fal
         else:
             in_paragraph = True
             new_rules[current_rule] += " "  # Space instead of a line break.
+            first_paragraph_cache += " "
     return {name: rule.strip() for name, rule in new_rules.items() if rule.strip()}
 
 
