@@ -377,6 +377,8 @@ class Node:
         if wargear_id is None:
             if owner_name is None:
                 owner_name = self.name
+            if self.type_name != "model":  # Bring this error out of the option group because the group names are long.
+                self.parent.parent.append_error_comment(f"Could not find wargear in {self.name}")
             self.append_error_comment(f"Could not find wargear {name}", owner_name)
             if found_name != self.name:
                 self.append_error_comment(f"\t Checked under {found_name}", owner_name)
