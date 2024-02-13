@@ -554,6 +554,11 @@ class PdfPage(Page):
                     stats_for_line = [cells[-5],
                                       " ".join(cells[-4:-2]),
                                       " ".join(cells[-2:]), ]
+                if name_cells and name_cells[-1] == "-" and name_cells[-2].isdigit():
+                    # if our name is ending in a range, stitch it back together
+                    range_cells = name_cells[-2:]
+                    name_cells = name_cells[:-2]
+                    stats_for_line[0] = " ".join(range_cells) + stats_for_line[0]
 
                 if name_cells and not name_col_index:
                     name_col_index = line.index(name_cells[0])
