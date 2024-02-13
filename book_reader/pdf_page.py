@@ -460,6 +460,7 @@ class PdfPage(Page):
         in_table = False
         in_note = False
         name_prefix = ""
+        name_counter = 0
         profile_index = -1
         sr_col_index = 0
         name_col_index = 0
@@ -537,9 +538,6 @@ class PdfPage(Page):
 
                 name_cells = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
-                if self.game.DASHED_WEAPON_MODES and name_prefix and name_cells[0] != "-":
-                    # If we've exited the list of options, clear the name prefix
-                    name_prefix = ""
 
                 if special_rules and special_rules[0].islower():
                     # If our headers are misaligned, we're in the middle of a word,
@@ -556,15 +554,29 @@ class PdfPage(Page):
                     stats_for_line = [cells[-5],
                                       " ".join(cells[-4:-2]),
                                       " ".join(cells[-2:]), ]
+
                 if name_cells and not name_col_index:
                     name_col_index = line.index(name_cells[0])
-                if (name_prefix
-                        # Don't append the name prefix if it's already in the name
-                        and name_prefix not in " ".join(name_cells)):
-                    if self.game.DASHED_WEAPON_MODES:
-                        name_cells = [name_prefix] + name_cells
-                    else:
-                        name_cells = [name_prefix, "-"] + name_cells
+
+                if name_prefix:
+                    if len(name_cells) == 0 or " ".join(name_cells) == "Up to":
+                        # Special handling for multirange heresy weapons
+                        stats_for_line[0] = " ".join(name_cells + [stats_for_line[0]])
+                        name_counter += 1  # number these profiles as 1, 2, 3
+                        name_cells = [f"{name_prefix} ({name_counter})"]
+                    elif self.game.DASHED_WEAPON_MODES and name_cells[0] != "-":
+                        # If we've exited the list of options, clear the name prefix
+                        name_prefix = ""
+                        name_counter = 0
+
+                    if (name_prefix
+                            # Don't append the name prefix if it's already in the name
+                            and name_prefix not in " ".join(name_cells)):
+                        if self.game.DASHED_WEAPON_MODES:
+                            name_cells = [name_prefix] + name_cells
+                        else:
+                            name_cells = [name_prefix, "-"] + name_cells
+
                 stats_for_line.append(special_rules)
                 weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
                                               stats_for_line)))
