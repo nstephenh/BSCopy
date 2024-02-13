@@ -33,6 +33,8 @@ class Game:
 
     COMBINED_ARTILLERY_PROFILE = False
 
+    DASHED_WEAPON_MODES = False
+
     NAME_HAS_DOTS: bool = False
 
     FORCE_ORG_IN_FLAVOR: bool = False

@@ -13,7 +13,6 @@ class PdfPage(Page):
     def __init__(self, book, raw_text, page_number, prev_page_type=None):
         super().__init__(book, page_number)
         self.raw_text = text_utils.replace_quote_alikes(raw_text)
-        self.page_number = page_number
         if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
             self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
@@ -22,8 +21,6 @@ class PdfPage(Page):
         if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
             self.try_handle_units()
 
-        if int(page_number) == 82:
-            print(raw_text)
         if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
             self.handle_special_rules_page(prev_page_type)
         if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
@@ -476,10 +473,12 @@ class PdfPage(Page):
                 self.special_rules_text = "\n".join(line)
                 return
             if text_utils.does_line_contain_header(line, self.game.WEAPON_PROFILE_TABLE_HEADERS):
-                if not line.lstrip().startswith(self.game.WEAPON_PROFILE_TABLE_HEADERS[0]):
+                if not (line.lstrip().startswith(self.game.WEAPON_PROFILE_TABLE_HEADERS[0])
+                        or line.lstrip().startswith("Weapon")):
                     name_prefix = line.split(f" {self.game.WEAPON_PROFILE_TABLE_HEADERS[0]} ")[0].strip()
+                else:
+                    name_prefix = ""  # Clear the name prefix as we are starting a new table.
                 sr_col_index = line.index(last_header)
-
                 in_table = True
                 in_note = False  # A previous note has ended
                 continue
@@ -519,47 +518,58 @@ class PdfPage(Page):
                         continue  # Not a full line, just a continuation of special rules.
                     special_rules = line[sr_col_index:]
 
-                # print("Name and stats: ", name_and_stats)
-                # print("Special Rules:  ", special_rules)
+                print("Name and stats: ", name_and_stats)
+                print("Special Rules:  ", special_rules)
 
                 # Name and stats
                 cells = name_and_stats.split()
-                if len(cells) < num_data_cells:
-                    if profile_index < 0:  # partial row that's a continuation of the name
-                        name_prefix += " " + name_and_stats.strip()
+                if len(cells) < num_data_cells or special_rules.strip() == "":
+                    name_col_text = name_and_stats.strip()
+                    if profile_index < 0:  # partial row that's a continuation a table header name (old world)
+                        name_prefix += " " + name_col_text
+                    elif special_rules.strip() == "" and self.game.DASHED_WEAPON_MODES:
+                        name_prefix = name_col_text  # Unlikely to be weapon name spillover,
+                        # they are fairly short and the column is generally quite wide in heresy.
+                        # There could be an edge case for this in weapon profiles I'm missing.
                     else:  # partial row that's a continuation of a previous row's name
                         weapons_dicts[profile_index]["Name"] += cells
                     continue
 
-                name = cells[:-num_data_cells]
+                name_cells = cells[:-num_data_cells]
                 stats_for_line = cells[-num_data_cells:]
+                if self.game.DASHED_WEAPON_MODES and name_prefix and name_cells[0] != "-":
+                    # If we've exited the list of options, clear the name prefix
+                    name_prefix = ""
+
                 if special_rules and special_rules[0].islower():
                     # If our headers are misaligned, we're in the middle of a word,
                     # scoot over all the cells and re-append the start of the word to the type.
-                    name = cells[:-num_data_cells - 1]  # Shift over one
+                    name_cells = cells[:-num_data_cells - 1]  # Shift over one
                     stats_for_line = cells[-num_data_cells - 1:-1]  # Shift over one
                     # This was cropped off the start of special rules, so re-append it
                     special_rules = cells[-1] + special_rules
                 if ")" in cells[-num_data_cells] and self.game.COMBINED_ARTILLERY_PROFILE:
                     # Special handling for artillery
                     # print(cells)
-                    name = cells[:-(num_data_cells + 2)]
+                    name_cells = cells[:-(num_data_cells + 2)]
 
                     stats_for_line = [cells[-5],
                                       " ".join(cells[-4:-2]),
                                       " ".join(cells[-2:]), ]
-                if name and not name_col_index:
-                    name_col_index = line.index(name[0])
+                if name_cells and not name_col_index:
+                    name_col_index = line.index(name_cells[0])
                 if (name_prefix
                         # Don't append the name prefix if it's already in the name
-                        and name_prefix not in " ".join(name)
-                        and name_prefix != "Weapon"):
-                    name = [name_prefix, "-"] + name
+                        and name_prefix not in " ".join(name_cells)):
+                    if self.game.DASHED_WEAPON_MODES:
+                        name_cells = [name_prefix] + name_cells
+                    else:
+                        name_cells = [name_prefix, "-"] + name_cells
                 stats_for_line.append(special_rules)
                 weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
                                               stats_for_line)))
                 profile_index += 1
-                weapons_dicts[profile_index]["Name"] = name
+                weapons_dicts[profile_index]["Name"] = name_cells
             else:
                 in_table = False
                 in_note = False

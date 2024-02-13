@@ -39,6 +39,8 @@ class Heresy(Game):
 
     SUBHEADINGS_ON_SAME_LINE = True
 
+    DASHED_WEAPON_MODES = True
+
     NAME_HAS_DOTS: bool = True
 
     FORCE_ORG_IN_FLAVOR: bool = True
