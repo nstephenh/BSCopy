@@ -183,9 +183,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
         if "Wargear" in self.subheadings:
             for model in self.model_profiles:
                 for line in split_at_dot(self.subheadings["Wargear"].splitlines()):
-                    if "only)" in line and model.name not in line:
-                        continue
-                    if "(" in line:
+                    if "only)" in line:
+                        if model.name not in line:
+                            continue
                         line = line.split("(")[0].strip()
                     model.original_wargear.append(line)
                     model.default_wargear.append(line)
