@@ -156,7 +156,7 @@ class System:
             export_dict[file_name] = {}
             print_styled(file_name, STYLES.CYAN)
             for page in book.pages:
-                print(f"\t{page.page_number} {str(page.page_type or '')}")
+                print(f"\t{page.page_number} {str(page.page_type or '')} targeting {page.target_system_file}")
 
                 actions_to_take = all_actions_to_take
                 if not page.target_system_file:
