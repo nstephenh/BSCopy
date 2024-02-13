@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
-from book_reader.raw_entry import RawProfile, RawModel, RawUnit
+from book_reader.raw_entry import RawProfile, RawModel, RawUnit, HasOptionsMixin
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_tag, get_or_create_sub_element
 from util.log_util import print_styled, STYLES
@@ -218,7 +218,7 @@ class Node:
                 category_name = self.system.game.category_book_to_full_name_map[raw_unit.force_org]
                 if category_name:  # Could be none for dedicated transport.
                     if category_name not in self.system.categories:
-                        self.system.errors.append(f"Could not find '{category_name}' for '{raw_unit.name}'")
+                        self.append_error_comment(f"Could not find '{category_name}'", raw_unit.name)
                     target_id = self.system.categories[category_name].id
                     category_links.get_or_create_child('categoryLink',
                                                        attrib={'targetId': target_id,
@@ -243,7 +243,7 @@ class Node:
             model_se.set_model_profile(raw_model)
             model_se.set_constraints_from_object(raw_model)
             model_se.set_wargear(raw_model)
-            model_se.set_options(raw_model.options_groups)
+            model_se.set_options(raw_model)
             model_se.set_types_and_subtypes(raw_model)
 
     def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
@@ -317,14 +317,15 @@ class Node:
         })
         name_mod.update_attributes({'value': name})
 
-    def set_rule_info_links(self, rule_names: list):
-        if len(rule_names) == 0:
+    def set_rule_info_links(self, raw_profile: RawProfile):
+        if len(raw_profile.special_rules) == 0:
             return
         info_links = self.get_or_create_child('infoLinks')
 
-        for rule_name in rule_names:
+        for rule_name in raw_profile.special_rules:
             found_name, rule_id = self.system.get_rule_name_and_id(rule_name)
             if rule_id is None:
+                self.append_error_comment(f"Could not find rule: {rule_name}", raw_profile.name)
                 continue
             rule_link = info_links.get_or_create_child('infoLink', attrib={
                 'name': found_name,  # Name *should* be accurate as we're looking for it in the list
@@ -341,7 +342,8 @@ class Node:
         for rule, text in raw_unit.special_rule_descriptions.items():
             self.create_rule(rule, text, raw_unit.page)
 
-    def set_options(self, option_groups: list['OptionGroup']):
+    def set_options(self, raw_with_options: RawUnit or RawModel):
+        option_groups = raw_with_options.option_groups
         if len(option_groups) == 0:
             return
         option_entries = self.get_or_create_child('selectionEntryGroups')
@@ -357,6 +359,9 @@ class Node:
                 # Lookup option in system
                 found_name, wargear_id = self.system.get_wargear_name_and_id(option.name)
                 if wargear_id is None:
+                    self.append_error_comment(f"Could not find wargear {option.name}", raw_with_options.name)
+                    if found_name != option.name:
+                        self.append_error_comment(f"\t Checked under {found_name}", raw_with_options.name)
                     continue
                 # Create link:
                 group_entry.create_entrylink(found_name, wargear_id, pts=option.pts, name_override=option.name,
@@ -401,7 +406,7 @@ class Node:
         for category_name in raw_model.type_and_subtypes:
             category_name = category_name.strip()
             if category_name not in self.system.categories:
-                self.system.errors.append(f"Could not find type or subtype '{category_name}' for '{raw_model.name}'")
+                self.append_error_comment(f"Could not find type or subtype '{category_name}'", raw_model.name)
                 continue
             target_id = self.system.categories[category_name].id
             category_links.get_or_create_child('categoryLink',
@@ -439,3 +444,12 @@ class Node:
             return
         comment_node = self.get_or_create_child('comment')
         comment_node.text = text
+
+    def append_error_comment(self, error_text, heading_for_system_errors):
+        self.system.errors.append(heading_for_system_errors + ": " + error_text)
+        comment_node = self.get_or_create_child('comment')
+        if comment_node.text is None:
+            comment_node.text = ""
+        else:
+            comment_node.text += "\n"
+        comment_node.text += error_text

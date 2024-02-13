@@ -8,11 +8,16 @@ if TYPE_CHECKING:
     from book_reader.page import Page
 
 
-class RawProfile:
-    def __init__(self, name: str, page: 'Page', stats: dict[str: str], special_rules: list[str] = None,
-                 profile_type=None):
+class RawEntry(object):
+    def __init__(self, name: str, page: 'Page'):
         self.name: str = name
         self.page = page
+
+
+class RawProfile(RawEntry):
+    def __init__(self, name: str, page: 'Page', stats: dict[str: str], special_rules: list[str] = None,
+                 profile_type=None):
+        super().__init__(name, page)
         self.stats: dict[str: str] = stats
         self.profile_type: str = profile_type
         self.special_rules: list[str] = []
@@ -46,7 +51,13 @@ class RawProfile:
         return {'Name': self.name, 'Stats': self.stats}
 
 
-class RawModel(RawProfile):
+class HasOptionsMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # forwards all unused arguments
+        self.option_groups: [OptionGroup] = []
+
+
+class RawModel(HasOptionsMixin, RawProfile):
 
     def __init__(self, page, name: str, stats: dict[str: str], special_rules: list[str] = None,
                  profile_type: str = None):
@@ -57,7 +68,6 @@ class RawModel(RawProfile):
         self.original_wargear: [str] = []
         self.wargear_descriptions: {str: str} = {}
         self.wargear_profiles: [RawProfile] = []
-        self.options_groups: [OptionGroup] = []
         self.unit_type_text: str = ""  # We use this as part of heresy characteristics
         self.type_and_subtypes: [str] = []
         self.pts = None
@@ -78,8 +88,8 @@ class RawModel(RawProfile):
         if len(self.wargear_profiles) > 0:
             dict_to_return["Wargear Profiles"] = [profile.serialize() for profile in self.wargear_profiles]
 
-        if len(self.options_groups) > 0:
-            dict_to_return["Option Groups"] = [group.serialize() for group in self.options_groups]
+        if len(self.option_groups) > 0:
+            dict_to_return["Option Groups"] = [group.serialize() for group in self.option_groups]
 
         return dict_to_return
 
@@ -118,10 +128,9 @@ class OptionGroup:
         }
 
 
-class RawUnit:
-    def __init__(self, name: str, page: 'Page' = None, points: int = None):
-        self.name = name
-        self.page = page
+class RawUnit(HasOptionsMixin, RawEntry):
+    def __init__(self, name: str, page: 'Page', points: int = None):
+        super().__init__(name, page)
         self.points = points
         self.force_org: str | None = None
         self.model_profiles: list[RawModel] = []
@@ -132,7 +141,6 @@ class RawUnit:
         self.subheadings: {str: str} = {}
         self.max = None
         self.errors: [str] = []
-        self.unit_options: [OptionGroup] = []
         self.page_weapons = []
 
     def serialize(self) -> dict:
@@ -143,8 +151,8 @@ class RawUnit:
             dict_to_return['Force Org'] = self.force_org
         if len(self.model_profiles) > 0:
             dict_to_return['Profiles'] = [profile.serialize() for profile in self.model_profiles]
-        if len(self.unit_options) > 0:
-            dict_to_return["Unit Options"] = [group.serialize() for group in self.unit_options]
+        if len(self.option_groups) > 0:
+            dict_to_return["Unit Options"] = [group.serialize() for group in self.option_groups]
         if len(self.special_rules) > 0:
             dict_to_return["Special Rules"] = self.special_rules
         if len(self.special_rule_descriptions) > 0:
@@ -344,9 +352,9 @@ class RawUnit:
             option_group.options.append(Option(name=name, pts=pts))
 
         for model in option_models:
-            model.options_groups.append(option_group)
+            model.option_groups.append(option_group)
         if len(option_models) == 0 and len(option_group.options):
-            self.unit_options.append(option_group)
+            self.option_groups.append(option_group)
 
     def process_unit_types(self, line):
         model_name = None

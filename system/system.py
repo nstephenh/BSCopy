@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 from typing import TYPE_CHECKING
@@ -234,8 +235,6 @@ class System:
         rule_name = get_generic_rule_name(rule_name, True)
         if rule_name in self.rules_by_name:
             return rule_name, self.rules_by_name[rule_name].id
-        print(f"Could not find rule: {rule_name}")
-        self.errors.append(f"Could not find rule: {rule_name}")
         return None, None
 
     def get_wargear_name_and_id(self, wargear_name: str) -> (str, str) or (None, None):
@@ -248,10 +247,7 @@ class System:
 
         if lookup_name in self.wargear_by_name:
             return lookup_name, self.wargear_by_name[lookup_name].id
-        self.errors.append(f"Could not find wargear for: {wargear_name}")
-        if lookup_name != wargear_name:
-            self.errors.append(f"\t Checked under {lookup_name}")
-        return None, None
+        return lookup_name, None
 
     def get_profile_type_id(self, profile_type: str):
         return self.nodes_with_ids.filter(lambda node: (
@@ -352,16 +348,20 @@ class System:
         if node is None:  # May be null if there are two instances of the unit in the target file.
             return
 
+        node.set_comments(f"Auto-imported on {datetime.date.today()}")  # Clears any existing errors or comments
+
         node.update_pub_and_page(raw_unit.page)
         node.set_force_org(raw_unit)
 
         node.set_models(raw_unit)
-        node.set_options(raw_unit.unit_options)
-        node.set_rule_info_links(raw_unit.special_rules)
+        node.set_options(raw_unit)
+        node.set_rule_info_links(raw_unit)
         node.set_rules(raw_unit)
-        node.set_comments("\n".join(raw_unit.errors))
 
-    def get_or_create_unit(self, raw_unit):
+        for error in raw_unit.errors:
+            node.append_error_comment(error, raw_unit.name)
+
+    def get_or_create_unit(self, raw_unit) -> Node or None:
         raw_unit.name = raw_unit.name.title()
 
         nodes = raw_unit.page.target_system_file.nodes_with_ids.filter(lambda node: (
