@@ -18,6 +18,8 @@ class Book:
         self.file_path = file_path
         self.system = system
 
+        self.name = os.path.split(file_path)[1]
+
         self.page_configs = {}
         self.pages = []
 
