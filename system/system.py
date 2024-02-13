@@ -77,6 +77,7 @@ class System:
         self.categories = {}
         self.refresh_index()
 
+        self.raw_pub_priority = {}
         self.raw_files = {}
         if include_raw:
             self.init_raw_game(raw_import_settings)
@@ -112,7 +113,13 @@ class System:
         if not os.path.isfile(expected_location):
             return {}
         with open(expected_location) as file:
-            return json.load(file)
+            json_config = json.load(file)
+            # read these as we want them for even non-initialized books.
+            for book_config in json_config:
+                pub_id = book_config.get('pub_id')
+                if pub_id:
+                    self.raw_pub_priority[pub_id] = book_config.get('priority', 0)
+            return json_config
 
     def init_raw_game(self, raw_import_settings):
         from book_reader.book import Book

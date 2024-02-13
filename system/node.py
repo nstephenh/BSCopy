@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 from book_reader.raw_entry import RawProfile, RawModel, RawUnit
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_tag, get_or_create_sub_element
+from util.log_util import print_styled, STYLES
 
 if TYPE_CHECKING:
     from system.system_file import SystemFile
@@ -63,6 +64,16 @@ class Node:
         self.attrib.update(attrib)
 
     def update_pub_and_page(self, page: 'Page'):
+        existing_pub_id = self.attrib.get('publicationId')
+        if existing_pub_id:
+            print(existing_pub_id)
+            existing_priority = self.system.raw_pub_priority.get(existing_pub_id)
+            if existing_priority is None:
+                print_styled("We have updated a rule from a book we didn't import", STYLES.RED)
+                exit()
+            else:
+                if page.book.priority < existing_priority:
+                    return  # Do not update a publication if the other source has higher priority
         self.update_attributes({
             'page': page.page_number,
             'publicationId': page.book.pub_id

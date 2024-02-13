@@ -22,6 +22,7 @@ class Book:
         self.pages = []
 
         self.pub_id = None
+        self.priority = 0
         self.target_file_name: str | None = None
         self.target_system_file: 'SystemFile' or None = None
         self.read_config(book_config)
@@ -35,6 +36,8 @@ class Book:
         if book_config is None:
             return
         self.pub_id = book_config.get('pub_id')
+        self.priority = book_config.get('priority', 0)
+
         self.target_system_file = self.get_target_sys_file(book_config.get('target_file_name'))
 
         page_ranges = book_config.get('page_ranges', [])
