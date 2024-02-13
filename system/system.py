@@ -86,9 +86,9 @@ class System:
             self.init_raw_game(raw_import_settings)
 
     def refresh_index(self):
-        self.rules_by_name = {node.name: node for node in
+        self.rules_by_name = {node.name.lower(): node for node in
                               self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared)}
-        self.wargear_by_name = {node.name: node for node in
+        self.wargear_by_name = {node.name.lower(): node for node in
                                 self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry' and node.shared)}
         categories = {node.name: node for node in
                       self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
@@ -233,11 +233,13 @@ class System:
     def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
         rule_name = rule_name.strip()
         rule_name = get_generic_rule_name(rule_name)
-        if rule_name in self.rules_by_name:
-            return rule_name, self.rules_by_name[rule_name].id
+        if rule_name.lower() in self.rules_by_name:
+            found_rule = self.rules_by_name[rule_name.lower()]
+            return found_rule.name, found_rule.id
         rule_name = get_generic_rule_name(rule_name, True)
-        if rule_name in self.rules_by_name:
-            return rule_name, self.rules_by_name[rule_name].id
+        if rule_name.lower() in self.rules_by_name:
+            found_rule = self.rules_by_name[rule_name.lower()]
+            return found_rule.name, found_rule.id
         return None, None
 
     def get_wargear_name_and_id(self, wargear_name: str) -> (str, str) or (None, None):
@@ -248,8 +250,8 @@ class System:
         if "Mounted" in lookup_name:
             lookup_name = lookup_name.split("Mounted")[1].strip()
         lookup_name = lookup_name.rstrip("*")
-        if lookup_name in self.wargear_by_name:
-            return lookup_name, self.wargear_by_name[lookup_name].id
+        if lookup_name.lower() in self.wargear_by_name:
+            return lookup_name, self.wargear_by_name[lookup_name.lower()].id
         return lookup_name, None
 
     def get_profile_type_id(self, profile_type: str):
