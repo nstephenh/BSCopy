@@ -244,9 +244,7 @@ class Node:
         profile_type = "Weapon"  # assume weapon by default
         characteristics_dict = dict(profile.stats)
         if type(profile) is RawModel:
-            profile_type = "Unit"  # Default to unit.
-            if set(characteristics_dict.keys()) == set(self.system.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
-                profile_type = self.system.game.ALT_PROFILE_NAME
+            profile_type = profile.profile_type
             characteristics_dict.update({
                 "Unit Type": profile.unit_type_text
             })

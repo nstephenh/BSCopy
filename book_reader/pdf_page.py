@@ -96,35 +96,24 @@ class PdfPage(Page):
     def game(self) -> 'Game':
         return self.book.system.game
 
-    def get_number_of_units(self):
-        units = 0
-        for line in self.raw_text.splitlines():
-            if self.does_line_contain_profile_header(line):
-                # print(f"Line contains profile header: {line}")
-                units += 1
-        return units
+    def get_number_of_units(self) -> int:
+        return self.raw_text.count(self.book.system.game.ProfileLocator)
 
     def does_line_contain_profile_header(self, line) -> bool:
-        if not len(self.game.UNIT_PROFILE_TABLE_HEADERS):
-            raise Exception("No UNIT PROFILE HEADERS")
-        profile_header_types = [self.game.UNIT_PROFILE_TABLE_HEADERS]
-        if len(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
-            profile_header_types.append(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS)
-        for header in profile_header_types:
-            if text_utils.does_line_contain_header(line, header):
-                return True
+        for header_type, header_raw_and_full in self.game.UNIT_PROFILE_TABLE_HEADER_OPTIONS.items():
+            header_raw = header_raw_and_full.get('raw')
+            if text_utils.does_line_contain_header(line, header_raw):
+                return header_type
         return False
 
-    def get_unit_profile_headers(self, text: str) -> [str]:
-        if not len(self.game.UNIT_PROFILE_TABLE_HEADERS):
+    def get_unit_profile_headers(self, text: str) -> (str, [str]):
+        if not len(self.game.UNIT_PROFILE_TABLE_HEADER_OPTIONS):
             raise Exception("No UNIT PROFILE HEADERS")
-        profile_header_types = [self.game.UNIT_PROFILE_TABLE_HEADERS]
-        if len(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS):
-            profile_header_types.append(self.game.ALT_UNIT_PROFILE_TABLE_HEADERS)
         for line in text.splitlines():
-            for header in profile_header_types:
-                if text_utils.does_line_contain_header(line, header):
-                    return header
+            for header_type, header_raw_and_full in self.game.UNIT_PROFILE_TABLE_HEADER_OPTIONS.items():
+                header_raw = header_raw_and_full.get('raw')
+                if text_utils.does_line_contain_header(line, header_raw):
+                    return header_type, header_raw
         return
 
     def does_contain_stagger(self, headers):
@@ -393,7 +382,7 @@ class PdfPage(Page):
         names = []
         stats = []
         # Then, get the table out of the header.
-        unit_profile_headers = self.get_unit_profile_headers(unit_text)
+        unit_profile_type, unit_profile_headers = self.get_unit_profile_headers(unit_text)
 
         num_data_cells = len(unit_profile_headers)
         in_table = False
@@ -432,7 +421,7 @@ class PdfPage(Page):
         for index, name in enumerate(names):
             name = ' '.join(name)
             raw_profile = RawModel(name=name, page=self, stats=dict(zip(unit_profile_headers + ['Note'],
-                                                                        stats[index])))
+                                                                        stats[index])), profile_type=unit_profile_type)
             constructed_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])

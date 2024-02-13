@@ -13,9 +13,12 @@ class OldWorld(Game):
         SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.PROFILE_SPECIAL_RULE,
         SystemSettingsKeys.WEAPON_AS_DESCRIPTION: False,
     }
-
-    UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Points"]
-
+    UNIT_PROFILE_TABLE_HEADER_OPTIONS = {
+        "Unit":
+            {"raw": ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Points"],
+             "full": ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Points"],
+             },
+    }
     WEAPON_PROFILE_TABLE_HEADERS = ["R", "S", "AP", "Special Rules"]
 
     COMBINED_ARTILLERY_PROFILE = True

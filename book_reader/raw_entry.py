@@ -9,10 +9,12 @@ if TYPE_CHECKING:
 
 
 class RawProfile:
-    def __init__(self, name: str, page: 'Page', stats: dict[str: str], special_rules: list[str] = None):
+    def __init__(self, name: str, page: 'Page', stats: dict[str: str], special_rules: list[str] = None,
+                 profile_type=None):
         self.name: str = name
         self.page = page
         self.stats: dict[str: str] = stats
+        self.profile_type: str = profile_type
         self.special_rules: list[str] = []
         if special_rules:
             for rule in special_rules:
@@ -46,8 +48,9 @@ class RawProfile:
 
 class RawModel(RawProfile):
 
-    def __init__(self, page, name: str, stats: dict[str: str], special_rules: list[str] = None):
-        super().__init__(name, page, stats, special_rules)
+    def __init__(self, page, name: str, stats: dict[str: str], special_rules: list[str] = None,
+                 profile_type: str = None):
+        super().__init__(name, page, stats, special_rules, profile_type)
         self.min = None
         self.max = None
         self.default_wargear: [str] = []

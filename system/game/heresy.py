@@ -8,13 +8,20 @@ class Heresy(Game):
 
     ProfileLocator = "Unit Composition"
 
-    UNIT_PROFILE_TABLE_HEADERS = ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Sv"]
-    UNIT_PROFILE_TABLE_HEADERS_FULL = ["Move", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Save"]
-
-    ALT_UNIT_PROFILE_TABLE_HEADERS: list[str] = ["M", "BS", "Front", "Side", "Rear", "HP", "Capacity"]
-    ALT_UNIT_PROFILE_TABLE_HEADERS_FULL: list[str] = ["Move", "BS", "Front", "Side", "Rear", "HP", "Transport Capacity"]
-
-    ALT_PROFILE_NAME = "Vehicle"
+    UNIT_PROFILE_TABLE_HEADER_OPTIONS = {
+        "Unit":
+            {"raw": ["M", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Sv"],
+             "full": ["Move", "WS", "BS", "S", "T", "W", "I", "A", "Ld", "Save"],
+             },
+        "Vehicle":
+            {"raw": ["M", "BS", "Front", "Side", "Rear", "HP", "Capacity"],
+             "full": ["Move", "BS", "Front", "Side", "Rear", "HP", "Transport Capacity"],
+             },
+        "Knights and Titans":
+            {"raw": ["M", "WS", "BS", "S", "Front", "Side", "Rear", "I", "A", "HP"],
+             "full": ["Move", "WS", "BS", "S", "Front", "Side", "Rear", "I", "A", "HP"],
+             },
+    }
 
     WEAPON_PROFILE_TABLE_HEADERS = ["Range", "Str", "AP", "Type"]
     WEAPON_PROFILE_TABLE_HEADERS_FULL: list[str] = ["Range", "Strength", "AP", "Type"]
