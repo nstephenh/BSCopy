@@ -58,7 +58,6 @@ class PdfPage(Page):
             return
 
         self.page_type = PageTypes.SPECIAL_RULES
-        print_styled(f"\tThis is a special rules page", STYLES.CYAN)
 
         self.special_rules_text = col_1 + "\n" + col_2
 
@@ -136,7 +135,6 @@ class PdfPage(Page):
             return
 
         if self.game.COULD_HAVE_STAGGERED_HEADERS:
-            print("Could have Stagger!")
             # TODO make this more generic
             header_that_may_be_staggered = None
             for staggered_row_header_option in ["Wargear", "Options", "Unit Composition"]:  # Wargear might not exist
@@ -333,8 +331,8 @@ class PdfPage(Page):
         return raw_text, ""
 
     def process_unit(self, unit_text):
-        print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
-        print_styled(unit_text, STYLES.CYAN)
+        # print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
+        # print_styled(unit_text, STYLES.CYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
         points = None
@@ -438,8 +436,8 @@ class PdfPage(Page):
         if not self.special_rules_text:
             return
 
-        print_styled("Unprocessed non-unit text:", STYLES.GREEN)
-        print_styled(self.special_rules_text, STYLES.YELLOW)
+        # print_styled("Unprocessed non-unit text:", STYLES.GREEN)
+        # print_styled(self.special_rules_text, STYLES.YELLOW)
 
         non_weapon_lines = []
 
@@ -519,8 +517,8 @@ class PdfPage(Page):
                         continue  # Not a full line, just a continuation of special rules.
                     special_rules = line[sr_col_index:]
 
-                print("Name and stats: ", name_and_stats)
-                print("Special Rules:  ", special_rules)
+                # print("Name and stats: ", name_and_stats)
+                # print("Special Rules:  ", special_rules)
 
                 # Name and stats
                 cells = name_and_stats.split()

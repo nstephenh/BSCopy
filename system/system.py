@@ -232,6 +232,7 @@ class System:
 
     def get_rule_name_and_id(self, rule_name: str) -> (str, str) or (None, None):
         rule_name = rule_name.strip()
+        rule_name = rule_name.rstrip("*")
         rule_name = get_generic_rule_name(rule_name)
         if rule_name.lower() in self.rules_by_name:
             found_rule = self.rules_by_name[rule_name.lower()]

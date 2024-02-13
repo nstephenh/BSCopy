@@ -213,8 +213,8 @@ def get_col_dividers(heatmap, margins=None):
 
     section_end = longest_edge + 1  # the next section starts at the character after our longest_edge char.
     if section_end - section_start < min_width:  # But this could also make our divider too small.
-        print_styled(f"Had to use min_width because dividing colum was {section_end - section_start} chars",
-                     STYLES.YELLOW)
+        # print_styled(f"Had to use min_width because dividing colum was {section_end - section_start} chars",
+        #              STYLES.YELLOW)
         section_start = section_end - min_width
 
     return section_start, section_end

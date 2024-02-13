@@ -267,7 +267,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
         first_colon = line.index(":")
         option_title = line[:first_colon] + ":"
         options = split_at_dash(line[first_colon + 1:])
-        print(option_title)
+        # print(option_title)
 
         # This is an "additional models" line
         if "may include" in option_title:
@@ -286,7 +286,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     else:
                         additional_models = text_utils.number_word_to_int(additional_models_str)
 
-                    print(f"{model_name} x{additional_models} at {pts} each")
+                    # print(f"{model_name} x{additional_models} at {pts} each")
                     profile = self.get_profile_for_name(model_name)
                     if profile is None:
                         continue  # get_profile_for_name will have added the error.
@@ -310,8 +310,8 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     (not option_title.startswith("One") and model_name in option_title):
                 # If the option is a "One model may" we leave this on the
                 option_models.append(model)
-        if len(option_models) > 0:
-            print(f"\tApplies to {', '.join([model.name for model in option_models])}")
+        # if len(option_models) > 0:
+            # print(f"\tApplies to {', '.join([model.name for model in option_models])}")
 
         from_wargear_list = False  # If the first entry is from the wargear list, and thus the default
 
@@ -343,13 +343,13 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
         # Read name and points from the source text
         for option in options:
-            print("Option:", option)
+            # print("Option:", option)
             if option.strip() == "":
                 continue
             name, pts = option_process_line(option)
             if line.endswith(" each"):
                 self.errors.append(f"The option '{name}' may need a 'multiply by number of models' modifier")
-            print(f"\t\t{name} for {pts} pts{defaulted_message}")
+            # print(f"\t\t{name} for {pts} pts{defaulted_message}")
             defaulted_message = ""  # Clear our defaulted message now that we've shown it.
             option_group.options.append(Option(name=name, pts=pts))
 
