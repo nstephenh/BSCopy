@@ -28,6 +28,8 @@ class System:
     def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory,
                  settings=None,
                  include_raw=False, raw_import_settings=None):
+
+        self.run_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
         print(f"Initializing {system_name}")
         self.errors = []
         print(settings)
@@ -348,7 +350,6 @@ class System:
         if node is None:  # May be null if there are two instances of the unit in the target file.
             return
 
-        node.set_comments(f"Auto-imported on {datetime.date.today()}")  # Clears any existing errors or comments
 
         node.update_pub_and_page(raw_unit.page)
         node.set_force_org(raw_unit)

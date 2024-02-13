@@ -185,8 +185,7 @@ class Node:
                         text += f"{child_l2.get('name')}: {child_l2.text}\n"
         return text
 
-    def set_profile(self, raw_profile: RawProfile, profile_type):
-        self._element.attrib['name'] = raw_profile.name.title()
+    def set_profile_characteristics(self, raw_profile: RawProfile, profile_type):
         self._element.attrib['name'] = raw_profile.name
         existing_characteristics = []
         # Set existing characteristic fields
@@ -449,8 +448,13 @@ class Node:
     def append_error_comment(self, error_text, heading_for_system_errors):
         self.system.errors.append(heading_for_system_errors + ": " + error_text)
         comment_node = self.get_or_create_child('comment')
+        bsc_error_header = f"!BSC Errors from {self.system.run_timestamp}"
         if comment_node.text is None:
-            comment_node.text = ""
-        else:
-            comment_node.text += "\n"
-        comment_node.text += error_text
+            comment_node.text = bsc_error_header
+        elif "!BSC Errors from " in comment_node.text:
+            existing_comment_backup = comment_node.text.split("!BSC Errors from ")[0]
+            existing_timestamp = comment_node.text.split("!BSC Errors from ")[1].split(" ")[0]
+            if existing_timestamp != self.system.run_timestamp:
+                comment_node.text = existing_comment_backup + bsc_error_header
+
+        comment_node.text += "\n" + error_text
