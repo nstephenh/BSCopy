@@ -454,7 +454,7 @@ class Node:
             comment_node.text = bsc_error_header
         elif "!BSC Errors from " in comment_node.text:
             existing_comment_backup = comment_node.text.split("!BSC Errors from ")[0]
-            existing_timestamp = comment_node.text.split("!BSC Errors from ")[1].split(" ")[0]
+            existing_timestamp = comment_node.text.split("!BSC Errors from ")[1].split()[0]  # newline or space
             if existing_timestamp != self.system.run_timestamp:
                 comment_node.text = existing_comment_backup + bsc_error_header
 
