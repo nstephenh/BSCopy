@@ -383,9 +383,12 @@ class Node:
             if found_name != self.name:
                 self.append_error_comment(f"\t Checked under {found_name}", owner_name)
             return
+
         # Create link:
-        self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name,
-                              min_n=min_n, max_n=max_n, default_n=default_n)
+        link = self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name,
+                                     min_n=min_n, max_n=max_n, default_n=default_n)
+        if name.endswith("*"):
+            link.append_error_comment("Name ends in a star, check the rules for special handling")
 
     def create_entrylink(self, name, target_id, pts=None, min_n=1, max_n=1, name_override=None, default_n=None):
         entry_links = self.get_or_create_child('entryLinks')
@@ -401,6 +404,7 @@ class Node:
         if name_override and name_override != name:
             option_link.set_name_modifier(name_override)
         option_link.set_constraints(min_n, max_n)
+        return option_link
 
     def set_types_and_subtypes(self, raw_model: 'RawModel'):
         category_links = self.get_or_create_child('categoryLinks')

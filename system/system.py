@@ -247,7 +247,7 @@ class System:
             lookup_name = remove_plural(lookup_name)
         if "Mounted" in lookup_name:
             lookup_name = lookup_name.split("Mounted")[1].strip()
-
+        lookup_name = lookup_name.rstrip("*")
         if lookup_name in self.wargear_by_name:
             return lookup_name, self.wargear_by_name[lookup_name].id
         return lookup_name, None
