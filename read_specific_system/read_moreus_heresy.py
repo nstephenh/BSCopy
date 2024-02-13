@@ -20,3 +20,4 @@ if __name__ == '__main__':
     system.save_system()
     for error in system.errors:
         print(error)
+    print(f"Error count: {len(system.errors)}")
