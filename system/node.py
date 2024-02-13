@@ -187,6 +187,7 @@ class Node:
 
     def set_profile(self, raw_profile: RawProfile, profile_type):
         self._element.attrib['name'] = raw_profile.name.title()
+        self._element.attrib['name'] = raw_profile.name
         existing_characteristics = []
         # Set existing characteristic fields
         stats = raw_profile.stats
