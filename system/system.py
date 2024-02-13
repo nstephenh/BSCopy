@@ -177,7 +177,7 @@ class System:
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        self.create_or_update_profile(page, weapon, profile_type="Weapon")
+                        self.create_or_update_upgrade(weapon, profile_type="Weapon")
             if Actions.LOAD_UNITS in all_actions_to_take:
                 self.refresh_index()  # We need to update the index before loading units
                 for page in book.pages:
@@ -212,12 +212,13 @@ class System:
                 return
             node = nodes[0]
             print(f"\t\t\tRule exists in data files: {node}")
-            node.update_pub_and_page(page)
             existing_rule_text = node.get_rules_text()
             diff = get_diff(existing_rule_text, rule_text, 3)
             if diff:
-                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
+                print_styled("\t\t\tText Differs, so not updating", STYLES.PURPLE)
+                node.append_error_comment(f"The text from {page.book.name} is different", rule_name)
                 print(diff)
+            node.update_pub_and_page(page)
             return
 
         # Then create any we couldn't find
@@ -264,32 +265,6 @@ class System:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
 
-    def create_or_update_profile(self, page, raw_profile: 'RawProfile', profile_type):
-        # A profile should also be in a selection entry with special rules,
-        # so once we find the profile, we'll want to find selection entries for it.
-
-        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
-                node.type == f"profile:{profile_type}"
-                and (node.name and node.name.lower() == raw_profile.name.lower())
-        ))
-        if len(nodes) > 0:
-            if len(nodes) > 1:
-                nodes_str = ", ".join([str(node) for node in nodes])
-                print_styled(f"\t\t\tProfile exists multiple times in data files: {nodes_str}", STYLES.RED)
-                return
-            node = nodes[0]
-            print(f"\t\t\tProfile exists in data files: {node}")
-            node.update_pub_and_page(page)
-            existing_profile_text = node.get_diffable_profile()
-            new_profile_text = raw_profile.get_diffable_profile(profile_type)
-            diff = get_diff(existing_profile_text, new_profile_text, 3)
-            if diff:
-                print_styled("\t\t\tText Differs!", STYLES.PURPLE)
-                print(diff)
-                node.set_profile(raw_profile, profile_type)
-            return
-        # Then create any we couldn't find
-        pass
 
     def create_or_update_category(self, page, name, text):
         name = name.title()
@@ -297,37 +272,10 @@ class System:
             print_styled(f"\t\t\tCategory has no text: {name}", STYLES.RED)
             return
 
-        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
-                node.type == "category"
-                and (node.name and node.name.lower() == name.lower())
-        ))
-        if len(nodes) > 0:
-            if len(nodes) > 1:
-                nodes_str = ", ".join([str(node) for node in nodes])
-                print_styled(f"\t\t\tCategory exists multiple times in data files: {nodes_str}", STYLES.RED)
-                return
-            node = nodes[0]
-            print(f"\t\t\tCategory exists in data files: {node}")
-            return
         # Then create any we couldn't find
         page.target_system_file.root_node.create_category(name, text, page)
 
     def create_or_update_wargear(self, page, wargear_name, wargear_text):
-        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
-                node.type == 'selectionEntry:upgrade'
-                and (node.name and node.name.lower() == wargear_name.lower() and node.shared)
-        ))
-        if len(nodes) > 0:
-            if len(nodes) > 1:
-                nodes_str = ", ".join([str(node) for node in nodes])
-                print_styled(f"\t\t\tWargear exists multiple times in data files: {nodes_str}", STYLES.RED)
-                return
-            node = nodes[0]
-            print(f"\t\t\tWargear exists in data files: {node}")
-
-        # Consider adding nice diff handling here.
-
-        # Then create any we couldn't find
         wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
         self.create_or_update_upgrade(wargear_as_profile, 'Wargear Item')
 
@@ -336,6 +284,7 @@ class System:
             'name': upgrade_profile.name,
             'type': 'upgrade',
         })
+        node.set_rule_info_links(upgrade_profile)
         node = node.get_or_create_child('profiles')
         node = node.get_or_create_child('profile', attrib={
             'name': upgrade_profile.name,
@@ -343,7 +292,7 @@ class System:
             'hidden': "false",
             'typeId': self.profile_types[profile_type]
         })
-        node.set_profile(upgrade_profile, profile_type)
+        node.set_profile_characteristics(upgrade_profile, profile_type)
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)

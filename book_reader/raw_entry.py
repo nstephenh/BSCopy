@@ -24,6 +24,8 @@ class RawProfile(RawEntry):
         if special_rules:
             for rule in special_rules:
                 self.special_rules.append(rule.strip())
+        elif self.profile_type == "Weapon" and stats.get('Type'):
+            self.special_rules = [rule.strip() for rule in stats.get('Type').split(',')[1:]]
 
     @property
     def game(self):

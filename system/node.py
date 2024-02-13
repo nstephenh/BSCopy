@@ -190,7 +190,8 @@ class Node:
         existing_characteristics = []
         # Set existing characteristic fields
         stats = raw_profile.stats
-        if raw_profile.special_rules:
+        # Hardcoded switch between heresy and the old world, if we expand this script will need additional updating.
+        if raw_profile.special_rules and "Type" not in stats.keys():
             stats.update({"Special Rules": raw_profile.get_special_rules_list()})
 
         if self.system_file.system.settings[SystemSettingsKeys.WEAPON_AS_DESCRIPTION]:
