@@ -353,20 +353,10 @@ class Node:
                 'name': group.title,
             })
             for option in group.options:
-                # Lookup option in page and get local options
-                found_locally = False
-                if found_locally:
-                    continue
-                # Lookup option in system
-                found_name, wargear_id = self.system.get_wargear_name_and_id(option.name)
-                if wargear_id is None:
-                    self.append_error_comment(f"Could not find wargear {option.name}", raw_with_options.name)
-                    if found_name != option.name:
-                        self.append_error_comment(f"\t Checked under {found_name}", raw_with_options.name)
-                    continue
-                # Create link:
-                group_entry.create_entrylink(found_name, wargear_id, pts=option.pts, name_override=option.name,
-                                             min_n=0, max_n=group.max)
+                group_entry.create_wargear_or_option(option.name, pts=option.pts,
+                                                     min_n=0, max_n=group.max,
+                                                     owner_name=raw_with_options.name
+                                                     )
 
             group_entry.set_constraints_from_object(group)
 
@@ -374,17 +364,26 @@ class Node:
         if len(raw_model.default_wargear) == 0:
             return
         for wargear_name in raw_model.default_wargear:
-            # Lookup option in page and get local options
-            found_locally = False
-            if found_locally:
-                continue
-            # Lookup option in system
-            found_name, wargear_id = self.system.get_wargear_name_and_id(wargear_name)
-            if wargear_id is None:
-                continue
+            self.create_wargear_or_option(wargear_name, owner_name=raw_model.name)
 
-            # Create link:
-            self.create_entrylink(found_name, wargear_id, name_override=wargear_name)
+    def create_wargear_or_option(self, name, pts=None, min_n=1, max_n=1, default_n=None, owner_name=None):
+        # Lookup option in page and get local options
+        found_locally = False
+        if found_locally:
+            # TODO: Handle creating an option from a local profile if given.
+            return
+        # Lookup option in system
+        found_name, wargear_id = self.system.get_wargear_name_and_id(name)
+        if wargear_id is None:
+            if owner_name is None:
+                owner_name = self.name
+            self.append_error_comment(f"Could not find wargear {name}", owner_name)
+            if found_name != self.name:
+                self.append_error_comment(f"\t Checked under {found_name}", owner_name)
+            return
+        # Create link:
+        self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name,
+                              min_n=min_n, max_n=max_n, default_n=default_n)
 
     def create_entrylink(self, name, target_id, pts=None, min_n=1, max_n=1, name_override=None, default_n=None):
         entry_links = self.get_or_create_child('entryLinks')
@@ -446,8 +445,9 @@ class Node:
         comment_node = self.get_or_create_child('comment')
         comment_node.text = text
 
-    def append_error_comment(self, error_text, heading_for_system_errors):
-        self.system.errors.append(heading_for_system_errors + ": " + error_text)
+    def append_error_comment(self, error_text, heading_for_system_errors=None):
+        if heading_for_system_errors is not None:
+            self.system.errors.append(heading_for_system_errors + ": " + error_text)
         comment_node = self.get_or_create_child('comment')
         bsc_error_header = f"!BSC Errors from {self.system.run_timestamp}"
         if comment_node.text is None:
