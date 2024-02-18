@@ -151,6 +151,7 @@ class System:
                                                book_config=book_json_config)
             i += 1
         export_dict = {}
+        self.raw_files = dict(sorted(self.raw_files.items(), key=lambda pair: pair[1].priority, reverse=True))
         all_actions_to_take = raw_import_settings.get(ReadSettingsKeys.ACTIONS, [])
         for file_name, book in self.raw_files.items():
             export_dict[file_name] = {}
