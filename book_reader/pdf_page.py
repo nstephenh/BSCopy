@@ -184,7 +184,6 @@ class PdfPage(Page):
                 # This page looks like a unit page somehow but isn't (crusade cards on page 69 of panoptica)
                 return
 
-
             _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index,
                                                                     debug_print_level=0)
 
