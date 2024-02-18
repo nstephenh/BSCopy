@@ -340,6 +340,8 @@ class PdfPage(Page):
         unit_name = ""
         points = None
         for line in unit_text.split("\n"):
+            if self.does_line_contain_profile_header(line):
+                break  # Stop if we hit a profile header
             if line.strip() != "":
                 unit_name += line.strip()
                 if not self.game.NAME_HAS_DOTS or "..." in unit_name:
