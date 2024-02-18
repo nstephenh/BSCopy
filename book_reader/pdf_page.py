@@ -178,8 +178,12 @@ class PdfPage(Page):
 
             if left_sidebar_divider_index:
                 uc_and_ut = text_utils.un_justify(uc_and_ut)
+            try:
+                ut_index = uc_and_ut.index("Unit Type")
+            except ValueError:
+                # This page looks like a unit page somehow but isn't (crusade cards on page 69 of panoptica)
+                return
 
-            ut_index = uc_and_ut.index("Unit Type")
 
             _, uc, ut, _ = text_utils.split_into_columns_at_divider(uc_and_ut, ut_index,
                                                                     debug_print_level=0)
