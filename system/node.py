@@ -421,7 +421,7 @@ class Node:
             target_id = self.system.categories[category_name].id
             category_links.get_or_create_child('categoryLink',
                                                attrib={'targetId': target_id,
-                                                       'primary': 'true',
+                                                       'primary': 'false',
                                                        },
                                                # Won't actually be the real name, may need an update script
                                                defaults={'name': category_name},
