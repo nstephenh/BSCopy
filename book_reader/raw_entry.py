@@ -294,6 +294,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     if profile.max is None:
                         profile.max = 0  # Start at 0 if these models aren't necessarily additional.
                     profile.max += additional_models
+                    if profile.min:
+                        # Reduce the points cost of the unit by the cost of each required model
+                        self.points -= (profile.pts * profile.min)
             return  # this section was points per model options, so we don't need to generate an options group.
 
         option_group = OptionGroup(title=option_title)
@@ -311,7 +314,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 # If the option is a "One model may" we leave this on the
                 option_models.append(model)
         # if len(option_models) > 0:
-            # print(f"\tApplies to {', '.join([model.name for model in option_models])}")
+        # print(f"\tApplies to {', '.join([model.name for model in option_models])}")
 
         from_wargear_list = False  # If the first entry is from the wargear list, and thus the default
 
