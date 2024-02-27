@@ -31,8 +31,8 @@ def get_tag(element):
 
 elements_that_get_id = [
     'entryLink', 'categoryLink', 'constraint', 'selectionEntry', 'rule', 'profile', 'infoLink', 'selectionEntryGroup',
-    'catalogueLink', 'repeat', 'categoryEntry', 'publication', 'profileType', 'characteristicType', 'condition',
-    'forceEntry', 'costType', 'modifier', 'association', 'infoGroup', 'catalogue', 'gameSystem'
+    'catalogueLink', 'categoryEntry', 'publication', 'profileType', 'characteristicType',
+    'forceEntry', 'costType', 'association', 'infoGroup', 'catalogue', 'gameSystem'
 ]
 
 
