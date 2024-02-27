@@ -268,7 +268,6 @@ class System:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
 
-
     def create_or_update_category(self, page, name, text):
         name = name.title()
         if len(text) == 0:
@@ -302,9 +301,9 @@ class System:
         if node is None:  # May be null if there are two instances of the unit in the target file.
             return
 
-
         node.update_pub_and_page(raw_unit.page)
         node.set_force_org(raw_unit)
+        node.set_cost(raw_unit.points)
 
         node.set_models(raw_unit)
         node.set_options(raw_unit)

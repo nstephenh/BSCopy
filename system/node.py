@@ -266,6 +266,9 @@ class Node:
 
         profile_element.set_characteristics_from_dict(characteristics_dict, profile_type)
 
+        if hasattr(profile, 'pts'):
+            self.set_cost(profile.pts)
+
     def set_characteristics_from_dict(self, profile: dict, profile_type: str = None):
         characteristics = self.get_or_create_child('characteristics')
         for characteristic, value in profile.items():
