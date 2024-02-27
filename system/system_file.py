@@ -22,6 +22,7 @@ class SystemFile:
 
         self.namespace = set_namespace_from_file(path)
 
+        self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
         self._source_tree = ET.parse(path)
 

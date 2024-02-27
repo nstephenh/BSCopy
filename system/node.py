@@ -23,6 +23,9 @@ class Node:
         self.type_name = element.attrib.get('typeName', element.attrib.get('type'))  # typeName on profiles, type on SEs
 
         self.system_file = system_file
+        self.system_file.all_nodes.append(self)
+        self.system_file.system.all_nodes.append(self)
+
         if self.id:
             self.system_file.nodes_with_ids.append(self)
             self.system_file.system.nodes_with_ids.append(self)

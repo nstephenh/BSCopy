@@ -44,6 +44,8 @@ class System:
         self.gst = None
         self.files: [SystemFile] = []
 
+
+        self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
 
         # profileType name: {characteristicType name: typeId}
