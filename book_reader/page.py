@@ -24,7 +24,7 @@ class Page:
 
         config = self.book.page_configs.get(self.page_number, {})
         self.page_type = config.get('type')
-        self.target_system_file: 'SystemFile' = config.get('target_system_file')
+        self.target_system_file: 'SystemFile' = config.get('target_system_file', book.target_system_file)
 
         self.special_rules_dict: dict[str: str] = {}
         self.wargear_dict: dict[str: str] = {}
