@@ -141,8 +141,7 @@ class System:
             filepath = os.path.join(self.game_system_location, 'raw', file_name)
             print('\r', end="")
             print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
-            # Assumes that each raw file is either named as a bs unique ID corresponding to a publication,
-            # Or has a publication defined in book_json_config
+            # Publication and target file will be defined in book_json_config
             book_json_config = {}
             for book in [book for book in json_config if book['file_name'] == file_name]:
                 book_json_config = book
