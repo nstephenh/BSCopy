@@ -21,8 +21,14 @@ def split_at_dot(lines):
         if line.endswith("-"):
             prev_line_ends_in_dash = True
         text_to_split += " " + line
-
-    bullet_entries = text_to_split.split("● ")
+    bullet = None
+    if "●" in text_to_split:  # Panoptica bullet
+        bullet = "●"
+    if "•" in text_to_split:  # GW bullet
+        bullet = "•"
+    if bullet is None:
+        raise Exception(f"Could not find a bullet in {text_to_split}")
+    bullet_entries = text_to_split.split(bullet + " ")  # Bullet followed by space
     return [entry.strip() for entry in bullet_entries if entry.strip() != ""]
 
 
