@@ -270,7 +270,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
         # print(option_title)
 
         # This is an "additional models" line
-        if "may include" in option_title:
+        if "may include" in option_title or ("may take" in option_title and "additional" in line):
             for option in options:
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
                 if name.startswith("Up to"):
