@@ -308,7 +308,7 @@ class PdfPage(Page):
                 text_utils.split_into_columns_at_divider(wargear_and_on, sr_col_index, debug_print_level=0)
 
         # Now lets put everything together:
-        new_text = "".join(
+        new_text = "\n".join(  # Add a newline between sections to ensure no overlap if table doesn't end in one.
             [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
                                                                    reversed(header_sections.keys())]
         )
