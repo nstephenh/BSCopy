@@ -252,13 +252,15 @@ class Node:
         profiles_element = self.get_or_create_child('profiles')
         profile_element = profiles_element.get_or_create_child('profile')
 
-        profile_type = "Weapon"  # assume weapon by default
+        profile_type = None  # assume weapon by default
         characteristics_dict = dict(profile.stats)
         if type(profile) is RawModel:
             profile_type = profile.profile_type
             characteristics_dict.update({
                 "Unit Type": profile.unit_type_text
             })
+        if profile_type is None:
+            raise Exception("Could not find profile type for profile.profile_type")
         profile_element.update_attributes({'name': profile.name,
                                            'typeId': self.system.get_profile_type_id(profile_type)})
 
