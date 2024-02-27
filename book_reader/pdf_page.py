@@ -427,10 +427,12 @@ class PdfPage(Page):
         # From the bottom up, split out the individual sections
         for header in reversed(self.game.UNIT_SUBHEADINGS):
             was_split, unit_text, content = split_at_header(header, unit_text, header_at_end_of_line=False)
+            if header.endswith(":"):
+                header = header[:-1]  # Strip colon of the end of header for our cleaned data
             if was_split:
                 if content[len(header):].splitlines()[0].strip() == ":":
                     constructed_unit.subheadings[header] = "\n".join(
-                        content.splitlines()[1:])  # Cut the header label off.
+                        content.splitlines()[1:])  # If we leave a colon behind on the name, strip it off
 
                 else:
                     constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.

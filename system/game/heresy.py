@@ -35,7 +35,8 @@ class Heresy(Game):
     UNIT_SUBHEADINGS: list[str] = ["Unit Composition", "Unit Type", "Wargear", "Special Rules",
                                    "Dedicated Transport:",
                                    "Access Points:",
-                                   "Options:"]
+                                   "Options:",
+                                   "Options"]  # Check options both with and without colons.
 
     SUBHEADINGS_ON_SAME_LINE = True
 

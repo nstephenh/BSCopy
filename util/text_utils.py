@@ -418,10 +418,10 @@ def get_first_non_list_or_header_line(text, headers):
                     or last_indent == get_line_indent(line)):
                 return index + 1
             last_indent = get_line_indent(line, 1)
-            if line.strip() == "Options:":
+            if line.strip() == "Options:" or line.strip() == "Options":
                 in_options = True
             continue
-        if not in_option_header and line.lstrip()[0] == "●":
+        if not in_option_header and line.lstrip()[0] in ["●", "•"]:
             in_option_header = True
         if not in_option_line and line.lstrip()[0] == "-":
             in_option_line = True
