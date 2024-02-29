@@ -11,8 +11,7 @@ from settings import default_data_directory
 
 
 class MyTestCase(unittest.TestCase):
-
-    def test_game(self):
+    def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         driver = webdriver.Chrome(
@@ -37,14 +36,14 @@ class MyTestCase(unittest.TestCase):
         except TimeoutException:
             print("No theme pop-up to skip")
 
-        game_directory = os.path.join(default_data_directory, 'horus-heresy')
+        self.game_directory = os.path.join(default_data_directory, 'horus-heresy')
         # add game system by clicking import
         print("Looking for system import")
         import_system_buttons = wait.until(lambda drv:
                                            drv.find_elements(By.XPATH, "//input[@type='file']"))
         if len(import_system_buttons) > 0:
             print("Found the system import button")
-            import_system_buttons[0].send_keys(game_directory)
+            import_system_buttons[0].send_keys(self.game_directory)
 
         # Load the 1st system.
         import_buttons = wait.until(lambda drv:
@@ -54,39 +53,45 @@ class MyTestCase(unittest.TestCase):
             print("Loading the first game system")
             import_buttons[0].click()
 
+        self.wait = wait
+        self.driver = driver
+
+    def test_game(self):
         # add list by clicking import
-        test_list = os.path.join(game_directory, 'tests', 'Empty Validation Test.ros')
-        import_list_element = wait.until(lambda drv:
-                                         drv.find_elements(By.ID, "importBs")
-                                         )
+        test_list = os.path.join(self.game_directory, 'tests', 'Empty Validation Test.ros')
+        import_list_element = self.wait.until(lambda drv:
+                                              drv.find_elements(By.ID, "importBs")
+                                              )
 
         if len(import_list_element) > 0:
             print("Uploading list to the import list button")
             import_list_element[0].send_keys(test_list)
 
         # Load the first list
-        lists = wait.until(lambda drv:
-                           drv.find_elements(By.CLASS_NAME, "listName"))
+        lists = self.wait.until(lambda drv:
+                                drv.find_elements(By.CLASS_NAME, "listName"))
         if len(lists) > 0:
             print("Loading the first list")
             lists[0].click()
 
         # Wait until the list has loaded
         print("Waiting for the list to load...")
-        wait.until(lambda drv:
-                   drv.find_element(By.CLASS_NAME, 'titreRoster'))
+        self.wait.until(lambda drv:
+                        drv.find_element(By.CLASS_NAME, 'titreRoster'))
 
         # Check for error list
         print("$debugOption for list")
-        errors = driver.execute_script("return $debugOption.allErrors.map(error => ({"
-                                       "msg: error.msg,"
-                                       "constraint_id:error.constraint.id,"
-                                       "}))")
+        errors = self.driver.execute_script("return $debugOption.allErrors.map(error => ({"
+                                            "msg: error.msg,"
+                                            "constraint_id:error.constraint.id,"
+                                            "}))")
         print(errors)
+        self.assertEqual(5, len(errors), "There are 5 errors in an empty space marine list")
+
+    def tearDown(self):
         # 60 seconds for me to mess around in
         # time.sleep(60)
-        driver.quit()
-        self.assertEqual(5, len(errors), "There are 5 errors in an empty space marine list")
+        self.driver.quit()
 
 
 if __name__ == '__main__':
