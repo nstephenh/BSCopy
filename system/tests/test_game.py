@@ -5,17 +5,20 @@ from pathlib import Path
 
 from selenium import webdriver
 from selenium.common import TimeoutException
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 import selenium.webdriver.support.ui as ui
+import selenium.webdriver.support.expected_conditions as EC
 
 from settings import default_data_directory
 
 
 class GameTests(unittest.TestCase):
+    debug = False
+
     def setUp(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')
+        if not self.debug:
+            options.add_argument('--headless')
         chromedriver_path = Path(__file__).resolve().parent / 'chromedriver/chromedriver.exe'
         driver = webdriver.Chrome(
             service=webdriver.chrome.service.Service(executable_path=chromedriver_path),
@@ -69,11 +72,8 @@ class GameTests(unittest.TestCase):
             import_list_element[0].send_keys(test_list)
 
         # Load the first list
-        lists = self.wait.until(lambda drv:
-                                drv.find_elements(By.CLASS_NAME, "listName"))
-        if len(lists) > 0:
-            print("Loading the first list")
-            lists[0].click()
+        self.wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "listName"))).click()
+        print("Loading the first list")
 
         # Wait until the list has loaded
         print("Waiting for the list to load...")
@@ -81,24 +81,44 @@ class GameTests(unittest.TestCase):
                         drv.find_element(By.CLASS_NAME, 'titreRoster'))
 
     def tearDown(self):
-        # 60 seconds for me to mess around in
-        # time.sleep(60)
+        if self.debug:
+            # 60 seconds for me to mess around in
+            time.sleep(60)
         self.driver.quit()
 
     def get_error_list(self):
-        print("$debugOption for list")
         errors = self.driver.execute_script("return $debugOption.allErrors.map(error => ({"
                                             "msg: error.msg,"
                                             "constraint_id:error.constraint.id,"
                                             "}))")
-        print(errors)
+        if self.debug:
+            print("$debugOption for list")
+            print(errors)
         return errors
+
+    def get_squad_cost(self, primary_category, unit_name, force_index=0):
+        script_to_run = (f" $debugOption.state.getChilds()[{force_index}].getChilds()[0].getChilds()"
+                         f".filter(entry => entry.name == '{primary_category}')[0].getChilds()"
+                         f".filter(entry => entry.name == '{unit_name}')[0].totalCosts")
+        if self.debug:
+            print(script_to_run)
+        costs = self.driver.execute_script(f"return {script_to_run}")
+        if len(costs) == 1:
+            return list(costs.values())[0]
+        return costs
 
     def test_LA_5_errors(self):
         self.load_system('horus-heresy')
         self.load_list('Empty Validation Test.ros')
         errors = self.get_error_list()
         self.assertEqual(5, len(errors), "There are 5 errors in an empty space marine list")
+
+    def test_dt_does_not_affect_squad_cost(self):
+        self.load_system('horus-heresy')
+        self.load_list('Dedicated Transport Squad Costs.ros')
+        squad_cost = self.get_squad_cost("Troops:", "Tactical Support Squad")
+        print(squad_cost)
+        self.assertEqual(170, squad_cost, "TSS does not count the rhino as a model")
 
 
 if __name__ == '__main__':
