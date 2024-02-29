@@ -1,6 +1,8 @@
 import os
 import time
 import unittest
+from pathlib import Path
+
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
@@ -14,8 +16,9 @@ class GameTests(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
+        chromedriver_path = Path(__file__).resolve().parent / 'chromedriver/chromedriver.exe'
         driver = webdriver.Chrome(
-            service=webdriver.chrome.service.Service(executable_path='system/tests/chromedriver/chromedriver.exe'),
+            service=webdriver.chrome.service.Service(executable_path=chromedriver_path),
             options=options)
         driver.delete_all_cookies()
         self.wait = ui.WebDriverWait(driver, 30)  # timeout after 30 seconds
