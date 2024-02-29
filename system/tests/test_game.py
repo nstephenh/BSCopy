@@ -15,7 +15,7 @@ class GameTests(unittest.TestCase):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         driver = webdriver.Chrome(
-            service=webdriver.chrome.service.Service(executable_path='chromedriver/chromedriver.exe'),
+            service=webdriver.chrome.service.Service(executable_path='system/tests/chromedriver/chromedriver.exe'),
             options=options)
         driver.delete_all_cookies()
         self.wait = ui.WebDriverWait(driver, 30)  # timeout after 30 seconds
