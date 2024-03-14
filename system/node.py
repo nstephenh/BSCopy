@@ -484,11 +484,11 @@ class Node:
             else:
                 new_errors_text = existing_errors_text + new_errors_text
         timestamp_to_use = self.system.run_timestamp
-        print_styled("Comparing old error text with new error text")
-        print_styled(self.previous_errors.strip(), STYLES.YELLOW)
-        print_styled(new_errors_text.strip(), STYLES.CYAN)
+        # print_styled("Comparing old error text with new error text")
+        # print_styled(self.previous_errors.strip(), STYLES.YELLOW)
+        # print_styled(new_errors_text.strip(), STYLES.CYAN)
         if self.previous_errors.strip() == new_errors_text.strip():
-            print_styled("Error text is the same, using previous timestamp", STYLES.GREEN)
+            # print_styled("Error text is the same, using previous timestamp", STYLES.GREEN)
             # If we end up with the same state as the original,
             # reset the errors timestamp for git diffs
             timestamp_to_use = self.previous_errors_timestamp
