@@ -17,7 +17,7 @@ from util.log_util import STYLES, print_styled, get_diff
 from util.text_utils import get_generic_rule_name, remove_plural, check_alt_names
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',
-                         'characteristicType']
+                         'characteristicType', 'modifier']
 
 
 class System:
@@ -203,27 +203,12 @@ class System:
         if node_type is None:
             raise Exception("Special rule type is not defined for system")
 
-        nodes = page.target_system_file.nodes_with_ids.filter(lambda node: (
-                node.type == node_type
-                and (node.name and node.name.lower() == rule_name.lower())
-        ))
-        if len(nodes) > 0:
-            if len(nodes) > 1:
-                nodes_str = ", ".join([str(node) for node in nodes])
-                print_styled(f"\t\t\tRule exists multiple times in data files: {nodes_str}", STYLES.RED)
-                return
-            node = nodes[0]
-            print(f"\t\t\tRule exists in data files: {node}")
-            existing_rule_text = node.get_rules_text()
-            diff = get_diff(existing_rule_text, rule_text, 3)
-            if diff:
-                print_styled("\t\t\tText Differs, so not updating", STYLES.PURPLE)
-                node.append_error_comment(f"The text from {page.book.name} is different", rule_name)
-                print(diff)
-            node.update_pub_and_page(page)
+        _, existing_instance_id = self.get_rule_name_and_id(rule_name)
+        if existing_instance_id is not None:
+            print_styled(f"\t\t\tRule already exists in system: {existing_instance_id}", STYLES.RED)
             return
 
-        # Then create any we couldn't find
+        # Create the new rule
         print_styled(f"\t\t\tCreating rule in {page.target_system_file}", STYLES.GREEN)
 
         rule_node = page.target_system_file.get_or_create_shared_node('rule', attrib={

@@ -1,5 +1,6 @@
 import argparse
 
+from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.node import Node
 from system.system import System
 from xml.etree import ElementTree as ET
@@ -13,7 +14,11 @@ if __name__ == '__main__':
     parser.add_argument("--interactive", '-i', action='store_true',
                         help="Prompt of special rules are identical")
     args = parser.parse_args()
-    system = System('horus-heresy')
+    system = System('moreus-heresy',
+                    settings={
+                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
+                    },
+                    )
     duplicate_groups = system.get_duplicates()
     confirmed_duplicates = {}
 
@@ -113,21 +118,19 @@ if __name__ == '__main__':
                     continue
                 addressed_count += 1
                 print_styled(
-                    f"\tReplacing {node.tag} {node._element.attrib['id']} with an entrylink to {best_option.id}",
+                    f"\tReplacing {node.tag} {node.id} with an entrylink to {best_option.id}",
                     style=STYLES.PURPLE)
 
                 # Update all nodes pointing to this node.
-                if node.id in system.nodes_by_target_id:
-                    for link_node in system.nodes_by_target_id[node.id]:
-                        link_node.set_target_id(best_option.id)
-                        link_update_count += 1
+                for link_node in system.nodes_with_ids.filter(lambda x: x.target_id == node.id):
+                    link_node.set_target_id(best_option.id)
+                    link_update_count += 1
                 node.delete()
-                grandparent = node.get_grandparent()
-                info_link_section = grandparent.find(f"./{node.system_file.get_namespace_tag()}infoLinks")
-                if not info_link_section:
-                    info_link_section = ET.SubElement(grandparent,
-                                                      f"{node.system_file.get_namespace_tag()}infoLinks")
-                ET.SubElement(info_link_section, f"{node.system_file.get_namespace_tag()}infoLink", {
+
+                grandparent = node.parent.parent
+
+                info_link_section = grandparent.get_or_create_child('infoLinks')
+                rule_link = info_link_section.get_or_create_child('infoLink', attrib={
                     'id': node.id,
                     'name': best_option.name,
                     'targetId': best_option.id,
