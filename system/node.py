@@ -252,13 +252,13 @@ class Node:
             model_se.set_options(raw_model)
             model_se.set_types_and_subtypes(raw_model)
 
-    def set_model_profile(self, profile: 'RawProfile' or 'RawModel'):
+    def set_model_profile(self, profile: 'RawModel'):
         # There should only be one profile per entrylink, so don't filter by name.
         # In the future we may want to consider breaking if we find an infolink that's the name of the profile
         profiles_element = self.get_or_create_child('profiles')
         profile_element = profiles_element.get_or_create_child('profile')
 
-        profile_type = None  # assume weapon by default
+        profile_type = None
         characteristics_dict = dict(profile.stats)
         if type(profile) is RawModel:
             profile_type = profile.profile_type
@@ -266,14 +266,14 @@ class Node:
                 "Unit Type": profile.unit_type_text
             })
         if profile_type is None:
-            raise Exception("Could not find profile type for profile.profile_type")
+            raise Exception(f"Could not find profile type for {profile.profile_type}")
         profile_element.update_attributes({'name': profile.name,
                                            'typeId': self.system.get_profile_type_id(profile_type)})
 
         profile_element.set_characteristics_from_dict(characteristics_dict, profile_type)
 
-        if hasattr(profile, 'pts'):
-            self.set_cost(profile.pts)
+        if hasattr(profile, 'points'):
+            self.set_cost(profile.points)
 
     def set_characteristics_from_dict(self, profile: dict, profile_type: str = None):
         characteristics = self.get_or_create_child('characteristics')
