@@ -49,3 +49,11 @@ def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None):
     if tag in elements_that_get_id:
         attrib.update({'id': get_random_bs_id()})
     return ET.SubElement(element, tag, attrib), True
+
+
+def get_sub_element(element, tag, attrib: dict[str:str] = None):
+    attrib_path_str = "{*}" + tag  # Any namespace
+    if attrib:
+        for key, value in attrib.items():
+            attrib_path_str += f"[@{key}='{value}']"
+    return element.find(attrib_path_str)

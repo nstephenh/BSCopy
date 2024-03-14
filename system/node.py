@@ -3,12 +3,13 @@ from xml.etree import ElementTree as ET
 
 from book_reader.raw_entry import RawProfile, RawModel, RawUnit, HasOptionsMixin
 from system.constants import SystemSettingsKeys, SpecialRulesType
-from util.element_util import get_tag, get_or_create_sub_element
+from util.element_util import get_tag, get_or_create_sub_element, get_sub_element
 from util.log_util import print_styled, STYLES
 
 if TYPE_CHECKING:
     from system.system_file import SystemFile
 
+bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by timestamp
 
 class Node:
 
@@ -45,8 +46,10 @@ class Node:
         for child in element:
             self.children.append(Node(system_file, child, parent=self))
 
+        self.non_error_comments = ""
         self.previous_errors = ""
         self.previous_errors_timestamp = ""
+        self.clean_previous_errors()
 
     @property
     def attrib(self) -> dict:
@@ -158,6 +161,13 @@ class Node:
         raise Exception(f"While looking for {tag}, we expected {et_element.tag}"
                         f"to exist in {[child.tag for child in self.children]}\n"
                         f"The node's child list is not properly being updated")
+
+    def get_child(self, tag, attrib: dict[str:str] = None):
+        et_element = get_sub_element(self._element, tag, attrib)
+        for child in self.children:
+            if child._element == et_element:
+                return child
+
 
     def get_rules_text_element(self):
         if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
@@ -461,36 +471,43 @@ class Node:
         comment_node = self.get_or_create_child('comment')
         comment_node.text = text
 
+    def clean_previous_errors(self):
+        comment_node = self.get_child('comment')
+        if comment_node is None:
+            return
+        if comment_node.text is None or comment_node.text == "":
+            comment_node.delete()
+            return
+        if bsc_error_label not in comment_node.text:
+            self.non_error_comments = comment_node.text
+            return
+        self.non_error_comments = comment_node.text.split(bsc_error_label)[0]
+        self.previous_errors_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
+        self.previous_errors = comment_node.text.split(bsc_error_label + self.previous_errors_timestamp)[1]
+        comment_node.text = self.non_error_comments
+
+        if comment_node.text is None or comment_node.text == "":
+            comment_node.delete()
+
     def append_error_comment(self, error_text, heading_for_system_errors=None):
         if heading_for_system_errors is not None:
             self.system.errors.append(heading_for_system_errors + ": " + error_text)
         comment_node = self.get_or_create_child('comment')
-        bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by timestamp
 
         if comment_node.text is None:
             comment_node.text = ""
 
-        non_error_comments = ""
         new_errors_text = "\n" + error_text
 
         if bsc_error_label in comment_node.text:
-            non_error_comments = comment_node.text.split(bsc_error_label)[0]
             existing_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
             existing_errors_text = comment_node.text.split(bsc_error_label + existing_timestamp)[1]
-            if existing_timestamp != self.system.run_timestamp and not self.previous_errors:
-                # If this is from a previous run, backup the existing errors text and do not append to it
-                self.previous_errors = existing_errors_text
-                self.previous_errors_timestamp = existing_timestamp
-            else:
-                new_errors_text = existing_errors_text + new_errors_text
+            new_errors_text = existing_errors_text + new_errors_text
+
         timestamp_to_use = self.system.run_timestamp
-        # print_styled("Comparing old error text with new error text")
-        # print_styled(self.previous_errors.strip(), STYLES.YELLOW)
-        # print_styled(new_errors_text.strip(), STYLES.CYAN)
         if self.previous_errors.strip() == new_errors_text.strip():
-            # print_styled("Error text is the same, using previous timestamp", STYLES.GREEN)
             # If we end up with the same state as the original,
             # reset the errors timestamp for git diffs
             timestamp_to_use = self.previous_errors_timestamp
 
-        comment_node.text = non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
+        comment_node.text = self.non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
