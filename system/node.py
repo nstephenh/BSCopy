@@ -45,6 +45,9 @@ class Node:
         for child in element:
             self.children.append(Node(system_file, child, parent=self))
 
+        self.previous_errors = ""
+        self.previous_errors_timestamp = ""
+
     @property
     def attrib(self) -> dict:
         return self._element.attrib
@@ -462,13 +465,32 @@ class Node:
         if heading_for_system_errors is not None:
             self.system.errors.append(heading_for_system_errors + ": " + error_text)
         comment_node = self.get_or_create_child('comment')
-        bsc_error_header = f"!BSC Errors from {self.system.run_timestamp}"
-        if comment_node.text is None:
-            comment_node.text = bsc_error_header
-        elif "!BSC Errors from " in comment_node.text:
-            existing_comment_backup = comment_node.text.split("!BSC Errors from ")[0]
-            existing_timestamp = comment_node.text.split("!BSC Errors from ")[1].split()[0]  # newline or space
-            if existing_timestamp != self.system.run_timestamp:
-                comment_node.text = existing_comment_backup + bsc_error_header
+        bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by timestamp
 
-        comment_node.text += "\n" + error_text
+        if comment_node.text is None:
+            comment_node.text = ""
+
+        non_error_comments = ""
+        new_errors_text = "\n" + error_text
+
+        if bsc_error_label in comment_node.text:
+            non_error_comments = comment_node.text.split(bsc_error_label)[0]
+            existing_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
+            existing_errors_text = comment_node.text.split(bsc_error_label + existing_timestamp)[1]
+            if existing_timestamp != self.system.run_timestamp and not self.previous_errors:
+                # If this is from a previous run, backup the existing errors text and do not append to it
+                self.previous_errors = existing_errors_text
+                self.previous_errors_timestamp = existing_timestamp
+            else:
+                new_errors_text = existing_errors_text + new_errors_text
+        timestamp_to_use = self.system.run_timestamp
+        print_styled("Comparing old error text with new error text")
+        print_styled(self.previous_errors.strip(), STYLES.YELLOW)
+        print_styled(new_errors_text.strip(), STYLES.CYAN)
+        if self.previous_errors.strip() == new_errors_text.strip():
+            print_styled("Error text is the same, using previous timestamp", STYLES.GREEN)
+            # If we end up with the same state as the original,
+            # reset the errors timestamp for git diffs
+            timestamp_to_use = self.previous_errors_timestamp
+
+        comment_node.text = non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
