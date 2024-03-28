@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by timestamp
 
+
 class Node:
 
     def __init__(self, system_file: 'SystemFile', element: ET.Element, parent: 'Node' = None):
@@ -168,7 +169,6 @@ class Node:
             if child._element == et_element:
                 return child
 
-
     def get_rules_text_element(self):
         if self.system_file.system.settings[SystemSettingsKeys.SPECIAL_RULE_TYPE] == SpecialRulesType.RULE:
             return self.get_or_create_child('description')
@@ -190,15 +190,31 @@ class Node:
         if element is not None:
             element.text = text
 
-    def get_diffable_profile(self):
-        text = f"Name: {self.name}\n"
+    def get_profile_node(self):
+        """
+        Returns the first profile node in this node, or the first linked profile from this node.
+        :return:
+        """
+        profiles = self.get_child('profiles')
+        if profiles is None:
+            links = self.get_child('infoLinks')
+            if links is None:
+                return
+            profile_link = links.get_child('infoLink', {"type": "profile"})
+            if profile_link is None:
+                return
+            return self.system.nodes_with_ids.get(lambda x: x.id == profile_link.target_id)
+        return profiles.get_child('profile')
+
+    def get_profile_dict(self):
+        profile_as_dict = {"Name": self.name}
         for child_l1 in self._element:
             if child_l1.tag.endswith('characteristics'):
                 for child_l2 in child_l1:
                     if child_l2.tag.endswith('characteristic'):
                         # should only be one child, description
-                        text += f"{child_l2.get('name')}: {child_l2.text}\n"
-        return text
+                        profile_as_dict[child_l2.get('name')] = child_l2.text
+        return profile_as_dict
 
     def set_profile_characteristics(self, raw_profile: RawProfile, profile_type):
         self._element.attrib['name'] = raw_profile.name
