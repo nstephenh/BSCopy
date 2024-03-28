@@ -216,6 +216,20 @@ class Node:
                         profile_as_dict[child_l2.get('name')] = child_l2.text
         return profile_as_dict
 
+    def get_categories(self):
+        categories = []
+        links = self.get_child('categoryLinks')
+        if links is None:
+            return
+        for child in links._element:
+            if not child.tag.endswith('categoryLink'):
+                continue
+            categories.append(child.get('targetId'))
+        return categories
+
+
+        return self.system.nodes_with_ids.get(lambda x: x.id == profile_link.target_id)
+
     def set_profile_characteristics(self, raw_profile: RawProfile, profile_type):
         self._element.attrib['name'] = raw_profile.name
         existing_characteristics = []
