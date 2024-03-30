@@ -102,8 +102,8 @@ class System:
                 name = name[:-len(" sub-type")]
                 if name.lower().endswith(" unit"):
                     name = name[:-len(" unit")]
-            elif name.lower().endswith(" unit-type"):
-                name = name[:-len(" unit-type")]
+            elif name.lower().endswith(" unit type"):
+                name = name[:-len(" unit type")]
             self.categories[name] = category
 
     def define_profile_characteristics(self):
