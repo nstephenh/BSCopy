@@ -82,7 +82,8 @@ class RawModel(HasOptionsMixin, RawProfile):
                 "Type and Subtypes": self.type_and_subtypes,
                 "Min": self.min,
                 "Max": self.max,
-                "Wargear": self.default_wargear
+                "Wargear": self.default_wargear,
+                "Pts": self.pts,
             })
         if len(self.wargear_descriptions) > 0:
             dict_to_return["Wargear Descriptions"] = self.wargear_descriptions
