@@ -192,7 +192,7 @@ class System:
                             continue
                         self.create_or_update_unit(unit)
 
-        if Actions.DUMP_TO_JSON in actions_to_take:
+        if Actions.DUMP_TO_JSON in all_actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
                       encoding='utf-8') as outfile:
                 outfile.write(json.dumps(export_dict, ensure_ascii=False, indent=2))
