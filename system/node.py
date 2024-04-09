@@ -43,6 +43,8 @@ class Node:
             if "}" in parent_tag:
                 parent_tag = parent_tag.split('}')[1]
             self.shared = parent_tag.startswith('shared')
+        self.collective = (self.attrib.get("collective") == "true")
+
         self.children = []
         for child in element:
             self.children.append(Node(system_file, child, parent=self))

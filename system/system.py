@@ -44,7 +44,6 @@ class System:
         self.gst = None
         self.files: [SystemFile] = []
 
-
         self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
 
@@ -91,7 +90,9 @@ class System:
         self.rules_by_name = {node.name.lower(): node for node in
                               self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared)}
         self.wargear_by_name = {node.name.lower(): node for node in
-                                self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry' and node.shared)}
+                                self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry'
+                                                                        and node.shared
+                                                                        and not node.collective)}
         categories = {node.name: node for node in
                       self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
         for name, category in categories.items():
