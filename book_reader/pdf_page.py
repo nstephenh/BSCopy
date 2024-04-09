@@ -42,7 +42,16 @@ class PdfPage(Page):
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
             self.get_text_units()
+            if self.units_text is None or self.units_text == "":
+                print(self.page_number, "has no unit text, here is it's raw text:")
+                print(self.raw_text)
+                self.page_type = PageTypes.BLANK_OR_IGNORED
+                return
             for unit in self.units_text:
+                if unit is None:
+                    print(f"Blank unit on page {self.page_number}:")
+                    print(self.raw_text)
+                    continue
                 self.process_unit(unit)
             if len(self.units):  # if we found any units, this page is a units page
                 self.page_type = PageTypes.UNIT_PROFILES
@@ -108,7 +117,7 @@ class PdfPage(Page):
                 header_raw = header_raw_and_full.get('raw')
                 if text_utils.does_line_contain_header(line, header_raw):
                     return header_type, header_raw
-        return
+        return None, None
 
     def does_contain_stagger(self, headers):
         indexes = []
@@ -381,6 +390,9 @@ class PdfPage(Page):
         stats = []
         # Then, get the table out of the header.
         unit_profile_type, unit_profile_headers = self.get_unit_profile_headers(unit_text)
+        if unit_profile_type is None:
+            print(f"Unable to read unit profile from page {self.page_number}")
+            return
 
         num_data_cells = len(unit_profile_headers)
         in_table = False
