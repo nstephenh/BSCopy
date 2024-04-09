@@ -79,7 +79,6 @@ class Node:
             existing_priority = self.system.raw_pub_priority.get(existing_pub_id)
             if existing_priority is None:
                 print_styled("We have updated a rule from a book we didn't import", STYLES.RED)
-                exit()
             else:
                 if page.book.priority < existing_priority:
                     return  # Do not update a publication if the other source has higher priority
