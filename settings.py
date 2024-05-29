@@ -4,7 +4,7 @@ from system.constants import SpecialRulesType, SystemSettingsKeys, GameImportSpe
 from util.generate_util import get_random_bs_id
 
 default_system = 'moreus-heresy'
-default_data_directory = os.path.expanduser("~/BattleScribe/data/")
+default_data_directory = os.getenv("DEFAULT_DATA_DIRECTORY", os.path.expanduser("~/BattleScribe/data/"))
 
 default_settings = {
     SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.RULE,
