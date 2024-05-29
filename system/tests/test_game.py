@@ -12,8 +12,6 @@ import selenium.webdriver.support.expected_conditions as EC
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
-from settings import default_data_directory
-
 
 class GameTests(unittest.TestCase):
     debug = False
@@ -46,6 +44,7 @@ class GameTests(unittest.TestCase):
             print("No theme pop-up to skip")
 
     def load_system(self, system_name):
+        default_data_directory = os.getenv("DEFAULT_DATA_DIRECTORY", os.path.expanduser("~/BattleScribe/data/"))
         self.game_directory = str(os.path.join(default_data_directory, system_name))
         # add game system by clicking import
         print("Looking for system import")
