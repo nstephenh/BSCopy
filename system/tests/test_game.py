@@ -38,7 +38,7 @@ class GameTests(unittest.TestCase):
         print("Waiting up to 30 seconds for the theme pop-up")
         try:
             theme_button_elements = self.wait.until(lambda drv:
-                                                    drv.find_elements(By.XPATH, "//*[text()='Keep current Theme']"))
+                                                    drv.find_elements(By.XPATH, "//*[text()='Close']"))
             if len(theme_button_elements) > 0:
                 print("Skipping the theme pop-up")
                 theme_button_elements[0].click()
