@@ -9,6 +9,9 @@ from selenium.webdriver.common.by import By
 import selenium.webdriver.support.ui as ui
 import selenium.webdriver.support.expected_conditions as EC
 
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+
 from settings import default_data_directory
 
 
@@ -19,9 +22,9 @@ class GameTests(unittest.TestCase):
         options = webdriver.ChromeOptions()
         if not self.debug:
             options.add_argument('--headless')
-        chromedriver_path = Path(__file__).resolve().parent / 'chromedriver/chromedriver.exe'
+
         driver = webdriver.Chrome(
-            service=webdriver.chrome.service.Service(executable_path=chromedriver_path),
+            service=ChromeService(ChromeDriverManager().install()),
             options=options)
         driver.delete_all_cookies()
         self.wait = ui.WebDriverWait(driver, 30)  # timeout after 30 seconds

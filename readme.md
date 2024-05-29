@@ -176,3 +176,7 @@ and updates any catalogue links referencing the old IDs.
 If you've forked a repo, and you are trying to pull changes from the upstream repo into your local repo, 
 you will likely have some conflicts. This script's goal is to make conflicts easier to spot as you can keep your 
 branch's revision numbers identical to the source repo.
+
+## As a test runner for a game system
+Install selenium and webdriver-manager
+Running system/game/tests/test_game.py will install chromedriver and load new-recruit
