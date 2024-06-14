@@ -1,4 +1,5 @@
 from system.constants import SystemSettingsKeys, GameImportSpecs
+from system.node import Node
 from system.node_collection import NodeCollection
 from system.system import System
 
@@ -38,9 +39,22 @@ if __name__ == '__main__':
             else:
                 needs_review.append(modifier)
 
-    print(f"There are {len(all_modifiers)} modifiers using those conditions")
-    print(f"{len(reference_blackshields)} modifiers already reference blackshields, {len(needs_review)} need review")
-
+    whitescars_count = 0
+    modifier: 'Node'  # Type hint
     for modifier in needs_review:
-        print(modifier)
-        print(modifier.pretty_full())
+        if modifier.field == "893e-2d76-8f04-44e5" and (
+                (modifier.value == "*" and modifier.type_name == "append")
+                or
+                (modifier.value == "1" and modifier.type_name == "increment")
+                or
+                (modifier.value[-1] == "*" and modifier.type_name == "set")
+        ):
+            print("Looks like white scars move modifier?")
+            print(modifier)
+            print(modifier.pretty_full())
+            whitescars_count += 1
+
+    print(f"There are {len(all_modifiers)} modifiers using those conditions")
+    print(f"{len(reference_blackshields)} modifiers already reference blackshields")
+    print(f"{len(needs_review)} need review")
+    print(f"{whitescars_count} of those appear to be whitescars movement")
