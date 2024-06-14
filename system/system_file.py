@@ -34,7 +34,7 @@ class SystemFile:
         self.game_system_revision = self._source_tree.getroot().get('gameSystemRevision')
 
         self._parent_map = {c: p for p in self._source_tree.iter() for c in p}
-        self.root_node = Node(self, self._source_tree.getroot())
+        self.root_node = Node(self, self._source_tree.getroot(), is_root_node=True)
 
     def save(self):
         ET.indent(self._source_tree)

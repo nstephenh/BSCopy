@@ -14,7 +14,7 @@ bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by time
 
 class Node:
 
-    def __init__(self, system_file: 'SystemFile', element: ET.Element, parent: 'Node' = None):
+    def __init__(self, system_file: 'SystemFile', element: ET.Element, parent: 'Node' = None, is_root_node=False):
         self._element = element
         self.name = None
         self.id = element.attrib.get('id')
@@ -29,6 +29,8 @@ class Node:
         self.system_file.all_nodes.append(self)
         self.system_file.system.all_nodes.append(self)
 
+        self.condition_value = element.attrib.get('value')
+
         if self.id:
             self.system_file.nodes_with_ids.append(self)
             self.system_file.system.nodes_with_ids.append(self)
@@ -38,12 +40,18 @@ class Node:
 
         self.parent = parent
         self.shared = False
+        self.is_root_node = is_root_node
+        self.is_base_level = False  # mostly for root selection entries
         if self.parent is not None:
             self.parent.children.append(self)
             parent_tag = self.parent.tag
             if "}" in parent_tag:
                 parent_tag = parent_tag.split('}')[1]
             self.shared = parent_tag.startswith('shared')
+            if self.parent and self.parent.parent:
+                # self.parent.parent as the parent would be "selectionEntries"
+                self.is_base_level = self.parent.parent.is_root_node
+
         self.collective = (self.attrib.get("collective") == "true")
 
         self.children = []
@@ -104,16 +112,42 @@ class Node:
         return self.system_file.system
 
     def __str__(self):
+        location_string = f"in {self.system_file}"
+        if not self.is_base_level or not self.is_root_node:
+            location_string = f"on {self.root_name} {location_string}"
+        if self.root_name != self.parent_name:
+            location_string = f"for {self.parent_name} {location_string}"
 
-        identifier_string = f"{self.type} {self.id} in {self.system_file}"
+        identifier_string = f"{self.type} {location_string}"
+        if self.id:
+            identifier_string += f", id: {self.id}"
         if self.is_link():
-            return f"Link to {self.target_id} ({identifier_string})"
-        return f"{self.name} ({identifier_string})"
+            return f"Link to {self.target_name} ({identifier_string})"
+        if self.name:
+            return f"{self.name} ({identifier_string})"
+        if self.condition_search_id:
+            return f"{self.type} {self.condition_value} of {self.target_name} ({location_string})"
+
+        return identifier_string
 
     @property
     def target_name(self):
         target_id = self.target_id if self.target_id is not None else self.condition_search_id
         return self.system.nodes_with_ids.get(lambda x: x.id == target_id).name
+
+    @property
+    def parent_name(self):
+        if self.parent.target_id:
+            return self.parent.target_name
+        if self.parent.name:
+            return self.parent.name
+        return self.parent.parent_name
+
+    @property
+    def root_name(self):
+        if self.is_base_level:
+            return self.name
+        return self.parent.root_name
 
     @property
     def type(self):
