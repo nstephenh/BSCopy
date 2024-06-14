@@ -128,10 +128,8 @@ class Node:
         identifier_string = f"{self.type} {location_string}"
         if self.id:
             identifier_string += f", id: {self.id}"
-        if self.is_link():
-            return f"Link to {self.target_name} ({identifier_string})"
-        if self.name:
-            return f"{self.name} ({identifier_string})"
+        if self.generated_name:
+            return f"{self.generated_name} ({identifier_string})"
         if self.condition_search_id:
             return f"{self.type} {self.value} of {self.target_name} ({location_string})"
 
@@ -163,9 +161,9 @@ class Node:
         return self.tag
 
     @property
-    def pretty_single(self):
-        if self.tag in ["conditions", "conditionGroups", "modifiers", "constraints"]:
-            return None  # These should not get an indent level.
+    def generated_name(self):
+        if self.is_link():
+            return f"Link to {self.target_name}"
         if self.tag == "condition":
             return f"{self.type_name} {self.value} of {self.target_name} in {self.system.try_get_name(self.condition_scope)}"
         if self.tag == "conditionGroup":
@@ -177,7 +175,18 @@ class Node:
             if self.type_name == "append":
                 return f"{self.type_name} {self.value} to {self.system.try_get_name(self.field)}"
             return f"{self.type_name} {self.system.try_get_name(self.field)} {conjunction} {self.system.try_get_name(self.value)}"
-        return str(self)
+        if self.tag == "constraint":
+            name = f"{self.type_name} {self.value} {self.field} of {self.target_name}"
+            if self.condition_scope:
+                name = f"{name} in {self.system.try_get_name(self.condition_scope)}"
+            return name
+        return self.name
+
+    @property
+    def pretty_single(self):
+        if self.tag in ["conditions", "conditionGroups", "modifiers", "constraints"]:
+            return None  # These should not print at all in pretty print mode, and thus don't get an indent level
+        return self.generated_name
 
     def pretty_full(self, indent=0):
         full_string = ""
@@ -225,7 +234,6 @@ class Node:
             if child.does_descendent_exist(condition_function):
                 return True
         return False
-
 
     def get_sub_elements_with_tag(self, tag):
         """

@@ -343,8 +343,8 @@ class System:
 
     def try_get_name(self, value):
         node = self.nodes_with_ids.get(lambda x: x.id == value)
-        if node and node.name:
-            return node.name
+        if node:
+            return node.generated_name
         return value
 
 
