@@ -341,6 +341,13 @@ class System:
         print()
         return duplicate_groups
 
+    def try_get_name(self, value):
+        node = self.nodes_with_ids.get(lambda x: x.id == value)
+        if node and node.name:
+            return node.name
+        return value
+
+
     def save_system(self):
         print(f"Saving {self.system_name}")
         count = len(self.files)

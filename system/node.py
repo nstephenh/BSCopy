@@ -211,6 +211,22 @@ class Node:
             return self.parent
         return self.parent.find_ancestor_with(condition_function)
 
+    def does_descendent_exist(self, condition_function: Callable[['Node'], bool]):
+        """
+        Depth-first search to find if a child fulfils a particular condition.
+        :param condition_function:
+        :return:
+        """
+        if len(self.children) == 0:
+            return False
+        for child in self.children:
+            if condition_function(child):
+                return True
+            if child.does_descendent_exist(condition_function):
+                return True
+        return False
+
+
     def get_sub_elements_with_tag(self, tag):
         """
         Children are containers for multiple grandchildren, so go through the grandchildren
