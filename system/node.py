@@ -208,10 +208,21 @@ class Node:
         self._element.attrib['targetId'] = new_target_id
 
     def remove(self, child: 'Node'):
-        self._element.remove(child._element)
+        if child.parent != self:
+            raise Exception("Cannot remove a node from something that's not it's parent")
+        child.parent = None
+        self._element.remove(child._element)  # Remove from XML
+        self.children.remove(child)  # Remove from list of children in the python view
+        # The node is still likely in all nodes list. Do we want this (for copying?)
 
     def delete(self):
         self.parent.remove(self)
+
+    def move_node_to_here(self, moving_node: 'Node'):
+        self._element.append(moving_node._element)  # Copy the xml element
+        moving_node.delete()  # Delete the xml element,
+        moving_node.parent = self
+        self.children.append(moving_node)
 
     def find_ancestor_with(self, condition_function: Callable[['Node'], bool]):
         if not self.parent:
@@ -272,7 +283,7 @@ class Node:
                         f"to exist in {[child.tag for child in self.children]}\n"
                         f"The node's child list is not properly being updated")
 
-    def get_child(self, tag, attrib: dict[str:str] = None):
+    def get_child(self, tag, attrib: dict[str:str] = None) -> 'Node' or None:
         et_element = get_sub_element(self._element, tag, attrib)
         for child in self.children:
             if child._element == et_element:
