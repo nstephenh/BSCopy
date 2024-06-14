@@ -47,7 +47,8 @@ class Node:
 
         self.children = []
         for child in element:
-            self.children.append(Node(system_file, child, parent=self))
+            Node(system_file, child, parent=self)
+            # Each node will add itself to self.children with the parent check above.
 
         self.non_error_comments = ""
         self.previous_errors = ""
