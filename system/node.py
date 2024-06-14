@@ -19,6 +19,7 @@ class Node:
         self.name = None
         self.id = element.attrib.get('id')
         self.target_id = element.attrib.get('targetId')
+        self.condition_search_id = element.attrib.get("childId")  # Conditions use childID instead of targetId
         self.tag = element.tag
         if "}" in self.tag:
             self.tag = self.tag.split('}')[1]  # If we don't have the prefix set, tag will have the verbose namespace.
@@ -108,6 +109,11 @@ class Node:
         if self.is_link():
             return f"Link to {self.target_id} ({identifier_string})"
         return f"{self.name} ({identifier_string})"
+
+    @property
+    def target_name(self):
+        target_id = self.target_id if self.target_id is not None else self.condition_search_id
+        return self.system.nodes_with_ids.get(lambda x: x.id == target_id).name
 
     @property
     def type(self):
@@ -228,7 +234,6 @@ class Node:
                 continue
             categories.append(child.get('targetId'))
         return categories
-
 
         return self.system.nodes_with_ids.get(lambda x: x.id == profile_link.target_id)
 
