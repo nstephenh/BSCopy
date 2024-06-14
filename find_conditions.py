@@ -40,6 +40,7 @@ if __name__ == '__main__':
                 needs_review.append(modifier)
 
     whitescars_count = 0
+    updated_this_run = 0
     modifier: 'Node'  # Type hint
     for modifier in needs_review:
         if modifier.field == "893e-2d76-8f04-44e5" and (
@@ -53,15 +54,19 @@ if __name__ == '__main__':
             print(modifier)
             print(modifier.pretty_full())
             whitescars_count += 1
-            if modifier.get_child("conditionGroups"):
-                print("Not sure how to handle an existing conditonGroup, skipping")
-                continue  # Not sure how to handle an existing group yet.
-
             print("Moving the condition to an 'and' group")
             existing_conditions = modifier.get_child("conditions")
-            and_group = (modifier.get_or_create_child("conditionGroups").
-                         get_or_create_child("conditionGroup", attrib={"type": "and"}))
-            and_group.move_node_to_here(existing_conditions)
+
+            condition_groups = modifier.get_or_create_child("conditionGroups")
+            if condition_groups.get_child("conditionGroup", attrib={"type": "or"}):
+                print("Handling for moving a condition group of type 'or' not yet implemented\n")
+                # TODO: move existing condition groups
+                continue
+
+            and_group = condition_groups.get_or_create_child("conditionGroup", attrib={"type": "and"})
+            if existing_conditions:  # There may not be any exisiting condtions if they were already in a condition group
+                and_group.move_node_to_here(existing_conditions)
+
             conditions = and_group.get_child("conditions")
             print("Adding a blackshield condition")
             conditions.get_or_create_child("condition", attrib={"type": "equalTo",
@@ -73,9 +78,12 @@ if __name__ == '__main__':
                                                                 "includeChildSelections": "true"})
             print("Result:")
             print(modifier.pretty_full())
+            updated_this_run += 1
+
 
     print(f"There are {len(all_modifiers)} modifiers using those conditions")
     print(f"{len(reference_blackshields)} modifiers already reference blackshields")
     print(f"{len(needs_review)} need review")
     print(f"{whitescars_count} of those appear to be whitescars movement")
+    print(f"{updated_this_run} conditions updated this run")
     system.save_system()
