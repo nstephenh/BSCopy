@@ -52,7 +52,6 @@ if __name__ == '__main__':
             print(modifier)
             print(modifier.pretty_full())
             search_count += 1
-            continue
             print("Moving the condition to an 'and' group")
             existing_conditions = modifier.get_child("conditions")
 
@@ -66,7 +65,7 @@ if __name__ == '__main__':
             if existing_conditions:  # There may not be any exisiting condtions if they were already in a condition group
                 and_group.move_node_to_here(existing_conditions)
 
-            conditions = and_group.get_child("conditions")
+            conditions = and_group.get_or_create_child("conditions")
             print("Adding a blackshield condition")
             # Only use the below condition for "set hidden = false" modifiers
             conditions.get_or_create_child("condition", attrib={"type": "equalTo",
@@ -84,7 +83,7 @@ if __name__ == '__main__':
     print(f"{len(reference_blackshields)} modifiers already reference blackshields")
     print(f"{len(needs_review)} need review")
     print(f"{search_count} of those match our search condition")
-    print(f"{len(updated_modifiers)} conditions updated this run")
+    system.save_system()
+    print(f"{len(updated_modifiers)} conditions updated this run:")
     for mod in updated_modifiers:
         print(mod)
-    system.save_system()
