@@ -254,9 +254,11 @@ class Node:
 
     @property
     def is_wargear_se(self):
-        return self.get_child("profiles") and \
-            self.get_child("profiles").get_child("profile", attrib={"typeName": "Wargear Item"})
-
+        return self.get_child("profiles") and (
+                self.get_child("profiles").get_child("profile", attrib={"typeName": "Wargear Item"})
+                or
+                self.get_child("profiles").get_child("profile", attrib={"typeName": "Weapon"})
+        )
 
     def get_sub_elements_with_tag(self, tag):
         """
