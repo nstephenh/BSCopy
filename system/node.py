@@ -31,8 +31,8 @@ class Node:
         self.system_file.all_nodes.append(self)
         self.system_file.system.all_nodes.append(self)
 
-        self.condition_value = element.attrib.get('value')
-        self.condition_field = element.attrib.get('field')
+        self.value = element.attrib.get('value')
+        self.field = element.attrib.get('field')
         self.condition_scope = element.attrib.get('scope')
         self.condition_percentValue = element.attrib.get('percentValue')
         self.includeChildSelections = element.attrib.get('includeChildSelections')
@@ -133,14 +133,14 @@ class Node:
         if self.name:
             return f"{self.name} ({identifier_string})"
         if self.condition_search_id:
-            return f"{self.type} {self.condition_value} of {self.target_name} ({location_string})"
+            return f"{self.type} {self.value} of {self.target_name} ({location_string})"
 
         return identifier_string
 
     @property
     def target_name(self):
         target_id = self.target_id if self.target_id is not None else self.condition_search_id
-        return self.system.nodes_with_ids.get(lambda x: x.id == target_id).name
+        return self.system.try_get_name(target_id)
 
     @property
     def parent_name(self):
@@ -161,6 +161,35 @@ class Node:
         if self.type_name:
             return f"{self.tag}:{self.type_name}"
         return self.tag
+
+    @property
+    def pretty_single(self):
+        if self.tag in ["conditions", "conditionGroups", "modifiers", "constraints"]:
+            return None  # These should not get an indent level.
+        if self.tag == "condition":
+            return f"{self.type_name} {self.value} of {self.target_name} in {self.system.try_get_name(self.condition_scope)}"
+        if self.tag == "conditionGroup":
+            return f"{self.type_name}"
+        if self.tag == "modifier":
+            conjunction = "to"  # set
+            if self.type_name == "increment":
+                conjunction = "by"
+            if self.type_name == "append":
+                return f"{self.type_name} {self.value} to {self.system.try_get_name(self.field)}"
+            return f"{self.type_name} {self.system.try_get_name(self.field)} {conjunction} {self.system.try_get_name(self.value)}"
+        return str(self)
+
+    def pretty_full(self, indent=0):
+        full_string = ""
+        self_string = self.pretty_single
+        if self_string is not None:
+            full_string = f"{'-' * indent}{self_string}" + "\n"
+            indent += 1
+        for child in self.children:
+            child_string = child.pretty_full(indent=indent)
+            if child_string:  # Some children get skipped
+                full_string += child_string
+        return full_string
 
     def is_link(self):
         return self.target_id is not None
@@ -282,8 +311,6 @@ class Node:
                 continue
             categories.append(child.get('targetId'))
         return categories
-
-        return self.system.nodes_with_ids.get(lambda x: x.id == profile_link.target_id)
 
     def set_profile_characteristics(self, raw_profile: RawProfile, profile_type):
         self._element.attrib['name'] = raw_profile.name

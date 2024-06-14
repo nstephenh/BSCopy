@@ -36,4 +36,5 @@ if __name__ == '__main__':
     print(f"There are {len(all_modifiers)} modifiers using those conditions")
     for modifier in all_modifiers:
         print(modifier)
+        print(modifier.pretty_full())
 
