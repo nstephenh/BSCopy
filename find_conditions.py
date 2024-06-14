@@ -46,30 +46,32 @@ if __name__ == '__main__':
     for modifier in needs_review:
         # modifier.parent is "modifiers", modifier.parent.parent is whatever is actually getting modified.
         if (not modifier.parent.parent.is_wargear_link) and (
-                (modifier.value == "false" and modifier.type_name == "set")
+                (modifier.value == "true" and modifier.type_name == "set")
         ):
             print("Looks like it's not a wargear modifier")
             print(modifier)
             print(modifier.pretty_full())
             search_count += 1
-            print("Moving the condition to an 'and' group")
-            existing_conditions = modifier.get_child("conditions")
+            # continue  # Quit early without doing anything
 
+            print("Moving the condition to an 'or' group")
+            existing_conditions = modifier.get_child("conditions")
             condition_groups = modifier.get_or_create_child("conditionGroups")
-            if condition_groups.get_child("conditionGroup", attrib={"type": "or"}):
-                print("Handling for moving a condition group of type 'or' not yet implemented\n")
+            if condition_groups.get_child("conditionGroup", attrib={"type": "and"}):
+                print("Handling for moving a condition group of type 'and' not yet implemented\n")
                 # TODO: move existing condition groups
                 continue
 
-            and_group = condition_groups.get_or_create_child("conditionGroup", attrib={"type": "and"})
+            group = condition_groups.get_or_create_child("conditionGroup", attrib={"type": "or"})
             if existing_conditions:  # There may not be any exisiting condtions if they were already in a condition group
-                and_group.move_node_to_here(existing_conditions)
+                # Should existing conditions should be moved into an "and" group?
+                group.move_node_to_here(existing_conditions)
 
-            conditions = and_group.get_or_create_child("conditions")
+            conditions = group.get_or_create_child("conditions")
             print("Adding a blackshield condition")
-            # Only use the below condition for "set hidden = false" modifiers
+            # Only use the below condition for "set hidden = true" modifiers
             conditions.get_or_create_child("condition", attrib={"type": "equalTo",
-                                                                "value": "0",
+                                                                "value": "1",
                                                                 "field": "selections",
                                                                 "scope": "force",
                                                                 "childId": blackshields_id,  # "ae4a-f95c-968e-eb46",
