@@ -39,21 +39,20 @@ if __name__ == '__main__':
             else:
                 needs_review.append(modifier)
 
-    whitescars_count = 0
-    updated_this_run = 0
+    search_count = 0
+    updated_modifiers = []
+
     modifier: 'Node'  # Type hint
     for modifier in needs_review:
-        if modifier.field == "893e-2d76-8f04-44e5" and (
-                (modifier.value == "*" and modifier.type_name == "append")
-                or
-                (modifier.value == "1" and modifier.type_name == "increment")
-                or
-                (modifier.value[-1] == "*" and modifier.type_name == "set")
+        # modifier.parent is "modifiers", modifier.parent.parent is whatever is actually getting modified.
+        if (not modifier.parent.parent.is_wargear_link) and (
+                (modifier.value == "false" and modifier.type_name == "set")
         ):
-            print("Looks like white scars move modifier")
+            print("Looks like it's not a wargear modifier")
             print(modifier)
             print(modifier.pretty_full())
-            whitescars_count += 1
+            search_count += 1
+            continue
             print("Moving the condition to an 'and' group")
             existing_conditions = modifier.get_child("conditions")
 
@@ -69,6 +68,7 @@ if __name__ == '__main__':
 
             conditions = and_group.get_child("conditions")
             print("Adding a blackshield condition")
+            # Only use the below condition for "set hidden = false" modifiers
             conditions.get_or_create_child("condition", attrib={"type": "equalTo",
                                                                 "value": "0",
                                                                 "field": "selections",
@@ -78,12 +78,13 @@ if __name__ == '__main__':
                                                                 "includeChildSelections": "true"})
             print("Result:")
             print(modifier.pretty_full())
-            updated_this_run += 1
-
-
+            updated_modifiers.append(modifier)
+    print("\n\n----------------")
     print(f"There are {len(all_modifiers)} modifiers using those conditions")
     print(f"{len(reference_blackshields)} modifiers already reference blackshields")
     print(f"{len(needs_review)} need review")
-    print(f"{whitescars_count} of those appear to be whitescars movement")
-    print(f"{updated_this_run} conditions updated this run")
+    print(f"{search_count} of those match our search condition")
+    print(f"{len(updated_modifiers)} conditions updated this run")
+    for mod in updated_modifiers:
+        print(mod)
     system.save_system()
