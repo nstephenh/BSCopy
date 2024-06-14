@@ -30,6 +30,11 @@ class Node:
         self.system_file.system.all_nodes.append(self)
 
         self.condition_value = element.attrib.get('value')
+        self.condition_field = element.attrib.get('field')
+        self.condition_scope = element.attrib.get('scope')
+        self.condition_percentValue = element.attrib.get('percentValue')
+        self.includeChildSelections = element.attrib.get('includeChildSelections')
+        self.includeChildForces = element.attrib.get('includeChildForces')
 
         if self.id:
             self.system_file.nodes_with_ids.append(self)
