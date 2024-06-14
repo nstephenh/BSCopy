@@ -246,6 +246,18 @@ class Node:
                 return True
         return False
 
+    @property
+    def is_wargear_link(self):
+        if not self.is_link():
+            return False
+        return self.system.nodes_with_ids.get(lambda x: x.id == self.target_id).is_wargear_se
+
+    @property
+    def is_wargear_se(self):
+        return self.get_child("profiles") and \
+            self.get_child("profiles").get_child("profile", attrib={"typeName": "Wargear Item"})
+
+
     def get_sub_elements_with_tag(self, tag):
         """
         Children are containers for multiple grandchildren, so go through the grandchildren
