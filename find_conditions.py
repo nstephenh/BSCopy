@@ -49,12 +49,33 @@ if __name__ == '__main__':
                 or
                 (modifier.value[-1] == "*" and modifier.type_name == "set")
         ):
-            print("Looks like white scars move modifier?")
+            print("Looks like white scars move modifier")
             print(modifier)
             print(modifier.pretty_full())
             whitescars_count += 1
+            if modifier.get_child("conditionGroups"):
+                print("Not sure how to handle an existing conditonGroup, skipping")
+                continue  # Not sure how to handle an existing group yet.
+
+            print("Moving the condition to an 'and' group")
+            existing_conditions = modifier.get_child("conditions")
+            and_group = (modifier.get_or_create_child("conditionGroups").
+                         get_or_create_child("conditionGroup", attrib={"type": "and"}))
+            and_group.move_node_to_here(existing_conditions)
+            conditions = and_group.get_child("conditions")
+            print("Adding a blackshield condition")
+            conditions.get_or_create_child("condition", attrib={"type": "equalTo",
+                                                                "value": "0",
+                                                                "field": "selections",
+                                                                "scope": "force",
+                                                                "childId": blackshields_id,  # "ae4a-f95c-968e-eb46",
+                                                                "shared": "true",
+                                                                "includeChildSelections": "true"})
+            print("Result:")
+            print(modifier.pretty_full())
 
     print(f"There are {len(all_modifiers)} modifiers using those conditions")
     print(f"{len(reference_blackshields)} modifiers already reference blackshields")
     print(f"{len(needs_review)} need review")
     print(f"{whitescars_count} of those appear to be whitescars movement")
+    system.save_system()
