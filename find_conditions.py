@@ -1,8 +1,6 @@
-
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.node_collection import NodeCollection
 from system.system import System
-
 
 if __name__ == '__main__':
     system = System('horus-heresy',
@@ -25,16 +23,24 @@ if __name__ == '__main__':
     print(f"Found {len(legion_ids)} Legions, and Blackshields in the Legions Selection Entry Group")
 
     all_modifiers = NodeCollection([])
+    reference_blackshields = NodeCollection([])
+    needs_review = NodeCollection([])
 
-    all_conditions_referencing_legions = system.all_nodes.filter(lambda x: x.tag == "condition" and x.condition_search_id in legion_ids)
+    all_conditions_referencing_legions = system.all_nodes.filter(
+        lambda x: x.tag == "condition" and x.condition_search_id in legion_ids)
     print(f"There are {len(all_conditions_referencing_legions)} conditions referencing legion Ids")
     for condition in all_conditions_referencing_legions:
         modifier = condition.find_ancestor_with(lambda x: x.tag == "modifier")
         if modifier not in all_modifiers:
             all_modifiers.append(modifier)
+            if modifier.does_descendent_exist(lambda x: x.condition_search_id == blackshields_id):
+                reference_blackshields.append(modifier)
+            else:
+                needs_review.append(modifier)
 
     print(f"There are {len(all_modifiers)} modifiers using those conditions")
-    for modifier in all_modifiers:
+    print(f"{len(reference_blackshields)} modifiers already reference blackshields, {len(needs_review)} need review")
+
+    for modifier in needs_review:
         print(modifier)
         print(modifier.pretty_full())
-
