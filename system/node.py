@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING
+from typing import Callable
+
 from xml.etree import ElementTree as ET
 
 from book_reader.raw_entry import RawProfile, RawModel, RawUnit, HasOptionsMixin
@@ -172,6 +174,13 @@ class Node:
 
     def delete(self):
         self.parent.remove(self)
+
+    def find_ancestor_with(self, condition_function: Callable[['Node'], bool]):
+        if not self.parent:
+            return None
+        if condition_function(self.parent):
+            return self.parent
+        return self.parent.find_ancestor_with(condition_function)
 
     def get_sub_elements_with_tag(self, tag):
         """
