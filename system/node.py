@@ -142,6 +142,8 @@ class Node:
 
     @property
     def parent_name(self):
+        if self.parent is None:
+            return None
         if self.parent.target_id:
             return self.parent.target_name
         if self.parent.name:
@@ -152,6 +154,8 @@ class Node:
     def root_name(self):
         if self.is_base_level:
             return self.name
+        if self.parent is None:
+            return None
         return self.parent.root_name
 
     @property
