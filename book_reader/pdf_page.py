@@ -2,7 +2,7 @@ from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile, RawModel
 from system.game.game import Game
-from text_to_rules import text_to_rules_dict
+from import_scripts.text_to_rules import text_to_rules_dict
 from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header

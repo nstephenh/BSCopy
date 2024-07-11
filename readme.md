@@ -35,7 +35,7 @@ or with an IDE such as PyCharm
 python3 text_to_weapons.py
 ```
 
-### [text_to_weapons.py](text_to_weapons.py)
+### [text_to_weapons.py](import_scripts/text_to_weapons.py)
 This script takes a list of weapons, and creates a selection entry for each. It uses the following format:
 ```python
 raw_text = """
@@ -54,14 +54,15 @@ pasting the output after doing all the entries in a publication.
 If the message `There were one or more errors, please validate the above` prints, then something went wrong,
 likely a special rule was not found. Ensure the special rule is in the game's files. 
 
-### [text_to_unit.py](text_to_unit.py)
+### [text_to_unit.py](import_scripts/text_to_unit.py)
 This script takes a unit entry in the following format, and a couple additional options:
+
 ```python
 from settings import fast_attack_force_org
 
-force_org = fast_attack_force_org # whatever force_org slot you need, just ensure it's imported properly.
+force_org = fast_attack_force_org  # whatever force_org slot you need, just ensure it's imported properly.
 
-base_points = 160 # points from the unit name
+base_points = 160  # points from the unit name
 
 access_points = ""  # Not adding automatic handling for this.
 raw_text = """
@@ -168,11 +169,11 @@ Cool! You'll probably need to manually edit a lot of the code, to mirror the for
 Reach out to `@nstephenh` in the BSData Discord: [![Chat on Discord](https://img.shields.io/discord/558412685981777922.svg?logo=discord&style=popout-square)](https://www.bsdata.net/discord)
 
 ## Other Scripts:
-### [ensure_links_point_properly.py](ensure_links_point_properly.py)
+### [ensure_links_point_properly.py](cleanup_scripts/ensure_links_point_properly.py)
 If you've forked a repo, then you need to change the IDs for the gst and each cat file. 
 This script can be run to notify you if any of the cat files ID's need to be changed 
 and updates any catalogue links referencing the old IDs. 
-### [sync_revisions_with_upstream.py](sync_revisions_with_upstream.py)
+### [sync_revisions_with_upstream.py](cleanup_scripts/sync_revisions_with_upstream.py)
 If you've forked a repo, and you are trying to pull changes from the upstream repo into your local repo, 
 you will likely have some conflicts. This script's goal is to make conflicts easier to spot as you can keep your 
 branch's revision numbers identical to the source repo.

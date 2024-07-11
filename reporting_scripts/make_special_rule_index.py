@@ -22,7 +22,7 @@ if __name__ == '__main__':
     for node in system.gst.root_node.get_child("publications").children:
         publication_names[node.id] = node.name
 
-    with open('exports/rules.csv', 'w', newline="") as csvfile:
+    with open('../exports/rules.csv', 'w', newline="") as csvfile:
 
         writer = csv.DictWriter(csvfile, fieldnames=["name", "page", "publication"])
         writer.writeheader()
@@ -39,7 +39,7 @@ if __name__ == '__main__':
                 rule_as_dict["publication"] = publication_names[pub]
             writer.writerow(rule_as_dict)
 
-    with open('exports/wargear.csv', 'w', newline="") as csvfile:
+    with open('../exports/wargear.csv', 'w', newline="") as csvfile:
 
         writer = csv.DictWriter(csvfile, fieldnames=["name", "page", "publication"])
         writer.writeheader()
@@ -56,7 +56,7 @@ if __name__ == '__main__':
                 rule_as_dict["publication"] = publication_names[pub]
             writer.writerow(rule_as_dict)
 
-    with open('exports/weapons.csv', 'w', newline="") as csvfile:
+    with open('../exports/weapons.csv', 'w', newline="") as csvfile:
 
         writer = csv.DictWriter(csvfile, fieldnames=["name", "page", "publication"])
         writer.writeheader()

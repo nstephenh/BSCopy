@@ -13,7 +13,7 @@ from system.game.games_list import get_game
 from system.node import Node
 from system.node_collection import NodeCollection
 from system.system_file import SystemFile, set_namespace_from_file
-from util.log_util import STYLES, print_styled, get_diff
+from util.log_util import STYLES, print_styled
 from util.text_utils import get_generic_rule_name, remove_plural, check_alt_names
 
 IGNORE_FOR_DUPE_CHECK = ['selectionEntryGroup', 'selectionEntry', 'constraint', 'repeat', 'condition',

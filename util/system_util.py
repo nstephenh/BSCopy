@@ -8,7 +8,7 @@ from system.system_file import set_namespace_from_file, read_categories
 from util.log_util import style_text, STYLES
 from util.system_globals import files_in_system, system
 from util.text_utils import cleanup_disallowed_bs_characters
-from util.generate_util import SHARED_RULES_TYPE, cleanup_file_match_bs_whitespace, BS_NAMESPACES
+from util.generate_util import SHARED_RULES_TYPE, BS_NAMESPACES
 
 
 def read_system(system_name=default_system):
