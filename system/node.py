@@ -6,6 +6,7 @@ from xml.etree import ElementTree as ET
 from book_reader.raw_entry import RawProfile, RawModel, RawUnit, HasOptionsMixin
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_tag, get_or_create_sub_element, get_sub_element
+from util.generate_util import find_comment_value
 from util.log_util import print_styled, STYLES
 
 if TYPE_CHECKING:
@@ -70,6 +71,16 @@ class Node:
         self.previous_errors = ""
         self.previous_errors_timestamp = ""
         self.clean_previous_errors()
+
+        # Certain nodes that didn't generally get ids, namely modifiers and conditions,
+        # were given ids by BSCopy to make them easier to find.
+        self.bscopy_node_id = ""
+        if "node_id_" in self.non_error_comments:
+            self.bscopy_node_id = find_comment_value(self._element,
+                                                     node_id=True)  # old code, it's "node" is an element.
+        self.template_id = ""
+        if "template_id_" in self.non_error_comments:
+            self.template_id = find_comment_value(self._element)  # old code, it's "node" is an element.
 
     @property
     def attrib(self) -> dict:
