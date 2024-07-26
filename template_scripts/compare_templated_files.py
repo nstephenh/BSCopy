@@ -9,28 +9,31 @@ if __name__ == '__main__':
     system = System('horus-heresy')
 
     ET.register_namespace("", "http://www.battlescribe.net/schema/catalogueSchema")
-    tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cattemplate'))
+    tree = ET.parse(os.path.expanduser('~/BattleScribe/data/horus-heresy/2022 - LA Template.cat'))
 
     template_nodes = {}
     nontemplate_nodes_by_target = {}
 
     # Find the base parts of the template
-    for node in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
-        bs_id = node.attrib.get("id")
-        name = node.attrib.get("name")
+    for element in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
+        bs_id = element.attrib.get("id")
+        name = element.attrib.get("name")
         template_nodes[bs_id] = {"Name": name,
-                                 "Files": []
+                                 "Files": [],
+                                 "Element": element,
                                  }
     missing_nodes = []
     for file in system.files:
         print(file.name)
-        for node in file.all_nodes.filter(lambda x: x.template_id):
+        for node in file.all_nodes.filter(lambda x: x.template_id and x.tag == "entryLink"):
             if node.template_id not in template_nodes:
-                print(f"{node.template_id} is expected to be in template, but missing!")
+                print(f"{node} is not in the template!")
                 missing_nodes.append(node.template_id)
                 continue
             if file.name not in template_nodes[node.template_id]["Files"]:
                 template_nodes[node.template_id]["Files"].append(file.name)
+                target_node = template_nodes[node.template_id]["Element"]
+                # TODO: Compare target_node and node
             else:
                 print(f"{template_nodes[node.template_id]['Name']} appears at least twice in {file.name}")
 
