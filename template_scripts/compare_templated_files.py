@@ -15,15 +15,17 @@ if __name__ == '__main__':
     nontemplate_nodes_by_target = {}
 
     # Find the base parts of the template
-    for element in tree.findall("./{}s/{}".format(ENTRY_LINK_TYPE, ENTRY_LINK_TYPE)):
-        bs_id = element.attrib.get("id")
-        name = element.attrib.get("name")
+    template_file = list(filter(lambda x: x.is_template, system.files))[0]
+
+    for node in template_file.all_nodes.filter(lambda x: x.is_base_level and x.tag == "entryLink"):
+        bs_id = node.id
+        name = str(node)
         template_nodes[bs_id] = {"Name": name,
                                  "Files": [],
-                                 "Element": element,
+                                 "Original Node": node,
                                  }
     missing_nodes = []
-    for file in system.files:
+    for file in filter(lambda x: not x.is_template, system.files):
         print(file.name)
         for node in file.all_nodes.filter(lambda x: x.template_id and x.tag == "entryLink"):
             if node.template_id not in template_nodes:
@@ -32,7 +34,7 @@ if __name__ == '__main__':
                 continue
             if file.name not in template_nodes[node.template_id]["Files"]:
                 template_nodes[node.template_id]["Files"].append(file.name)
-                target_node = template_nodes[node.template_id]["Element"]
+                target_node = template_nodes[node.template_id]["Original Node"]
                 # TODO: Compare target_node and node
             else:
                 print(f"{template_nodes[node.template_id]['Name']} appears at least twice in {file.name}")

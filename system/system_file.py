@@ -19,6 +19,7 @@ class SystemFile:
         self.path = path
 
         self.is_gst = os.path.splitext(path)[1] == ".gst"
+        self.is_template = "Template" in self.name
 
         self.namespace = set_namespace_from_file(path)
 
