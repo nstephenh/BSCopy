@@ -147,6 +147,35 @@ class Node:
         return identifier_string
 
     @property
+    def simple_identifier(self):
+        identifier_string = f"{self.type}"
+        if self.id:
+            identifier_string += f"({self.id})"
+        return identifier_string
+
+    @property
+    def path(self):
+        if self.parent:
+            return f"{self.parent.path} > {self.simple_identifier}"
+        return self.simple_identifier
+
+    @property
+    def parent_model(self):
+        if self.parent:
+            if self.parent.type_name == "model":
+                return self.parent.name
+            return self.parent.parent_model
+        return None
+
+    @property
+    def parent_unit(self):
+        if self.parent:
+            if self.parent.type_name == "unit":
+                return self.parent.name
+            return self.parent.parent_unit
+        return None
+
+    @property
     def target_name(self):
         target_id = self.target_id if self.target_id is not None else self.condition_search_id
         return self.system.try_get_name(target_id)
