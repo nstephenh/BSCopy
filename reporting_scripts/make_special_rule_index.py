@@ -12,7 +12,7 @@ from util.log_util import print_styled, STYLES, get_diff, prompt_y_n
 
 if __name__ == '__main__':
 
-    system = System('horus-heresy-panoptica',
+    system = System('horus-heresy',
                     settings={
                         SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
                     },
@@ -58,7 +58,9 @@ if __name__ == '__main__':
 
     with open('../exports/weapons.csv', 'w', newline="") as csvfile:
 
-        writer = csv.DictWriter(csvfile, fieldnames=["name", "page", "publication"])
+        writer = csv.DictWriter(csvfile,
+                                fieldnames=["name", "page", "publication",
+                                            "node_id", "unit", "model", "file", "path", ])
         writer.writeheader()
 
         for rule in system.nodes_with_ids.filter(lambda x: x.type == "profile:Weapon"):
@@ -67,7 +69,17 @@ if __name__ == '__main__':
             rule_as_dict = {
                 "name": rule.name,
                 "page": rule.attrib.get('page'),
+                "node_id": rule.id,
+                "file": rule.system_file,
+                "path": rule.path,
             }
+            model = rule.parent_model
+            if model:
+                rule_as_dict["model"] = model
+
+            unit = rule.parent_unit
+            if unit:
+                rule_as_dict["unit"] = unit
             pub = rule.attrib.get('publicationId')
             if pub is not None:
                 rule_as_dict["publication"] = publication_names[pub]
