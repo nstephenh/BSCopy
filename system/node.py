@@ -28,6 +28,9 @@ class Node:
             self.tag = self.tag.split('}')[1]  # If we don't have the prefix set, tag will have the verbose namespace.
         self.type_name = element.attrib.get('typeName', element.attrib.get('type'))  # typeName on profiles, type on SEs
 
+        self.pub = self.attrib.get('publicationId')
+        self.page = self.attrib.get('page')
+
         self.system_file = system_file
         self.system_file.all_nodes.append(self)
         self.system_file.system.all_nodes.append(self)
@@ -116,6 +119,8 @@ class Node:
             'page': page.page_number,
             'publicationId': page.book.pub_id
         })
+        self.page = page.page_number
+        self.pub = page.book.pub_id
 
     @property
     def text(self):
