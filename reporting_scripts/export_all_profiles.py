@@ -12,9 +12,18 @@ if __name__ == '__main__':
         pass
 
     system = System(system_name)
-    json_export = {
-        "Profile Types": []
-    }
+
+    json_export = {}
+
+    json_export["Publications"] = []
+    for publication_node in system.nodes_with_ids.filter(lambda node: node.tag == 'publication'):
+        json_export["Publications"].append({
+            "Name": publication_node.name,
+            "Builder ID": publication_node.id,
+            "Publication Date": publication_node.attrib.get("publicationDate"),
+        })
+
+    json_export["Profile Types"] = []
     for profile_type, profile_id in system.profile_types.items():
         characteristics = []
         for characteristic, characteristic_id in system.profile_characteristics[profile_type].items():
@@ -27,7 +36,8 @@ if __name__ == '__main__':
             "Builder ID": profile_id,
             "Characteristics": characteristics,
         })
-    profiles_to_export = []
+
+    json_export["Profiles"] = []
     for profile_node in system.nodes_with_ids.filter(lambda node: node.tag == 'profile'):
         profile_dict = profile_node.get_profile_dict()
         profile_dict["Type"] = profile_node.type_name
@@ -35,8 +45,7 @@ if __name__ == '__main__':
         profile_dict["Publication ID"] = profile_node.pub
         profile_dict["Page"] = profile_node.page
         print(profile_dict)
-        profiles_to_export.append(profile_dict)
-    json_export["Profiles"] = profiles_to_export
+        json_export["Profiles"].append(profile_dict)
 
     json_export["Rules"] = []
     for rule_node in system.nodes_with_ids.filter(lambda node: node.tag == 'rule'):
