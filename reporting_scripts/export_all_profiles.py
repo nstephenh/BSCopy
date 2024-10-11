@@ -39,11 +39,15 @@ if __name__ == '__main__':
 
     json_export["Profiles"] = []
     for profile_node in system.nodes_with_ids.filter(lambda node: node.tag == 'profile'):
-        profile_dict = profile_node.get_profile_dict()
-        profile_dict["Type"] = profile_node.type_name
-        profile_dict["Builder ID"] = profile_node.id
-        profile_dict["Publication ID"] = profile_node.pub
-        profile_dict["Page"] = profile_node.page
+        characteristics = profile_node.get_profile_dict()
+        profile_dict = {
+            "Name": characteristics.pop('Name'),  # Pull name out of characteristics dict
+            "Type": profile_node.type_name,
+            "Builder ID": profile_node.id,
+            "Publication ID": profile_node.pub,
+            "Page": profile_node.page,
+            "Characteristics": characteristics
+        }
         print(profile_dict)
         json_export["Profiles"].append(profile_dict)
 
