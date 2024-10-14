@@ -18,26 +18,30 @@ class PdfPage(Page):
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
             self.page_type = PageTypes.BLANK_OR_IGNORED
             return
-        if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
-            self.try_handle_units()
 
-        if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
-            self.handle_special_rules_page(prev_page_type)
-        if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
-            self.handle_weapon_profiles_page(prev_page_type)
-        if not self.page_type or self.page_type == PageTypes.WARGEAR:
-            self.handle_wargear_page(prev_page_type)
-        if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
-            self.handle_types_page(prev_page_type)
+        try:
+            if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
+                self.try_handle_units()
 
-        # Pull out any special rules or profiles, either the main body of the page, or set from units.
-        self.process_weapon_profiles()
-        if self.page_type != PageTypes.WEAPON_PROFILES:  # A weapon page shouldn't have any special rules on it.
-            self.process_special_rules()
+            if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
+                self.handle_special_rules_page(prev_page_type)
+            if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
+                self.handle_weapon_profiles_page(prev_page_type)
+            if not self.page_type or self.page_type == PageTypes.WARGEAR:
+                self.handle_wargear_page(prev_page_type)
+            if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
+                self.handle_types_page(prev_page_type)
 
-        for unit in self.units:
-            unit.page_weapons = self.weapons
-            unit.process_subheadings()
+            # Pull out any special rules or profiles, either the main body of the page, or set from units.
+            self.process_weapon_profiles()
+            if self.page_type != PageTypes.WEAPON_PROFILES:  # A weapon page shouldn't have any special rules on it.
+                self.process_special_rules()
+
+            for unit in self.units:
+                unit.page_weapons = self.weapons
+                unit.process_subheadings()
+        except Exception as e:
+            print(e)
 
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:

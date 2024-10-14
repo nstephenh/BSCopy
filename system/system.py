@@ -54,6 +54,8 @@ class System:
         self.categories: dict[str: str] = {}
 
         self.system_name = system_name
+        if self.system_name == 'noop':
+            return
         self.game_system_location = os.path.join(data_directory, system_name)
         game_files = os.listdir(self.game_system_location)
         temp_file_list = []  # List so we can get a count for progress bar
