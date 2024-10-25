@@ -13,6 +13,7 @@ class PdfPage(Page):
     def __init__(self, book, raw_text, page_number, file_page_number, prev_page_type=None):
         super().__init__(book, page_number, file_page_number)
         self.raw_text = text_utils.replace_quote_alikes(raw_text)
+        self.cleaned_text = None
         if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
             self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
@@ -22,7 +23,6 @@ class PdfPage(Page):
         try:
             if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
                 self.try_handle_units()
-
             if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
                 self.handle_special_rules_page(prev_page_type)
             if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
@@ -31,6 +31,8 @@ class PdfPage(Page):
                 self.handle_wargear_page(prev_page_type)
             if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
                 self.handle_types_page(prev_page_type)
+            if not self.page_type or self.page_type == PageTypes.FAQ:
+                self.handle_simple_two_column_page()  # For now just read into cleaned_text
 
             # Pull out any special rules or profiles, either the main body of the page, or set from units.
             self.process_weapon_profiles()
@@ -63,7 +65,7 @@ class PdfPage(Page):
     def handle_special_rules_page(self, prev_page_type):
         # Special rules pages are two-column format
         has_special_rules_header = "Special Rules".lower() in self.raw_text.lower().lstrip().splitlines()[2]
-        header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
+        header_text, col_1, col_2 = self.handle_simple_two_column_page()
 
         # If page doesn't have a special rules header and isn't after a previous special rules page,
         # then it's not a special rules page.
@@ -82,7 +84,7 @@ class PdfPage(Page):
         self.special_rules_text = self.raw_text
 
     def handle_wargear_page(self, prev_page_type):
-        header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
+        header_text, col_1, col_2 = self.handle_simple_two_column_page()
         first_line = ""
         if header_text.lstrip().splitlines():
             first_line = header_text.lstrip().splitlines()[0].lower()
@@ -91,6 +93,11 @@ class PdfPage(Page):
             return
         self.page_type = PageTypes.WARGEAR
         self.special_rules_text = col_1 + "\n" + col_2
+
+    def handle_simple_two_column_page(self):
+        header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
+        self.cleaned_text = "\n".join([header_text, col_1, col_2])
+        return header_text, col_1, col_2
 
     def handle_types_page(self, prev_page_type):
         has_types_header = "Unit Types".lower() in self.raw_text.lstrip().splitlines()[0].lower()
