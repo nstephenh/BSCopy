@@ -21,9 +21,13 @@
             <td>Errata</td>
         </tr>
         <tr>
-            <td>{{ page.raw_text|linebreaks }}</td>
+            <td>
+                <pre>{{ page.raw_text|linebreaks }}</pre>
+            </td>
 
-            <td>{{ page.cleaned_text|linebreaks }}</td>
+            <td>
+                <pre>{{ page.cleaned_text|linebreaks }}</pre>
+            </td>
             <td>
                 <ul>
                     {% for errata in page.errata %}
