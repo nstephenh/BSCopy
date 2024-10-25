@@ -100,15 +100,23 @@ class RawPage(models.Model):
     cleaned_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.document} {self.file_page_number} {self.raw_text.strip()[:30]}..."
+        return f"{self.document} pg{self.file_page_number}: {self.raw_text.strip()[:30]}..."
 
 
 class RawErrata(models.Model):
     """
-    A block of text in a document that changes another block of text in another document.
+    A block of text in a document that changes one or more blocks of text in another document.
     """
-    PublishedDocumentVersion = models.ForeignKey(PublishedDocument, on_delete=models.CASCADE)
+    page = models.ForeignKey(RawPage, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
 
+    target_page = models.CharField(max_length=len("Various Pages"))
+    # Page is not an integer because it could be a range or something else strange
+
+    text = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.page.document} pg{self.page.file_page_number}: {self.title} (Page {self.target_page})"
 
 class ProfileType(BuilderModel):
     pass

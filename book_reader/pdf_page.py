@@ -14,36 +14,37 @@ class PdfPage(Page):
         super().__init__(book, page_number, file_page_number)
         self.raw_text = text_utils.replace_quote_alikes(raw_text)
         self.cleaned_text = None
+        self.faq_entries = []
         if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
             self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
             self.page_type = PageTypes.BLANK_OR_IGNORED
             return
 
-        try:
-            if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
-                self.try_handle_units()
-            if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
-                self.handle_special_rules_page(prev_page_type)
-            if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
-                self.handle_weapon_profiles_page(prev_page_type)
-            if not self.page_type or self.page_type == PageTypes.WARGEAR:
-                self.handle_wargear_page(prev_page_type)
-            if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
-                self.handle_types_page(prev_page_type)
-            if not self.page_type or self.page_type == PageTypes.FAQ:
-                self.handle_simple_two_column_page()  # For now just read into cleaned_text
+        if not self.page_type or self.page_type == PageTypes.UNIT_PROFILES:
+            self.try_handle_units()
+        if not self.page_type or self.page_type == PageTypes.SPECIAL_RULES:
+            self.handle_special_rules_page(prev_page_type)
+        if not self.page_type or self.page_type == PageTypes.WEAPON_PROFILES:
+            self.handle_weapon_profiles_page(prev_page_type)
+        if not self.page_type or self.page_type == PageTypes.WARGEAR:
+            self.handle_wargear_page(prev_page_type)
+        if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
+            self.handle_types_page(prev_page_type)
+        if self.page_type == PageTypes.FAQ:
+            self.handle_faq_page()  # For now just read into cleaned_text
 
-            # Pull out any special rules or profiles, either the main body of the page, or set from units.
-            self.process_weapon_profiles()
-            if self.page_type != PageTypes.WEAPON_PROFILES:  # A weapon page shouldn't have any special rules on it.
-                self.process_special_rules()
+        # Pull out any special rules or profiles, either the main body of the page, or set from units.
+        self.process_weapon_profiles()
+        if self.page_type != PageTypes.WEAPON_PROFILES:  # A weapon page shouldn't have any special rules on it.
+            self.process_special_rules()
 
-            for unit in self.units:
-                unit.page_weapons = self.weapons
+        for unit in self.units:
+            unit.page_weapons = self.weapons
+            try:
                 unit.process_subheadings()
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                print(e)
 
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
@@ -58,7 +59,11 @@ class PdfPage(Page):
                     print(f"Blank unit on page {self.page_number}:")
                     print(self.raw_text)
                     continue
-                self.process_unit(unit)
+                try:
+                    self.process_unit(unit)
+                except Exception as e:
+                    print(f"Could not process unit on page {self.page_number}")
+                    print(e)
             if len(self.units):  # if we found any units, this page is a units page
                 self.page_type = PageTypes.UNIT_PROFILES
 
@@ -98,6 +103,29 @@ class PdfPage(Page):
         header_text, col_1, col_2, _ = split_into_columns(self.raw_text, ensure_middle=True, debug_print_level=0)
         self.cleaned_text = "\n".join([header_text, col_1, col_2])
         return header_text, col_1, col_2
+
+    def handle_faq_page(self):
+        self.handle_simple_two_column_page()
+        faq_entries = []
+        entry = None
+
+        for line in self.cleaned_text.splitlines():
+            if "(Page" in line:
+                if entry:
+                    faq_entries.append(entry)
+                    # Put the existing entry on the list and then make a new one
+                entry = {
+                    "Title": line.split("(Page")[0],
+                    "Page": line.split("(Page")[-1].rstrip().rstrip(")"),
+                    "Text": "",
+                }
+            elif entry:  # Assuming we've started an entry, append it
+                entry['Text'] += "\n" + line
+        # Push the last entry on the list (if it exists)
+        if entry:
+            faq_entries.append(entry)
+
+        self.faq_entries = faq_entries
 
     def handle_types_page(self, prev_page_type):
         has_types_header = "Unit Types".lower() in self.raw_text.lstrip().splitlines()[0].lower()
@@ -320,6 +348,9 @@ class PdfPage(Page):
         special_rules_list = ""
         if "Special Rules" in wargear_and_on:
             sr_row_index = text_utils.get_index_of_line_with_headers(wargear_and_on, "Special Rules")
+            if "Special Rules" not in wargear_and_on.splitlines()[sr_row_index]:
+                print(f"Could not properly locate Special Rules")
+                return
             sr_col_index = wargear_and_on.splitlines()[sr_row_index].index("Special Rules")
 
             # At this point, wargear and on is just wargear and special rules,

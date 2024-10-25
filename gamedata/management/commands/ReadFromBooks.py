@@ -7,7 +7,7 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
-from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument
+from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata
 
 
 class Command(BaseCommand):
@@ -52,7 +52,7 @@ def dump_books_for_system(system):
             publisher_abbreviation = name_components[0]
             edition_abbreviation = name_components[1]  # assume all books are from this publisher
             name = name_components[2]
-            version = "published"
+            version = "Published"
             if len(name_components) == 4:
                 version = name_components[3]
         else:
@@ -83,3 +83,10 @@ def dump_books_for_system(system):
             dbPage.raw_text = page.raw_text
             dbPage.cleaned_text = page.cleaned_text
             dbPage.save()
+            for faq in page.faq_entries:
+                errata, _ = RawErrata.objects.get_or_create(page=dbPage,
+                                                            title=faq["Title"],
+                                                            )
+                errata.file_page_number = faq["Page"]
+                errata.text = faq["Text"]
+                errata.save()
