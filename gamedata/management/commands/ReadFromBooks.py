@@ -62,7 +62,7 @@ def dump_books_for_system(system):
         page_offset = 0
         if "(" in name:  # for "Reduced" which has no title page
             page_offset = 0
-            name = name.split("(")[0]
+            name = name.split("(")[0].strip()
         elif publisher_abbreviation == "GW":  # GW Title page offset
             page_offset = -1
 
@@ -83,10 +83,34 @@ def dump_books_for_system(system):
             dbPage.raw_text = page.raw_text
             dbPage.cleaned_text = page.cleaned_text
             dbPage.save()
+            target_docs_for_errata = get_target_docs_for_errata(hh2, page)
             for faq in page.faq_entries:
                 errata, _ = RawErrata.objects.get_or_create(page=dbPage,
                                                             title=faq["Title"],
                                                             )
-                errata.file_page_number = faq["Page"]
+                errata.target_page = faq["Page"]
                 errata.text = faq["Text"]
+                errata.target_docs.set(target_docs_for_errata)
                 errata.save()
+
+
+def get_target_docs_for_errata(db_system, page):
+    target_docs_for_errata = PublishedDocument.objects.none()
+    if page.faq_entries:
+        for eratta_target_name in page.target_books_for_errata:
+            name_components = eratta_target_name.split(' - ')
+            if len(name_components) not in [1, 2]:
+                raise Exception(f"Errata Book Reference {eratta_target_name} is not in the expected name format of " +
+                                "'title - version (optional)'")
+            target_pub_name = name_components[0]
+
+            pubs_for_target = PublishedDocument.objects.filter(
+                publication__name=target_pub_name,
+                publication__edition=db_system)
+            if len(name_components) == 2:
+                version = name_components[1]
+                pubs_for_target.filter(version=version)
+            if not pubs_for_target.exists():
+                raise Exception(f"Unable to find the specified target document to errata: {eratta_target_name}")
+            target_docs_for_errata |= pubs_for_target
+    return target_docs_for_errata
