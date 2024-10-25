@@ -69,7 +69,7 @@ class PublishedDocument(models.Model):
     """
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
-    version_number = models.CharField(max_length=10)
+    version = models.CharField(max_length=10)
 
     release_date = models.DateField(blank=True, null=True)
     release_year = models.PositiveSmallIntegerField(blank=True, null=True,
@@ -89,7 +89,7 @@ class PublishedDocument(models.Model):
         super(PublishedDocument, self).save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.publication} {self.version_number}"
+        return f"{self.publication} {self.version}"
 
 
 class RawPage(models.Model):

@@ -74,7 +74,7 @@ class Book:
             # we can guess that it's still the previous page type.
             prev_page_type = None
             page_offset = 0  # Consider pulling default page offset from book json.
-            for page_counter, page_text in tqdm(enumerate(pdf.split(''))):
+            for page_counter, page_text in tqdm(enumerate(pdf.split('')), unit="Pages"):
                 if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
                     page_offset = self.try_get_page_offset(page_text, page_counter)
                 if page_offset:

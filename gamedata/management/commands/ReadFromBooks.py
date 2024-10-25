@@ -47,28 +47,34 @@ def import_heresy_books():
         i += 1
 
     gw, _ = Publisher.objects.get_or_create(name="Games Workshop", abbreviation="GW")
+    pano, _ = Publisher.objects.get_or_create(name="Liber Panoptica Team", abbreviation="Pano")
     hh, _ = Game.objects.get_or_create(name="Warhammer: The Horus Heresy", abbreviation="HH")
     hh2, _ = GameEdition.objects.get_or_create(game=hh, release_year=2022)
 
     for file, book, in raw_files.items():
         print(file)
         name_components = file.split(' - ')
-        if len(name_components) == 3:
+        if len(name_components) in [3, 4]:
             publisher_abbreviation = name_components[0]
             edition_abbreviation = name_components[1]  # assume all books are from this publisher
             name = name_components[2]
+            version = "published"
+            if len(name_components) == 4:
+                version = name_components[3]
+
         else:
-            raise Exception(f"Book {file} is not in the expected name format of 'publisher - game edition - title'")
+            raise Exception(f"Book {file} is not in the expected name format of " +
+                            "'publisher - game edition - title - version (optional)'")
         if edition_abbreviation != "HH2":
             raise Exception(f"Currently we only support the edition HH2")
-        if publisher_abbreviation == gw.abbreviation:
-            publisher = gw
-        else:
+        try:
+            publisher = Publisher.objects.get(abbreviation=publisher_abbreviation)
+        except Publisher.DoesNotExist:
             raise Exception(f"Publisher with abbreviation {publisher_abbreviation} does not exist")
 
         pub, _ = Publication.objects.get_or_create(name=name, publisher=publisher, edition=hh2)
-        doc, _ = PublishedDocument.objects.get_or_create(publication=pub)
-        for page in tqdm(book.pages):
+        doc, _ = PublishedDocument.objects.get_or_create(publication=pub, version=version)
+        for page in tqdm(book.pages, unit="Pages"):
             dbPage, _ = RawPage.objects.get_or_create(document=doc, file_page_number=page.page_number)
             dbPage.raw_text = page.raw_text
             dbPage.save()
