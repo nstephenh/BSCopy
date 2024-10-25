@@ -238,7 +238,10 @@ class PdfPage(Page):
             rules_text = "".join([profiles, uc, ut, bottom_half])
 
             if rules_text:
-                self.units_text = [self.cleanup_unit_text(rules_text)]
+                cleaned_unit_text = self.cleanup_unit_text(rules_text)
+                if cleaned_unit_text:
+                    self.units_text = [cleaned_unit_text]
+                    self.cleaned_text = self.flavor_text_col + "\n" + cleaned_unit_text
             return
         else:
             page_header, col_1_text, col_2_text, _ = split_into_columns(self.raw_text, debug_print_level=0)
