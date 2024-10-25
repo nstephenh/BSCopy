@@ -35,4 +35,4 @@ class RawPageAdmin(admin.ModelAdmin):
 
 @admin.register(RawErrata)
 class RawErrataAdmin(admin.ModelAdmin):
-    list_filter = ["page__document"]
+    list_filter = ["target_docs"]

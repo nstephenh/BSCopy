@@ -109,14 +109,16 @@ class RawErrata(models.Model):
     """
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
-
-    target_page = models.CharField(max_length=len("Various Pages"))
-    # Page is not an integer because it could be a range or something else strange
-
     text = models.TextField(blank=True, null=True)
 
+    # Page is not an integer because it could be a range, or Various Pages
+    target_page = models.CharField(max_length=len("Various Pages"))
+    target_docs = models.ManyToManyField(PublishedDocument, related_name="Errata")
+
     def __str__(self):
-        return f"{self.page.document} pg{self.page.file_page_number}: {self.title} (Page {self.target_page})"
+        target_name_list = (self.target_docs.all().values_list("publication__name", flat=True))
+        return (f"{self.page.document} pg{self.page.file_page_number}: " +
+                f"{self.title} ({', '.join(target_name_list)} Page {self.target_page})")
 
 
 class ProfileType(BuilderModel):
