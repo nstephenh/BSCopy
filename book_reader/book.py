@@ -75,14 +75,18 @@ class Book:
             prev_page_type = None
             page_offset = 0  # Consider pulling default page offset from book json.
             for page_counter, page_text in tqdm(enumerate(pdf.split('')), unit="Pages"):
+                page_number = try_get_page_number(page_text)
                 if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
-                    page_offset = self.try_get_page_offset(page_text, page_counter)
-                if page_offset:
+                    page_offset = try_get_page_offset(page_text, page_counter)
+                if page_number:
+                    pass  # Use the page number from ty get
+                elif page_offset:
                     page_number = page_counter + page_offset
                     # print(f"Page number is {page_number}, from {page_counter} + {page_offset}")
                 else:
                     page_number = page_counter
-                page = PdfPage(self, page_text, page_number, prev_page_type=prev_page_type)
+                page = PdfPage(self, page_text, page_number, prev_page_type=prev_page_type,
+                               file_page_number=page_counter)
                 self.pages.append(page)
                 prev_page_type = page.page_type
 
@@ -106,24 +110,6 @@ class Book:
                 check=True
             )
 
-    @staticmethod
-    def try_get_page_offset(page_text, page_counter):
-        if page_text.count("\n") > 5:  # Assuming there are 5 lines to check,
-            for line in page_text.split("\n")[-5:]:  # Check the last 5 lines
-                line = line.strip()
-                if line.isdigit():
-                    page_read_from_pdf = int(line)
-                    print(f"Page in pdf is {page_read_from_pdf}")
-                    print(f"Page counter is {page_counter}")
-                    return page_read_from_pdf - page_counter
-        return None
-
-    @staticmethod
-    def range_dict_to_range(range_dict):
-        start = range_dict["start"]
-        end = range_dict["end"]
-        return range(start, end + 1)
-
     def get_target_sys_file(self, target_file_name):
         if not target_file_name:
             return
@@ -134,3 +120,22 @@ class Book:
                          f" or remove the reference to it. ", STYLES.RED)
             exit(1)
         return target_system_file
+
+
+def try_get_page_offset(page_text, page_counter):
+    page_read_from_pdf = try_get_page_number(page_text)
+    if page_read_from_pdf:
+        print(f"Page in pdf is {page_read_from_pdf}")
+        print(f"Page counter is {page_counter}")
+        return page_read_from_pdf - page_counter
+    return None
+
+
+def try_get_page_number(page_text):
+    if page_text.count("\n") > 5:  # Assuming there are 5 lines to check,
+        for line in page_text.split("\n")[-5:]:  # Check the last 5 lines
+            line = line.strip()
+            if line.isdigit():
+                page_read_from_pdf = int(line)
+                return page_read_from_pdf
+    return None

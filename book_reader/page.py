@@ -18,9 +18,10 @@ class Page:
      or apply to the game system.
     """
 
-    def __init__(self, book: 'Book', page_number: int):
+    def __init__(self, book: 'Book', page_number: int, file_page_number: int):
         self.book = book
         self.page_number = page_number
+        self.file_page_number = file_page_number
 
         config = self.book.page_configs.get(self.page_number, {})
         self.page_type = config.get('type')
@@ -73,7 +74,7 @@ class EpubPage(Page):
         except ValueError:
             # print(f"Could not get page number for {page_name}")
             return
-        super().__init__(book, page_number)
+        super().__init__(book, page_number, file_page_number=page_number)
         content = page_item.get_content()
         soup = BeautifulSoup(content, "html.parser")
         special_rules_elements_by_name: dict[str: Tag] = {}

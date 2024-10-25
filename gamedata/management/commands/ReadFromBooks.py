@@ -61,10 +61,17 @@ def import_heresy_books():
             version = "published"
             if len(name_components) == 4:
                 version = name_components[3]
-
         else:
             raise Exception(f"Book {file} is not in the expected name format of " +
                             "'publisher - game edition - title - version (optional)'")
+
+        page_offset = 0
+        if "(" in name:  # for "Reduced" which has no title page
+            page_offset = 0
+            name = name.split("(")[0]
+        elif publisher_abbreviation == "GW":  # GW Title page offset
+            page_offset = -1
+
         if edition_abbreviation != "HH2":
             raise Exception(f"Currently we only support the edition HH2")
         try:
@@ -75,6 +82,9 @@ def import_heresy_books():
         pub, _ = Publication.objects.get_or_create(name=name, publisher=publisher, edition=hh2)
         doc, _ = PublishedDocument.objects.get_or_create(publication=pub, version=version)
         for page in tqdm(book.pages, unit="Pages"):
-            dbPage, _ = RawPage.objects.get_or_create(document=doc, file_page_number=page.page_number)
+            dbPage, _ = RawPage.objects.get_or_create(document=doc,
+                                                      file_page_number=page.file_page_number)
+            if page.file_page_number - page_offset > 0:
+                dbPage.actual_page_number = page.file_page_number - page_offset
             dbPage.raw_text = page.raw_text
             dbPage.save()
