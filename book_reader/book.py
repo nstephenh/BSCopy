@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from tqdm import tqdm
 
+from book_reader.constants import ReadSettingsKeys, Actions
 from book_reader.pdf_page import PdfPage
 from util.log_util import print_styled, STYLES
 
@@ -42,12 +43,17 @@ class Book:
         self.pub_id = book_config.get('pub_id')
         self.priority = book_config.get('priority', 0)
 
-        self.target_system_file = self.get_target_sys_file(book_config.get('target_file_name'))
+        # Only set target system file if we are doing more than dumping to json.
+        actions = self.settings.get(ReadSettingsKeys.ACTIONS, [])
+        skip_target_sys_file = (len(actions) == 1 and actions[0] == Actions.DUMP_TO_JSON)
+        if not skip_target_sys_file:
+            self.target_system_file = self.get_target_sys_file(book_config.get('target_file_name'))
 
         page_ranges = book_config.get('page_ranges', [])
         for page_range in page_ranges:
-            target_system_file = self.get_target_sys_file(page_range.pop('target_file_name', None))
-            page_range['target_system_file'] = target_system_file if target_system_file else self.target_system_file
+            if not skip_target_sys_file:
+                target_system_file = self.get_target_sys_file(page_range.pop('target_file_name', None))
+                page_range['target_system_file'] = target_system_file if target_system_file else self.target_system_file
             for i in range(page_range.pop('start'), page_range.pop('end') + 1):
                 self.page_configs[i] = page_range
 
