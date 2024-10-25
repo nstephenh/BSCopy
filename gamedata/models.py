@@ -118,8 +118,9 @@ class RawErrata(models.Model):
     def __str__(self):
         return f"{self.page.document} pg{self.page.file_page_number}: {self.title} (Page {self.target_page})"
 
+
 class ProfileType(BuilderModel):
-    pass
+    pass  # All we need is name
 
 
 class CharacteristicType(BuilderModel):
