@@ -97,6 +97,7 @@ class RawPage(models.Model):
     file_page_number = models.PositiveIntegerField()
     actual_page_number = models.PositiveIntegerField(blank=True, null=True)
     raw_text = models.TextField(blank=True, null=True)
+    cleaned_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.document} {self.file_page_number} {self.raw_text.strip()[:30]}..."

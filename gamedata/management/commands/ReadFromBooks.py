@@ -3,9 +3,8 @@ import os
 from django.core.management import BaseCommand
 from tqdm import tqdm
 
-import settings
-from book_reader.book import Book
-from book_reader.constants import ReadSettingsKeys
+from book_reader.constants import ReadSettingsKeys, Actions
+from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
 from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument
@@ -19,39 +18,34 @@ class Command(BaseCommand):
 
 
 def import_heresy_books():
-    books_to_read = []
-    for file_name in os.listdir("imports/"):
-        filepath = os.path.join("imports/", file_name)
-        if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.epub', '.pdf']:
-            continue  # Skip this iteration
-        books_to_read.append(file_name)
-
+    settings = {
+        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
+    }
     raw_import_settings = {
         ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR: True,
         ReadSettingsKeys.ACTIONS: [
+            Actions.DUMP_TO_JSON,
         ],
     }
+    base_heresy = System('horus-heresy',
+                         settings=settings,
+                         include_raw=True,
+                         raw_import_settings=raw_import_settings)
+    modded_heresy = System('horus-heresy-panoptica',
+                           settings=settings,
+                           include_raw=True,
+                           raw_import_settings=raw_import_settings)
+    dump_books_for_system(base_heresy)
+    dump_books_for_system(modded_heresy)
 
-    i = 1
-    raw_files = {}
 
-    # We need a system to load the default settings.
-    system = System('noop', settings=settings.default_settings)
-    for file_name in books_to_read:
-        file_no_ext = os.path.splitext(file_name)[0]
-        filepath = os.path.join("imports/", file_name)
-        print('\r', end="")
-        print(f"Reading book ({i}/{len(books_to_read)}): {filepath}", end="")
-        # Publication and target file will be defined in book_json_config
-        raw_files[file_no_ext] = Book(filepath, system, settings=raw_import_settings)
-        i += 1
-
+def dump_books_for_system(system):
     gw, _ = Publisher.objects.get_or_create(name="Games Workshop", abbreviation="GW")
     pano, _ = Publisher.objects.get_or_create(name="Liber Panoptica Team", abbreviation="Pano")
     hh, _ = Game.objects.get_or_create(name="Warhammer: The Horus Heresy", abbreviation="HH")
     hh2, _ = GameEdition.objects.get_or_create(game=hh, release_year=2022)
 
-    for file, book, in raw_files.items():
+    for file, book, in system.raw_files.items():
         print(file)
         name_components = file.split(' - ')
         if len(name_components) in [3, 4]:
@@ -87,4 +81,5 @@ def import_heresy_books():
             if page.file_page_number - page_offset > 0:
                 dbPage.actual_page_number = page.file_page_number - page_offset
             dbPage.raw_text = page.raw_text
+            dbPage.cleaned_text = page.cleaned_text
             dbPage.save()
