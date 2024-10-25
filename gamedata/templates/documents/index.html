@@ -1,0 +1,9 @@
+<h1>Document List</h1>
+{% for book in document_list %}
+    <h2>{{ book.name }}</h2>
+    <ul>
+        {% for revision in book.revisions %}
+            <li><h3><a href="{% url 'page_index' document_id=book.id %}"> {{ revision.version }}</a></h3></li>
+        {% endfor %}
+    </ul>
+{% endfor %}

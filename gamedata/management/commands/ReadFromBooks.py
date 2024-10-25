@@ -88,7 +88,7 @@ def dump_books_for_system(system):
                 errata, _ = RawErrata.objects.get_or_create(page=dbPage,
                                                             title=faq["Title"],
                                                             )
-                errata.target_page = faq["Page"]
+                errata.target_page = faq["Page"].strip()
                 errata.text = faq["Text"]
                 errata.target_docs.set(target_docs_for_errata)
                 errata.save()

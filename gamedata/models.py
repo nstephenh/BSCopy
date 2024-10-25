@@ -67,7 +67,7 @@ class PublishedDocument(models.Model):
     """
     Has versions for each printing.
     """
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE, related_name="documents")
 
     version = models.CharField(max_length=10)
 
@@ -93,7 +93,7 @@ class PublishedDocument(models.Model):
 
 
 class RawPage(models.Model):
-    document = models.ForeignKey(PublishedDocument, on_delete=models.CASCADE)
+    document = models.ForeignKey(PublishedDocument, on_delete=models.CASCADE, related_name='pages')
     file_page_number = models.PositiveIntegerField()
     actual_page_number = models.PositiveIntegerField(blank=True, null=True)
     raw_text = models.TextField(blank=True, null=True)
@@ -101,6 +101,9 @@ class RawPage(models.Model):
 
     def __str__(self):
         return f"{self.document} pg{self.file_page_number}: {self.raw_text.strip()[:30]}..."
+
+    def find_errata(self):
+        return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
 
 
 class RawErrata(models.Model):

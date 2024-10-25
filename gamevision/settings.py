@@ -24,12 +24,13 @@ SECRET_KEY = 'django-insecure-q$de6ffg2@)n82g)slusef&n1ge39&@&9nv-_c@vb+b@p#!-(d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
 INSTALLED_APPS = [
     'gamedata',
+    'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

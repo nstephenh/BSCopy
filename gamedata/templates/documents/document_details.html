@@ -1,0 +1,41 @@
+<head>
+    <style>
+        body {
+            font-family: monospace
+        }
+    </style>
+</head>
+<body>
+<h1>{{ book.name }}</h1>
+<table>
+
+    {% for page in pages %}
+        <tr>
+            <td colspan="100%">
+                Page {{ page.actual_page_number }} Actual: {{ page.actual_page_number }}
+            </td>
+        </tr>
+        <tr>
+            <td>Raw</td>
+            <td>Cleaned</td>
+            <td>Errata</td>
+        </tr>
+        <tr>
+            <td>{{ page.raw_text|linebreaks }}</td>
+
+            <td>{{ page.cleaned_text|linebreaks }}</td>
+            <td>
+                <ul>
+                    {% for errata in page.errata %}
+                        <li>
+                            <h4>{{ errata }}</h4>
+                            <p>{{ errata.text }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </td>
+
+        </tr>
+    {% endfor %}
+</table>
+</body>

@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+import gamedata.views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', gamedata.views.book_index),
+    path('book/<document_id>', gamedata.views.page_index, name='page_index'),
 ]
