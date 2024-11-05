@@ -98,12 +98,18 @@ class RawPage(models.Model):
     actual_page_number = models.PositiveIntegerField(blank=True, null=True)
     raw_text = models.TextField(blank=True, null=True)
     cleaned_text = models.TextField(blank=True, null=True)
+    rules_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.document} pg{self.file_page_number}: {self.raw_text.strip()[:30]}..."
 
     def find_errata(self):
         return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
+
+
+class RawUnit(models.Model):
+    page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='units')
+    unit_text = models.TextField(blank=True, null=True)
 
 
 class RawErrata(models.Model):

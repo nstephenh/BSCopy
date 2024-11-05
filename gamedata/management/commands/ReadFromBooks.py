@@ -7,7 +7,7 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
-from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata
+from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, RawUnit
 
 
 class Command(BaseCommand):
@@ -82,7 +82,12 @@ def dump_books_for_system(system):
                 dbPage.actual_page_number = page.file_page_number - page_offset
             dbPage.raw_text = page.raw_text
             dbPage.cleaned_text = page.cleaned_text
+            dbPage.rules_text = page.special_rules_text
             dbPage.save()
+            for unit_text in page.units_text:
+                # TODO: This will create new units on re-runs, which is not what we want.
+                RawUnit.objects.get_or_create(unit_text=unit_text, page=dbPage)
+
             target_docs_for_errata = get_target_docs_for_errata(hh2, page)
             for faq in page.faq_entries:
                 errata, _ = RawErrata.objects.get_or_create(page=dbPage,
