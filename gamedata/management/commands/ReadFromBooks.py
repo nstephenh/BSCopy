@@ -7,7 +7,8 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
-from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, RawUnit
+from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, RawUnit, \
+    Profile, ProfileCharacteristic, CharacteristicType, ProfileType
 
 
 class Command(BaseCommand):
@@ -76,21 +77,20 @@ def dump_books_for_system(system):
         pub, _ = Publication.objects.get_or_create(name=name, publisher=publisher, edition=hh2)
         doc, _ = PublishedDocument.objects.get_or_create(publication=pub, version=version)
         for page in tqdm(book.pages, unit="Pages"):
-            dbPage, _ = RawPage.objects.get_or_create(document=doc,
-                                                      file_page_number=page.file_page_number)
+            db_page, _ = RawPage.objects.get_or_create(document=doc,
+                                                       file_page_number=page.file_page_number)
             if page.file_page_number - page_offset > 0:
-                dbPage.actual_page_number = page.file_page_number - page_offset
-            dbPage.raw_text = page.raw_text
-            dbPage.cleaned_text = page.cleaned_text
-            dbPage.rules_text = page.special_rules_text
-            dbPage.save()
-            for unit_text in page.units_text:
-                # TODO: This will create new units on re-runs, which is not what we want.
-                RawUnit.objects.get_or_create(unit_text=unit_text, page=dbPage)
+                db_page.actual_page_number = page.file_page_number - page_offset
+            db_page.raw_text = page.raw_text
+            db_page.cleaned_text = page.cleaned_text
+            db_page.rules_text = page.special_rules_text
+            db_page.save()
+            for unit in page.units:
+                store_unit_in_database(unit, db_page)
 
             target_docs_for_errata = get_target_docs_for_errata(hh2, page)
             for faq in page.faq_entries:
-                errata, _ = RawErrata.objects.get_or_create(page=dbPage,
+                errata, _ = RawErrata.objects.get_or_create(page=db_page,
                                                             title=faq["Title"],
                                                             )
                 errata.target_page = faq["Page"].strip()
@@ -119,3 +119,26 @@ def get_target_docs_for_errata(db_system, page):
                 raise Exception(f"Unable to find the specified target document to errata: {eratta_target_name}")
             target_docs_for_errata |= pubs_for_target
     return target_docs_for_errata
+
+
+def store_unit_in_database(unit, db_page):
+    db_unit, _ = RawUnit.objects.get_or_create(page=db_page, name=unit.name)
+    edition = db_page.document.publication.edition
+    for model in unit.model_profiles:
+        profile_type, _ = ProfileType.objects.get_or_create(edition=edition,
+                                                            name=model.profile_type)
+        # Profile doesn't link to a page but does link to a document and page number....
+        db_profile, _ = Profile.objects.get_or_create(page_number=db_page.actual_page_number,
+                                                      edition=edition,
+                                                      document=db_page.document,
+                                                      unit=db_unit,
+                                                      profile_type=profile_type,
+                                                      name=model.name)
+        for characteristic_type, value in model.stats.items():
+            db_characteristic_type, _ = CharacteristicType.objects.get_or_create(abbreviation=characteristic_type,
+                                                                                 profile_type=profile_type,
+                                                                                 edition=edition)
+            pc, _ = ProfileCharacteristic.objects.get_or_create(profile=db_profile,
+                                                                characteristic_type=db_characteristic_type)
+            pc.value_text = value
+            pc.save()

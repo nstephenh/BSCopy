@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.db import models
-from django.utils import timezone
 
 
 # Create your models here
@@ -109,7 +108,7 @@ class RawPage(models.Model):
 
 class RawUnit(models.Model):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='units')
-    unit_text = models.TextField(blank=True, null=True)
+    name = models.CharField(max_length=200)
 
 
 class RawErrata(models.Model):
@@ -139,7 +138,9 @@ class CharacteristicType(BuilderModel):
     abbreviation = models.CharField(max_length=10)
 
     def __str__(self):
-        return f"{self.name} on {self.profile_type}"
+        if self.name:
+            return f"{self.name} on {self.profile_type}"
+        return f"{self.abbreviation} on {self.profile_type}"
 
 
 class PublishedBuilderModel(BuilderModel):
@@ -155,13 +156,14 @@ class PublishedBuilderModel(BuilderModel):
 
 class Profile(PublishedBuilderModel):
     profile_type = models.ForeignKey(ProfileType, on_delete=models.CASCADE)
+    unit = models.ForeignKey(RawUnit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
 
     def __str__(self):
         return f"{self.name} ({self.profile_type})"
 
 
 class ProfileCharacteristic(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="characteristics")
     characteristic_type = models.ForeignKey(CharacteristicType, on_delete=models.CASCADE)
     value_text = models.TextField(blank=True, null=True)
 
