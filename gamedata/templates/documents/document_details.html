@@ -8,7 +8,6 @@
 <body>
 <h1>{{ book.name }}</h1>
 <table>
-
     {% for page in pages %}
         <tr>
             <td colspan="100%">
@@ -16,29 +15,42 @@
             </td>
         </tr>
         <tr>
-            <td>Raw</td>
+            <td>Extracted Data</td>
             <td>Cleaned</td>
-            <td>Errata</td>
+            <td>Raw</td>
         </tr>
         <tr>
             <td>
-                <pre>{{ page.raw_text|linebreaks }}</pre>
+                {% if page.units %}
+                    {% for unit in page.units %}
+                        {% include 'documents/raw_unit.html' %}
+                    {% endfor %}
+                {% endif %}
+                {% if page.errata %}
+                    <h4>Errata:</h4>
+                    <ul>
+                        {% for errata in page.errata %}
+                            <li>
+                                <h4>{{ errata }}</h4>
+                                <p>{{ errata.text }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
             </td>
-
             <td>
                 <pre>{{ page.cleaned_text|linebreaks }}</pre>
             </td>
             <td>
-                <ul>
-                    {% for errata in page.errata %}
-                        <li>
-                            <h4>{{ errata }}</h4>
-                            <p>{{ errata.text }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
+                <pre>{{ page.raw_text|linebreaks }}</pre>
             </td>
 
+
+        </tr>
+        <tr>
+            <td colspan="100%">
+                <hr/>
+            </td>
         </tr>
     {% endfor %}
 </table>

@@ -32,6 +32,20 @@ def page_index(request, document_id):
             print(e)
             errata.append(e)
         page_data.update({"errata": errata})
+        units = []
+        for unit in page.units.all():
+            unit_data = {
+                "name": unit.name,
+            }
+            units.append(unit_data)
+            unit_data["profiles"] = []
+
+            for profile in unit.profiles.all():
+                profile_data = {'name': profile.name}
+                for characteristic in profile.characteristics.all():
+                    profile_data.update({characteristic.characteristic_type.abbreviation: characteristic.value_text})
+                unit_data["profiles"].append(profile_data)
+        page_data.update({"units": units})
         pages.append(page_data)
     context = {
         "book": PublishedDocumentSerializer(book).data,

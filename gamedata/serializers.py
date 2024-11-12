@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from gamedata.models import Publication, PublishedDocument, RawPage
+from gamedata.models import Publication, PublishedDocument, RawPage, RawUnit, Profile, ProfileCharacteristic
 
 
 class PublicationSerializer(serializers.ModelSerializer):
@@ -19,3 +19,21 @@ class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = RawPage
         fields = ['id', 'file_page_number', 'actual_page_number', 'raw_text', 'cleaned_text']
+
+
+class UnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RawUnit
+        fields = ['id', 'name']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['id', 'name']
+
+
+class ProfileCharacteristicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileCharacteristic
+        fields = ['id', 'characteristic_type', 'value_text']

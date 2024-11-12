@@ -1,0 +1,15 @@
+<h3>{{ unit.name }}</h3>
+<table>
+    <tr>
+        {% for characteristic, val in unit.profiles.0.items %}
+            <td>{{ characteristic }}</td>
+        {% endfor %}
+    </tr>
+    {% for profile in unit.profiles %}
+        <tr>
+            {% for characteristic, value in unit.profiles.0.items %}
+                <td>{{ value }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>
