@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from gamedata.models import Publication, PublishedDocument, RawPage, PublishedUnit, Profile, ProfileCharacteristic
+from gamedata.models import Publication, PublishedDocument, RawPage, PublishedUnit, PublishedProfile, ProfileCharacteristic
 
 
 class PublicationSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class UnitSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Profile
+        model = PublishedProfile
         fields = ['id', 'name']
 
 

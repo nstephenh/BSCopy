@@ -28,7 +28,7 @@ class Game(models.Model):
 
 class GameMetaModel(models.Model):
     """
-    Anything that can be in multiple editions of a game, will have a builder model that maps back to it.
+    Anything that can be in multiple editions of a game. Can have a builder model for mapping multiple
     """
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -49,26 +49,22 @@ class GameEdition(models.Model):
             return f"{self.game} ({self.release_year})"
 
 
-class BuilderModel(models.Model):
-    edition = models.ForeignKey(GameEdition, on_delete=models.CASCADE)
+class GameMod(models.Model):
+    """
+    A modification to a game system that adds or tweaks things.
+    One source that has multiple "levels" of options may be broken up as such.
+    """
     name = models.CharField(max_length=100, blank=True, null=True)
-    builder_id = models.CharField(max_length=40, blank=True, null=True)
-    builder_type = None  # TODO: Set a builder type for reference?
-
-    class Meta:
-        abstract = True
-
-    def __str__(self):
-        return f"{self.name} from {self.edition}"
+    edition = models.ForeignKey(GameEdition, on_delete=models.CASCADE)
 
 
-class Publication(BuilderModel):
+class Publication(models.Model):
+    edition = models.ForeignKey(GameEdition, on_delete=models.CASCADE)
+    name = models.CharField(max_length=120)
     publisher = models.ForeignKey(Publisher, on_delete=models.CASCADE)
 
     publication_year = models.PositiveIntegerField(blank=True, null=True)  # Since we can't be super exact with dates.
     publication_date = models.DateField(blank=True, null=True)
-
-    name = models.CharField(max_length=120)
 
     def __str__(self):
         return f"{self.name}"
@@ -118,13 +114,19 @@ class RawPage(models.Model):
         return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
 
 
-class ForceOrg(BuilderModel):
+class PublishedModel(models.Model):
+    page = models.ForeignKey(RawPage, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class ForceOrg(GameMetaModel):
     pass  # All we need is name
 
 
 # Rough equivalent of raw_entry.RawUnit
-class PublishedUnit(models.Model):
-    page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='units')
+class PublishedUnit(PublishedModel):
     name = models.CharField(max_length=200)
     force_org = models.ForeignKey(ForceOrg, on_delete=models.CASCADE, blank=True, null=True)
     max = models.IntegerField(blank=True, null=True)
@@ -133,7 +135,7 @@ class PublishedUnit(models.Model):
         return f"{self.name} on {self.page}"
 
 
-class RawText(models.Model):
+class RawText(PublishedModel):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='texts')
     unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, related_name='subheadings', blank=True, null=True)
     title = models.CharField(max_length=100)
@@ -159,12 +161,12 @@ class RawErrata(RawText):
                 f"{self.title} ({', '.join(target_name_list)} Page {self.target_page})")
 
 
-class ProfileType(BuilderModel):
+class GameProfileType(GameMetaModel):
     pass  # All we need is name
 
 
-class CharacteristicType(BuilderModel):
-    profile_type = models.ForeignKey(ProfileType, on_delete=models.CASCADE)
+class GameCharacteristicType(GameMetaModel):
+    profile_type = models.ForeignKey(GameProfileType, on_delete=models.CASCADE)
     abbreviation = models.CharField(max_length=10)
 
     def __str__(self):
@@ -173,38 +175,25 @@ class CharacteristicType(BuilderModel):
         return f"{self.abbreviation} on {self.profile_type}"
 
 
-class PublishedBuilderModel(BuilderModel):
-    publication = models.ForeignKey(Publication, on_delete=models.SET_NULL, blank=True, null=True)
-    page_number = models.PositiveIntegerField(blank=True, null=True)
-
-    document = models.ForeignKey(PublishedDocument, on_delete=models.CASCADE, blank=True, null=True,
-                                 help_text="The exact publication this version was found in")
-
-    class Meta:
-        abstract = True
-
-
-class Profile(PublishedBuilderModel):
-    profile_type = models.ForeignKey(ProfileType, on_delete=models.CASCADE)
-    unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
+class PublishedProfile(PublishedModel):
+    name = models.CharField(max_length=100)
+    profile_type = models.ForeignKey(GameProfileType, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name} ({self.profile_type})"
 
 
 class ProfileCharacteristic(models.Model):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="characteristics")
-    characteristic_type = models.ForeignKey(CharacteristicType, on_delete=models.CASCADE)
+    profile = models.ForeignKey(PublishedProfile, on_delete=models.CASCADE, related_name="characteristics")
+    characteristic_type = models.ForeignKey(GameCharacteristicType, on_delete=models.CASCADE)
     value_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.characteristic_type} on {self.profile}"
 
 
-class GameMod(models.Model):
-    """
-    A modification to a game system that adds or tweaks things.
-    One source that has multiple "levels" of options may be broken up as such.
-    """
-    name = models.CharField(max_length=100, blank=True, null=True)
-    edition = models.ForeignKey(GameEdition, on_delete=models.CASCADE)
+class Miniature(models.Model):  # Roughly equivalent of raw_entry.RawModel
+    # Using Miniature instead of model just to avoid confusion with django.
+    unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, related_name='models')
+    name = models.CharField(max_length=100)
+    profile = models.OneToOneField('PublishedProfile', on_delete=models.CASCADE, related_name='model')

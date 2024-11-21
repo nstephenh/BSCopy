@@ -2,7 +2,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
-from gamedata.models import Game, GameEdition, Publication, ProfileType, CharacteristicType, Profile, \
+from gamedata.models import Game, GameEdition, Publication, GameProfileType, GameCharacteristicType, Profile, \
     ProfileCharacteristic
 
 
@@ -10,6 +10,8 @@ class Command(BaseCommand):
     help = "Creates the Horus Heresy System"
 
     def handle(self, *args, **options):
+        print("This was for importing data only from BattleScribe xml. It has been deprecated until re-implemented.")
+        exit()
         print("Creating the Horus Heresy System")
 
         hh, _ = Game.objects.get_or_create(name="Warhammer: The Horus Heresy")
@@ -48,8 +50,8 @@ def import_rules(data, game_ed):
         }]
     }
     rule_type = create_profile_type(game_ed, rule_profile_type)
-    characteristic_type = CharacteristicType.objects.get(name="Text",
-                                                         profile_type=rule_type)
+    characteristic_type = GameCharacteristicType.objects.get(name="Text",
+                                                             profile_type=rule_type)
     for rule in data.get('Rules', []):
         print(f"Creating {rule['Name']}")
         profile, _ = Profile.objects.get_or_create(builder_id=rule["Builder ID"],
@@ -67,10 +69,10 @@ def import_rules(data, game_ed):
 
 def create_profile_type(game_ed, profile_type):
     print(f"Creating {profile_type['Name']}")
-    profile_type_object = import_builder_object(game_ed, ProfileType, profile_type)
+    profile_type_object = import_builder_object(game_ed, GameProfileType, profile_type)
     for characteristic in profile_type.get('Characteristics', []):
         print(f"Creating {profile_type['Name']} {characteristic['Name']}")
-        CharacteristicType.objects.get_or_create(
+        GameCharacteristicType.objects.get_or_create(
             builder_id=characteristic["Builder ID"],
             profile_type=profile_type_object,
             edition=game_ed,
@@ -103,7 +105,7 @@ def import_builder_object(game_ed, model, data, defaults=None):
 
 
 def import_profile(game_ed, data):
-    profile_type = ProfileType.objects.get(name=data["Type"], edition=game_ed)
+    profile_type = GameProfileType.objects.get(name=data["Type"], edition=game_ed)
     profile, _ = Profile.objects.get_or_create(builder_id=data["Builder ID"],
                                                edition=game_ed,
                                                defaults={
@@ -113,8 +115,8 @@ def import_profile(game_ed, data):
                                                )
     for characteristic_type_name, value in data.get('Characteristics', {}).items():
         print(f"\t Setting {characteristic_type_name} to {value}")
-        characteristic_type = CharacteristicType.objects.get(name=characteristic_type_name,
-                                                             profile_type=profile_type)
+        characteristic_type = GameCharacteristicType.objects.get(name=characteristic_type_name,
+                                                                 profile_type=profile_type)
         pc, _ = ProfileCharacteristic.objects.get_or_create(profile=profile,
                                                             characteristic_type=characteristic_type)
         pc.value_text = value

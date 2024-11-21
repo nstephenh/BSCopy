@@ -9,7 +9,7 @@ from system.system import System
 
 from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, \
     PublishedUnit, \
-    Profile, ProfileCharacteristic, CharacteristicType, ProfileType, RawText, ForceOrg
+    PublishedProfile, ProfileCharacteristic, GameCharacteristicType, GameProfileType, RawText, ForceOrg, Miniature
 
 
 class Command(BaseCommand):
@@ -125,33 +125,33 @@ def get_target_docs_for_errata(db_system, page):
 
 def store_unit_in_database(unit, db_page):
     db_unit, _ = PublishedUnit.objects.get_or_create(page=db_page, name=unit.name)
-    edition = db_page.document.publication.edition
+    game = db_page.document.publication.edition.game
     for model in unit.model_profiles:
-        profile_type, _ = ProfileType.objects.get_or_create(edition=edition,
-                                                            name=model.profile_type)
-        # Profile doesn't link to a page but does link to a document and page number....
-        db_profile, _ = Profile.objects.get_or_create(page_number=db_page.actual_page_number,
-                                                      edition=edition,
-                                                      document=db_page.document,
-                                                      unit=db_unit,
-                                                      profile_type=profile_type,
-                                                      name=model.name)
+        profile_type, _ = GameProfileType.objects.get_or_create(name=model.profile_type,
+                                                                game=game)
+        db_profile, _ = PublishedProfile.objects.get_or_create(page=db_page,
+                                                               profile_type=profile_type,
+                                                               name=model.name)
         for characteristic_type, value in model.stats.items():
-            db_characteristic_type, _ = CharacteristicType.objects.get_or_create(abbreviation=characteristic_type,
-                                                                                 profile_type=profile_type,
-                                                                                 edition=edition)
+            db_characteristic_type, _ = GameCharacteristicType.objects.get_or_create(abbreviation=characteristic_type,
+                                                                                     profile_type=profile_type,
+                                                                                     game=game)
             pc, _ = ProfileCharacteristic.objects.get_or_create(profile=db_profile,
                                                                 characteristic_type=db_characteristic_type)
             pc.value_text = value
             pc.save()
+        db_miniature, _ = Miniature.objects.get_or_create(unit=db_unit, name=model.name, profile=db_profile)
+        db_miniature.save()
+
+    # Saving off the raw text theoretically allows us to re-process it later.
     for title, text in unit.subheadings.items():
         db_subheading, _ = RawText.objects.get_or_create(page=db_page, unit=db_unit, title=title)
         db_subheading.text = text
         db_subheading.save()
 
     if unit.force_org:
-        force_org, _ = ForceOrg.objects.get_or_create(edition=edition,
-                                                      name=unit.force_org)  # TODO: this should probably ignore case
+        # TODO: this should probably ignore case
+        force_org, _ = ForceOrg.objects.get_or_create(game=game, name=unit.force_org)
         db_unit.force_org = force_org
     db_unit.max = unit.max
 
