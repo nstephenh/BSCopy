@@ -88,14 +88,15 @@ def dump_books_for_system(system):
             for unit in page.units:
                 store_unit_in_database(unit, db_page)
 
-            target_docs_for_errata = get_target_docs_for_errata(hh2, page)
+            # TODO: Set target docs after we load everything.
+            # target_docs_for_errata = get_target_docs_for_errata(hh2, page)
             for faq in page.faq_entries:
                 errata, _ = RawErrata.objects.get_or_create(page=db_page,
                                                             title=faq["Title"],
                                                             )
                 errata.target_page = faq["Page"].strip()
                 errata.text = faq["Text"]
-                errata.target_docs.set(target_docs_for_errata)
+                # errata.target_docs.set(target_docs_for_errata)
                 errata.save()
 
 
