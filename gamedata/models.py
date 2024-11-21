@@ -26,6 +26,17 @@ class Game(models.Model):
         return self.name
 
 
+class GameMetaModel(models.Model):
+    """
+    Anything that can be in multiple editions of a game, will have a builder model that maps back to it.
+    """
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
 class GameEdition(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     edition_name = models.CharField(max_length=100, blank=True, null=True)
@@ -42,6 +53,7 @@ class BuilderModel(models.Model):
     edition = models.ForeignKey(GameEdition, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, blank=True, null=True)
     builder_id = models.CharField(max_length=40, blank=True, null=True)
+    builder_type = None  # TODO: Set a builder type for reference?
 
     class Meta:
         abstract = True
@@ -106,10 +118,16 @@ class RawPage(models.Model):
         return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
 
 
+class ForceOrg(BuilderModel):
+    pass  # All we need is name
+
+
 # Rough equivalent of raw_entry.RawUnit
-class Unit(models.Model):
+class PublishedUnit(models.Model):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='units')
     name = models.CharField(max_length=200)
+    force_org = models.ForeignKey(ForceOrg, on_delete=models.CASCADE, blank=True, null=True)
+    max = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} on {self.page}"
@@ -117,7 +135,7 @@ class Unit(models.Model):
 
 class RawText(models.Model):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='texts')
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='subheadings', blank=True, null=True)
+    unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, related_name='subheadings', blank=True, null=True)
     title = models.CharField(max_length=100)
     text = models.TextField(blank=True, null=True)
 
@@ -168,7 +186,7 @@ class PublishedBuilderModel(BuilderModel):
 
 class Profile(PublishedBuilderModel):
     profile_type = models.ForeignKey(ProfileType, on_delete=models.CASCADE)
-    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
+    unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
 
     def __str__(self):
         return f"{self.name} ({self.profile_type})"

@@ -7,8 +7,9 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
-from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, Unit, \
-    Profile, ProfileCharacteristic, CharacteristicType, ProfileType, RawText
+from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, \
+    PublishedUnit, \
+    Profile, ProfileCharacteristic, CharacteristicType, ProfileType, RawText, ForceOrg
 
 
 class Command(BaseCommand):
@@ -123,7 +124,7 @@ def get_target_docs_for_errata(db_system, page):
 
 
 def store_unit_in_database(unit, db_page):
-    db_unit, _ = Unit.objects.get_or_create(page=db_page, name=unit.name)
+    db_unit, _ = PublishedUnit.objects.get_or_create(page=db_page, name=unit.name)
     edition = db_page.document.publication.edition
     for model in unit.model_profiles:
         profile_type, _ = ProfileType.objects.get_or_create(edition=edition,
@@ -148,3 +149,10 @@ def store_unit_in_database(unit, db_page):
         db_subheading.text = text
         db_subheading.save()
 
+    if unit.force_org:
+        force_org, _ = ForceOrg.objects.get_or_create(edition=edition,
+                                                      name=unit.force_org)  # TODO: this should probably ignore case
+        db_unit.force_org = force_org
+    db_unit.max = unit.max
+
+    db_unit.save()
