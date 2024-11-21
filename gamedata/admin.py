@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from gamedata.models import Game, GameEdition, Publication, CharacteristicType, ProfileType, Profile, \
-    ProfileCharacteristic, RawPage, RawErrata
+    ProfileCharacteristic, RawPage, RawErrata, RawText
 
 admin.site.register(Game)
 admin.site.register(GameEdition)
@@ -31,6 +31,11 @@ class ProfileCharacteristicAdmin(admin.ModelAdmin):
 @admin.register(RawPage)
 class RawPageAdmin(admin.ModelAdmin):
     list_filter = ["document"]
+
+
+@admin.register(RawText)
+class RawTextAdmin(admin.ModelAdmin):
+    list_filter = ["page__document", "page__document__publication", "page__document__publication__edition"]
 
 
 @admin.register(RawErrata)

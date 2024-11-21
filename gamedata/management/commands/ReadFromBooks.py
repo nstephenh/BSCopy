@@ -7,8 +7,8 @@ from book_reader.constants import ReadSettingsKeys, Actions
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
 
-from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, RawUnit, \
-    Profile, ProfileCharacteristic, CharacteristicType, ProfileType
+from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, Unit, \
+    Profile, ProfileCharacteristic, CharacteristicType, ProfileType, RawText
 
 
 class Command(BaseCommand):
@@ -123,7 +123,7 @@ def get_target_docs_for_errata(db_system, page):
 
 
 def store_unit_in_database(unit, db_page):
-    db_unit, _ = RawUnit.objects.get_or_create(page=db_page, name=unit.name)
+    db_unit, _ = Unit.objects.get_or_create(page=db_page, name=unit.name)
     edition = db_page.document.publication.edition
     for model in unit.model_profiles:
         profile_type, _ = ProfileType.objects.get_or_create(edition=edition,
@@ -143,3 +143,8 @@ def store_unit_in_database(unit, db_page):
                                                                 characteristic_type=db_characteristic_type)
             pc.value_text = value
             pc.save()
+    for title, text in unit.subheadings.items():
+        db_subheading, _ = RawText.objects.get_or_create(page=db_page, unit=db_unit, title=title)
+        db_subheading.text = text
+        db_subheading.save()
+

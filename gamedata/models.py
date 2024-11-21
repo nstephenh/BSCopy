@@ -106,20 +106,32 @@ class RawPage(models.Model):
         return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
 
 
-class RawUnit(models.Model):
+# Rough equivalent of raw_entry.RawUnit
+class Unit(models.Model):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='units')
     name = models.CharField(max_length=200)
 
+    def __str__(self):
+        return f"{self.name} on {self.page}"
 
-class RawErrata(models.Model):
-    """
-    A block of text in a document that changes one or more blocks of text in another document.
-    """
-    page = models.ForeignKey(RawPage, on_delete=models.CASCADE)
+
+class RawText(models.Model):
+    page = models.ForeignKey(RawPage, on_delete=models.CASCADE, related_name='texts')
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='subheadings', blank=True, null=True)
     title = models.CharField(max_length=100)
     text = models.TextField(blank=True, null=True)
 
-    # Page is not an integer because it could be a range, or Various Pages
+    def __str__(self):
+        if self.unit:
+            return f"{self.title} on {self.unit}"
+        return f"{self.title} on {self.page}"
+
+
+class RawErrata(RawText):
+    """
+    A block of text in a document that changes one or more blocks of text in another document.
+    """
+    # Target page is not an integer because it could be a range, or 'Various Pages', etc
     target_page = models.CharField(max_length=len("Various Pages"))
     target_docs = models.ManyToManyField(PublishedDocument, related_name="Errata")
 
@@ -156,7 +168,7 @@ class PublishedBuilderModel(BuilderModel):
 
 class Profile(PublishedBuilderModel):
     profile_type = models.ForeignKey(ProfileType, on_delete=models.CASCADE)
-    unit = models.ForeignKey(RawUnit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, null=True, blank=True, related_name="profiles")
 
     def __str__(self):
         return f"{self.name} ({self.profile_type})"

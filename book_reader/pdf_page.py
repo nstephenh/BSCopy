@@ -41,7 +41,7 @@ class PdfPage(Page):
 
         for unit in self.units:
             unit.page_weapons = self.weapons
-            try:
+            try:  # TODO Do want to delay this?
                 unit.process_subheadings()
             except Exception as e:
                 print(e)
