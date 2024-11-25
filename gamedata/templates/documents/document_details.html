@@ -3,6 +3,16 @@
         body {
             font-family: monospace
         }
+
+        table, th, td {
+            border: 1px solid black;
+            vertical-align: top;
+            padding: 15px;
+        }
+
+        .extracted_data {
+            min-width: 30%;
+        }
     </style>
 </head>
 <body>
@@ -21,22 +31,37 @@
         </tr>
         <tr>
             <td>
-                {% if page.units %}
-                    {% for unit in page.units %}
-                        {% include 'documents/raw_unit.html' %}
-                    {% endfor %}
-                {% endif %}
-                {% if page.errata %}
-                    <h4>Errata:</h4>
-                    <ul>
-                        {% for errata in page.errata %}
-                            <li>
-                                <h4>{{ errata }}</h4>
-                                <p>{{ errata.text }}</p>
-                            </li>
+                <div class="extracted_data">
+                    {% if page.units %}
+                        {% for unit in page.units %}
+                            {% include 'documents/raw_unit.html' %}
                         {% endfor %}
-                    </ul>
-                {% endif %}
+                    {% endif %}
+                    {% if page.errata %}
+                        <h4>Errata:</h4>
+                        <ul>
+                            {% for errata in page.errata %}
+                                <li>
+                                    <h3>{{ errata }}</h3>
+                                    <p>{{ errata.text }}</p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    {% if page.special_rules %}
+                        <h4>Special Rules:</h4>
+                        <ul>
+                            {% for rule in page.special_rules %}
+                                <li>
+                                    <p>
+                                        <b>{{ rule.name }}</b><br/>
+                                        {{ rule.text }}
+                                    </p>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
             </td>
             <td>
                 <pre>{{ page.cleaned_text|linebreaks }}</pre>

@@ -113,6 +113,14 @@ class RawPage(models.Model):
     def find_errata(self):
         return RawErrata.objects.filter(target_page=str(self.actual_page_number), target_docs=self.document)
 
+    @property
+    def units(self):
+        return PublishedUnit.objects.filter(page=self)
+
+    @property
+    def rules(self):
+        return SpecialRule.objects.filter(page=self)
+
 
 class PublishedModel(models.Model):
     page = models.ForeignKey(RawPage, on_delete=models.CASCADE)
@@ -197,3 +205,12 @@ class Miniature(models.Model):  # Roughly equivalent of raw_entry.RawModel
     unit = models.ForeignKey(PublishedUnit, on_delete=models.CASCADE, related_name='models')
     name = models.CharField(max_length=100)
     profile = models.OneToOneField('PublishedProfile', on_delete=models.CASCADE, related_name='model')
+
+
+class SpecialRule(PublishedModel):
+    name = models.CharField(max_length=100)
+    text = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} on {self.page}"
+

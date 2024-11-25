@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from gamedata.models import Publication, PublishedDocument, RawPage, PublishedUnit, PublishedProfile, ProfileCharacteristic
+from gamedata.models import Publication, PublishedDocument, RawPage, PublishedUnit, PublishedProfile, \
+    ProfileCharacteristic, SpecialRule
 
 
 class PublicationSerializer(serializers.ModelSerializer):
@@ -38,3 +39,8 @@ class ProfileCharacteristicSerializer(serializers.ModelSerializer):
         model = ProfileCharacteristic
         fields = ['id', 'characteristic_type', 'value_text']
 
+
+class SpecialRuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SpecialRule
+        fields = ['id', 'name', 'text']

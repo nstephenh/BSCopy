@@ -9,7 +9,8 @@ from system.system import System
 
 from gamedata.models import Publication, RawPage, Publisher, Game, GameEdition, PublishedDocument, RawErrata, \
     PublishedUnit, \
-    PublishedProfile, ProfileCharacteristic, GameCharacteristicType, GameProfileType, RawText, ForceOrg, Miniature
+    PublishedProfile, ProfileCharacteristic, GameCharacteristicType, GameProfileType, RawText, ForceOrg, Miniature, \
+    SpecialRule
 
 
 class Command(BaseCommand):
@@ -99,7 +100,11 @@ def dump_books_for_system(system):
                 errata.text = faq["Text"]
                 # errata.target_docs.set(target_docs_for_errata)
                 errata.save()
-
+            for name, text in page.special_rules_dict.items():
+                rule, _ = SpecialRule.objects.get_or_create(page=db_page,
+                                                            name=name)
+                rule.text = text
+                rule.save()
 
 def get_target_docs_for_errata(db_system, page):
     target_docs_for_errata = PublishedDocument.objects.none()

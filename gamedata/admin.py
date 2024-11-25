@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from gamedata.models import Game, GameEdition, Publication, GameCharacteristicType, GameProfileType, PublishedProfile, \
-    ProfileCharacteristic, RawPage, RawErrata, RawText, ForceOrg
+    ProfileCharacteristic, RawPage, RawErrata, RawText, ForceOrg, SpecialRule
 
 admin.site.register(Game)
 admin.site.register(GameEdition)
@@ -51,3 +51,7 @@ class RawTextAdmin(PublishedModelAdmin):
 @admin.register(RawErrata)
 class RawErrataAdmin(PublishedModelAdmin):
     list_filter = ["target_docs"]
+
+@admin.register(SpecialRule)
+class SpecialRuleAdmin(PublishedModelAdmin):
+    pass
