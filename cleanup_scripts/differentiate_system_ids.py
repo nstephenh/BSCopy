@@ -23,8 +23,8 @@ id_translation_table: dict[int:int] = {}  # old_id: new_id
 
 new_files = []
 
-if __name__ == '__main__':
 
+def main():
     parser = argparse.ArgumentParser(description="Given two systems, differentiate their IDs")
     args = parser.parse_args()
 
@@ -55,15 +55,29 @@ if __name__ == '__main__':
             new_id = system_file.id[:-1] + last_char
             print("Adjusting all files referencing this")
             for file_to_edit_contents_of in new_system.files:
-                with open(file_to_edit_contents_of.path, 'r', encoding="utf-8") as f:
-                    filedata = f.read()
-                if filedata.count(system_file.id):
-                    print(f"\t{file_to_edit_contents_of} contains {filedata.count(system_file.id)} references")
-                else:
-                    continue
-                filedata = filedata.replace(system_file.id, new_id)
-                with open(file_to_edit_contents_of.path, 'w', encoding="utf-8") as f:
-                    f.write(filedata)
+                replace_in_file(file_to_edit_contents_of.path, str(file_to_edit_contents_of), system_file.id, new_id)
+            system_file.id = new_id
+        id_translation_table[original_id_map[file_name]] = system_file.id
 
+    tests_dir = os.path.join(new_system.game_system_location, 'tests')
+    for filename in os.listdir(tests_dir):
+        for old_id, new_id in id_translation_table.items():
+            replace_in_file(os.path.join(tests_dir, filename), filename, old_id, new_id)
 
     print("Done")
+
+
+def replace_in_file(path, name, old_id, new_id):
+    with open(path, 'r', encoding="utf-8") as f:
+        filedata = f.read()
+    if filedata.count(old_id):
+        print(f"\t{name} contains {filedata.count(old_id)} references")
+    else:
+        return
+    filedata = filedata.replace(old_id, new_id)
+    with open(path, 'w', encoding="utf-8") as f:
+        f.write(filedata)
+
+
+if __name__ == '__main__':
+    main()
