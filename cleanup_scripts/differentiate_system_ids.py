@@ -17,9 +17,6 @@ downstream_game = "horus-heresy-panoptica"
 upstream_dir = os.path.join(bsdata_source, upstream_game)
 downstream_dir = os.path.join(bsdata_source, downstream_game)
 
-revision_map: dict[str:int] = {}  # Filename; revision
-gsrevision_map: dict[str:int] = {}  # Filename; revision
-
 original_id_map: dict[str:int] = {}  # Filename: original_id
 
 id_translation_table: dict[int:int] = {}  # old_id: new_id
@@ -28,15 +25,11 @@ new_files = []
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description="Given two systems, ensure revision numbers are in sync ")
-    parser.add_argument("--r", '-r', action='store_true',
-                        help="Reset downstream with a rebase on upstream")
-    parser.add_argument("--skip_map", '-s', action='store_true',
-                        help="use a existing id_map.json file, skipping making a new one")
+    parser = argparse.ArgumentParser(description="Given two systems, differentiate their IDs")
     args = parser.parse_args()
 
     # First iterate through the upstream directory and get the revision number of each file
-    print("Getting revision numbers from upstream")
+    print("Getting IDs from upstream")
 
     old_system = System(upstream_game)
     for system_file in old_system.files:
@@ -44,11 +37,8 @@ if __name__ == '__main__':
         if system_file.is_gst:
             file_name = "GST"  # Since the GST name may change, just store it as "GST"
 
-        revision_map[file_name] = system_file.revision
-        gsrevision_map[file_name] = system_file.game_system_revision
         original_id_map[file_name] = system_file.id
 
-    print("Updating revision numbers on downstream")
     new_system = System(downstream_game)
     for system_file in new_system.files:
         file_name = system_file.name
@@ -57,16 +47,23 @@ if __name__ == '__main__':
         if file_name not in original_id_map.keys():
             new_files.append(system_file)
             continue
+        if system_file.id in original_id_map.values():
+            print(f"File ID for {system_file} needs updated")
+            last_char = system_file.id[-1]
+            incremented = int(last_char, 16) + 1
+            last_char = hex(incremented)[-1]  # Only get last character
+            new_id = system_file.id[:-1] + last_char
+            print("Adjusting all files referencing this")
+            for file_to_edit_contents_of in new_system.files:
+                with open(file_to_edit_contents_of.path, 'r', encoding="utf-8") as f:
+                    filedata = f.read()
+                if filedata.count(system_file.id):
+                    print(f"\t{file_to_edit_contents_of} contains {filedata.count(system_file.id)} references")
+                else:
+                    continue
+                filedata = filedata.replace(system_file.id, new_id)
+                with open(file_to_edit_contents_of.path, 'w', encoding="utf-8") as f:
+                    f.write(filedata)
 
-        # update revision and gameSystemRevision
-        system_file._source_tree.getroot().attrib['revision'] = revision_map[file_name]
-        if file_name != "GST":
-            system_file._source_tree.getroot().attrib['gameSystemRevision'] = gsrevision_map[file_name]
-
-        id_translation_table[original_id_map[file_name]] = system_file.id
-    new_system.save_system()
-
-    with open(os.path.join(downstream_dir, 'id_map.json'), 'w') as f:
-        f.write(json.dumps(id_translation_table))
 
     print("Done")
