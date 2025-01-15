@@ -303,7 +303,7 @@ class System:
         # TODO check some flag to determine if weapon already has a mod and to modify the mod.
 
         print(f"Need to modify {node} with {upgrade_profile.name}")
-        node.modify_profile(upgrade_profile)
+        node.modify_profile(upgrade_profile, profile_type)
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)

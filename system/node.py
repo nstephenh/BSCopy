@@ -722,7 +722,7 @@ class Node:
 
         comment_node.text = self.non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
 
-    def modify_profile(self, new_profile):
+    def modify_profile(self, new_profile, profile_type):
         profile_node = self.get_profile_node()
         print(profile_node)
         mod_groups = profile_node.get_or_create_child('modifierGroups')
@@ -741,4 +741,14 @@ class Node:
         )
         mods = mod_group.get_or_create_child('modifiers')
         # For each stat, create a mod
-
+        # TODO: Run a diff
+        for characteristic_name, value in new_profile.stats.items():
+            #                 <modifier type="set" value="New Range" field="95ba-cda7-b831-6066"/>
+            _, characteristic_id = self.system.get_characteristic_name_and_id(characteristic_name, profile_type)
+            mods.get_or_create_child('modifier',
+                                     attrib={
+                                         'type': 'set',
+                                         'value': value,
+                                         'field': characteristic_id
+                                     })
+        # Compare the types and add/remove special rules as needed.
