@@ -13,7 +13,7 @@ if __name__ == '__main__':
                         ReadSettingsKeys.ACTIONS: [
                             Actions.DUMP_TO_JSON,
                             Actions.LOAD_SPECIAL_RULES,
-                            Actions.LOAD_WEAPON_PROFILES,
+                            Actions.MODIFY_WEAPONS, # TBD creating new vs modifying.
                             Actions.LOAD_UNITS,
                         ],
                     })

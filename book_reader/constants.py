@@ -11,6 +11,7 @@ class Actions(StrEnum):
     LOAD_SPECIAL_RULES = 'Load Special Rules'
     LOAD_WEAPON_PROFILES = 'Load Weapon Profiles'
     LOAD_UNITS = 'Load Units'
+    MODIFY_WEAPONS = 'Modify Weapon Profiles'
 
 
 class PageTypes(StrEnum):

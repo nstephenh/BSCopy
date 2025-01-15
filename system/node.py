@@ -373,7 +373,7 @@ class Node:
         if element is not None:
             element.text = text
 
-    def get_profile_node(self):
+    def get_profile_node(self) -> 'Node':
         """
         Returns the first profile node in this node, or the first linked profile from this node.
         :return:
@@ -721,3 +721,24 @@ class Node:
             timestamp_to_use = self.previous_errors_timestamp
 
         comment_node.text = self.non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
+
+    def modify_profile(self, new_profile):
+        profile_node = self.get_profile_node()
+        print(profile_node)
+        mod_groups = profile_node.get_or_create_child('modifierGroups')
+        mod_group = mod_groups.get_or_create_child('modifierGroup', attrib={'type': 'and'})
+        mod_group.get_or_create_child('conditions').get_or_create_child(
+            "condition",
+            attrib={
+                "type": "atLeast",
+                "value": 1,
+                "field": "selections",
+                "scope": "force",
+                "childId": "1231-877a-96d9-cacd",
+                "shared": True,
+                "includeChildSelections": True
+            }
+        )
+        mods = mod_group.get_or_create_child('modifiers')
+        # For each stat, create a mod
+

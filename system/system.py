@@ -183,6 +183,10 @@ class System:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_upgrade(weapon, profile_type="Weapon")
+                if Actions.MODIFY_WEAPONS in actions_to_take and not page.units:
+                    for weapon in page.weapons:
+                        print(f"\t\tWeapon: {weapon.name}")
+                        self.modify_upgrade_with_conditions(weapon, profile_type="Weapon")
             if Actions.LOAD_UNITS in all_actions_to_take:
                 self.refresh_index()  # We need to update the index before loading units
                 for page in book.pages:
@@ -272,6 +276,7 @@ class System:
         self.create_or_update_upgrade(wargear_as_profile, 'Wargear Item')
 
     def create_or_update_upgrade(self, upgrade_profile, profile_type):
+        # This only updates in the target file.
         node = upgrade_profile.page.target_system_file.get_or_create_shared_node('selectionEntry', attrib={
             'name': upgrade_profile.name,
             'type': 'upgrade',
@@ -285,6 +290,20 @@ class System:
             'typeId': self.profile_types[profile_type]
         })
         node.set_profile_characteristics(upgrade_profile, profile_type)
+
+    def modify_upgrade_with_conditions(self, upgrade_profile, profile_type):
+        name, node_id = self.get_wargear_name_and_id(upgrade_profile.name)
+        if not node_id:
+            print(f"Could not find {upgrade_profile.name} to update in place")  # TODO make the weapon new.
+            return
+        node = self.nodes_with_ids.get(lambda x: x.id == node_id)
+        if not node:
+            print(f"Could not find {node_id} to update in place")  # TODO make the weapon new.
+            return
+        # TODO check some flag to determine if weapon already has a mod and to modify the mod.
+
+        print(f"Need to modify {node} with {upgrade_profile.name}")
+        node.modify_profile(upgrade_profile)
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)
@@ -348,7 +367,6 @@ class System:
         if node:
             return node.generated_name
         return value
-
 
     def save_system(self):
         print(f"Saving {self.system_name}")
