@@ -373,7 +373,7 @@ class Node:
         if element is not None:
             element.text = text
 
-    def get_profile_node(self) -> 'Node':
+    def get_profile_node(self, type_name) -> 'Node':
         """
         Returns the first profile node in this node, or the first linked profile from this node.
         :return:
@@ -387,6 +387,8 @@ class Node:
             if profile_link is None:
                 return
             return self.system.nodes_with_ids.get(lambda x: x.id == profile_link.target_id)
+        if type_name:
+            return profiles.get_child('profile', attrib={'typeName': type_name})
         return profiles.get_child('profile')
 
     def get_profile_dict(self):
@@ -722,9 +724,13 @@ class Node:
 
         comment_node.text = self.non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
 
-    def modify_profile(self, new_profile, profile_type):
-        profile_node = self.get_profile_node()
+    def modify_profile(self, new_profile, profile_type) -> bool:
+        profile_node = self.get_profile_node(profile_type)
         print(profile_node)
+        if not profile_node:
+            self.append_error_comment(f"Profile changed type")
+            return False
+        existing_characteristics_node = profile_node.get_child('characteristics')
         mod_groups = profile_node.get_or_create_child('modifierGroups')
         mod_group = mod_groups.get_or_create_child('modifierGroup', attrib={'type': 'and'})
         mod_group.get_or_create_child('conditions').get_or_create_child(
@@ -740,11 +746,16 @@ class Node:
             }
         )
         mods = mod_group.get_or_create_child('modifiers')
-        # For each stat, create a mod
-        # TODO: Run a diff
+        # For each stat, create a mod if that stat has changed
         for characteristic_name, value in new_profile.stats.items():
-            #                 <modifier type="set" value="New Range" field="95ba-cda7-b831-6066"/>
             _, characteristic_id = self.system.get_characteristic_name_and_id(characteristic_name, profile_type)
+            existing_characteristic_node = existing_characteristics_node.get_child('characteristic', attrib={
+                "typeId": characteristic_id
+            })
+            if existing_characteristic_node.text == value:
+                continue  # Value is already set
+
+            #  <modifier type="set" value="New Range" field="95ba-cda7-b831-6066"/>
             mods.get_or_create_child('modifier',
                                      attrib={
                                          'type': 'set',
