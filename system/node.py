@@ -741,8 +741,8 @@ class Node:
                 "field": "selections",
                 "scope": "force",
                 "childId": "1231-877a-96d9-cacd",
-                "shared": True,
-                "includeChildSelections": True
+                "shared": 'true',
+                "includeChildSelections": 'true'
             }
         )
         mods = mod_group.get_or_create_child('modifiers')
