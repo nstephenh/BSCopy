@@ -724,6 +724,29 @@ class Node:
 
         comment_node.text = self.non_error_comments + bsc_error_label + timestamp_to_use + new_errors_text
 
+    def set_conditional_option(self, option_child_id: str):
+        self.get_or_create_child('conditions').get_or_create_child(
+            "condition",
+            attrib={
+                "type": "atLeast",
+                "value": 1,
+                "field": "selections",
+                "scope": "force",
+                "childId": option_child_id,
+                "shared": 'true',
+                "includeChildSelections": 'true'
+            }
+        )
+
+    def set_hidden(self):
+        mods = self.get_or_create_child('modifiers')
+        return mods.get_or_create_child('modifier',
+                                        attrib={
+                                            'type': 'set',
+                                            'value': "hidden",
+                                            'field': "true",
+                                        })
+
     def modify_profile(self, new_profile, profile_type) -> bool:
         profile_node = self.get_profile_node(profile_type)
         print(profile_node)
@@ -733,18 +756,7 @@ class Node:
         existing_characteristics_node = profile_node.get_child('characteristics')
         mod_groups = profile_node.get_or_create_child('modifierGroups')
         mod_group = mod_groups.get_or_create_child('modifierGroup', attrib={'type': 'and'})
-        mod_group.get_or_create_child('conditions').get_or_create_child(
-            "condition",
-            attrib={
-                "type": "atLeast",
-                "value": 1,
-                "field": "selections",
-                "scope": "force",
-                "childId": "1231-877a-96d9-cacd",
-                "shared": 'true',
-                "includeChildSelections": 'true'
-            }
-        )
+        mod_group.set_conditional_option("1231-877a-96d9-cacd")
         mods = mod_group.get_or_create_child('modifiers')
         # For each stat, create a mod if that stat has changed
         for characteristic_name, value in new_profile.stats.items():
@@ -763,3 +775,51 @@ class Node:
                                          'field': characteristic_id
                                      })
         # Compare the types and add/remove special rules as needed.
+        self.modify_rule_info_links(new_profile)
+
+    def modify_rule_info_links(self, raw_profile: RawProfile):
+        if len(raw_profile.special_rules) == 0:
+            return
+        info_links = self.get_or_create_child('infoLinks')
+
+        for rule_name in raw_profile.special_rules:
+            found_name, rule_id = self.system.get_rule_name_and_id(rule_name)
+            if rule_id is None:
+                self.append_error_comment(f"Could not find rule: {rule_name}", raw_profile.name)
+                continue
+
+            rule_already_existed = info_links.get_child('infoLink', attrib={
+                'targetId': rule_id,
+            })
+            if rule_already_existed:
+                print("Looking at a rule")
+                mods = rule_already_existed.get_child('modifiers')
+                if not mods:
+                    continue  # No mods thus no name mods.
+                # What will this do if there's two?
+                existing_name_mod = mods.get_child('modifier', attrib={
+                    'type': "set",
+                    'field': "name",
+                })
+                if not existing_name_mod:
+                    continue  # This is not a rule with a number modifier
+                if existing_name_mod.value == rule_name:
+                    continue  # The name does not need to be changed as it's already set
+                print(f"Rule may need changed from '{existing_name_mod.value}' to '{rule_name}'")
+                self.append_error_comment(f"Rule needs changed from '{existing_name_mod.value}' to '{rule_name}'",
+                                          raw_profile.name)
+                continue
+                existing_name = existing_name_mod.value
+                name_mod = rule_link.set_name_modifier(rule_name)
+                continue
+
+            rule_link = info_links.get_or_create_child('infoLink', attrib={
+                'name': found_name,  # Name *should* be accurate as we're looking for it in the list
+                'hidden': 'false',
+                'type': 'rule',
+                'targetId': rule_id,
+            })
+            if found_name != rule_name:
+                rule_link.set_name_modifier(rule_name)
+            if not rule_already_existed:
+                rule_link.set_hidden().set_conditional_option("1231-877a-96d9-cacd")
