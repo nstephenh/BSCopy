@@ -792,7 +792,7 @@ class Node:
                 'targetId': rule_id,
             })
             if rule_already_existed:
-                print("Looking at a rule")
+                print(f"Looking at existing rule {rule_name}")
                 mods = rule_already_existed.get_child('modifiers')
                 if not mods:
                     continue  # No mods thus no name mods.

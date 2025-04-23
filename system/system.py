@@ -179,14 +179,17 @@ class System:
                     for unit_type, text in page.wargear_dict.items():
                         print(f"\t\tWargear: {unit_type}")
                         self.create_or_update_wargear(page, unit_type, text)
+                if Actions.MODIFY_WEAPONS in actions_to_take and not page.units:
+                    remaining_weapons = page.weapons
+                    for weapon in page.weapons:
+                        print(f"\t\tWeapon: {weapon.name}")
+                        if self.modify_upgrade_with_conditions(weapon, profile_type="Weapon"):
+                            remaining_weapons.remove(weapon)
+                    page.weapons = remaining_weapons
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
                         self.create_or_update_upgrade(weapon, profile_type="Weapon")
-                if Actions.MODIFY_WEAPONS in actions_to_take and not page.units:
-                    for weapon in page.weapons:
-                        print(f"\t\tWeapon: {weapon.name}")
-                        self.modify_upgrade_with_conditions(weapon, profile_type="Weapon")
             if Actions.LOAD_UNITS in all_actions_to_take:
                 self.refresh_index()  # We need to update the index before loading units
                 for page in book.pages:
@@ -295,15 +298,16 @@ class System:
         name, node_id = self.get_wargear_name_and_id(upgrade_profile.name)
         if not node_id:
             print(f"Could not find {upgrade_profile.name} to update in place")  # TODO make the weapon new.
-            return
+            return False
         node = self.nodes_with_ids.get(lambda x: x.id == node_id)
         if not node:
             print(f"Could not find {node_id} to update in place")  # TODO make the weapon new.
-            return
+            return False
         # TODO check some flag to determine if weapon already has a mod and to modify the mod.
 
         print(f"Need to modify {node} with {upgrade_profile.name}")
         node.modify_profile(upgrade_profile, profile_type)
+        return True
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)
