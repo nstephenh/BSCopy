@@ -79,13 +79,13 @@ class Book:
             # If the next page doesn't have information to help identify it,
             # we can guess that it's still the previous page type.
             prev_page_type = None
-            page_offset = 0  # Consider pulling default page offset from book json.
+            page_offset = None  # Consider pulling default page offset from book json.
             for page_counter, page_text in tqdm(enumerate(pdf.split('')), unit="Pages"):
                 page_number = try_get_page_number(page_text)
-                if page_counter < 5 and not page_offset:  # Try getting page number for the first 5 pages.
+                if page_counter < 5 and page_offset is not None:  # Try getting page number for the first 5 pages.
                     page_offset = try_get_page_offset(page_text, page_counter)
                 if page_number:
-                    pass  # Use the page number from ty get
+                    pass  # Use the page number from try get
                 elif page_offset:
                     page_number = page_counter + page_offset
                     # print(f"Page number is {page_number}, from {page_counter} + {page_offset}")
@@ -103,14 +103,18 @@ class Book:
         """
         # Need pdftotext 23, not 4.x
         path_to_pdftotext = os.path.expanduser("~/miniconda3/Library/bin/pdftotext.exe")
+        program_args = ['-layout', '-enc', 'UTF-8', self.file_path]
         try:
-            args = [path_to_pdftotext, '-layout', '-enc', 'UTF-8', self.file_path]
+            raise Exception("test")
+            args = [path_to_pdftotext]
+            args += program_args
             sp.run(
                 args, stdout=sp.PIPE, stderr=sp.DEVNULL,
                 check=True
             )
         except Exception:
-            args = ['pdftotext', '-layout', '-enc', 'UTF-8', self.file_path]
+            args = ['pdftotext']
+            args += program_args
             sp.run(
                 args, stdout=sp.PIPE, stderr=sp.DEVNULL,
                 check=True
