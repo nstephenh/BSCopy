@@ -21,9 +21,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="Warhammer-The-Old-World" />
     <orderEntry type="module" module-name="panoptica-heresy" />
-    <orderEntry type="module" module-name="horus-heresy-panoptica" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/gamedata/templates" />
+      </list>
+    </option>
   </component>
 </module>

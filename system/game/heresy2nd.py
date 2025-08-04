@@ -2,8 +2,8 @@ from system.constants import GameImportSpecs
 from system.game.game import Game
 
 
-class Heresy(Game):
-    GAME_FORMAT_CONSTANT = GameImportSpecs.HERESY
+class Heresy2nd(Game):
+    GAME_FORMAT_CONSTANT = GameImportSpecs.HERESY2E
     SYSTEM_NAME = "horus-heresy"
 
     ProfileLocator = "Unit Composition"

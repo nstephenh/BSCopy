@@ -9,7 +9,7 @@ default_data_directory = os.getenv("DEFAULT_DATA_DIRECTORY", os.path.expanduser(
 default_settings = {
     SystemSettingsKeys.SPECIAL_RULE_TYPE: SpecialRulesType.RULE,
     SystemSettingsKeys.WEAPON_AS_DESCRIPTION: False,
-    SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY
+    SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E
 }
 
 name_synonyms = {

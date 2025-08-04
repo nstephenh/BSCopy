@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     system = System('wh40k-10e',
                     settings={
-                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
+                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E,
                     },
                     )
     # get a list of all LA

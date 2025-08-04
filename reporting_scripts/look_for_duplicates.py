@@ -16,7 +16,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     system = System('moreus-heresy',
                     settings={
-                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
+                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E,
                     },
                     )
     duplicate_groups = system.get_duplicates()

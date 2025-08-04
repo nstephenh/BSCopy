@@ -22,7 +22,7 @@ class Command(BaseCommand):
 
 def import_heresy_books():
     settings = {
-        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY,
+        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E,
     }
     raw_import_settings = {
         ReadSettingsKeys.FIRST_PARAGRAPH_IS_FLAVOR: True,

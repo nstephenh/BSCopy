@@ -1,11 +1,11 @@
 from system.game.game import Game
-from system.game.heresy import Heresy
+from system.game.heresy import Heresy2nd
 
 from system.game.oldworld import OldWorld
 
 games = [
     OldWorld(),
-    Heresy(),
+    Heresy2nd(),
 ]
 
 

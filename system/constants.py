@@ -13,4 +13,5 @@ class SpecialRulesType:
 
 class GameImportSpecs:
     OLDWORLD = 'OLDWORLD'
-    HERESY = 'HERESY'
+    HERESY2E = 'HERESY2e'
+    HERESY3E = 'HERESY3e'
