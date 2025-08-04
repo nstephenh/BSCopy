@@ -405,7 +405,7 @@ class Node:
         categories = []
         links = self.get_child('categoryLinks')
         if links is None:
-            return
+            return []
         for child in links._element:
             if not child.tag.endswith('categoryLink'):
                 continue
