@@ -17,3 +17,23 @@ class Heresy3e(Game):
     UNIT_SUBHEADINGS: list[str] = ["WARGEAR", "SPECIAL RULES",
                                    "TRAITS", "TYPE",
                                    ]
+
+    BATTLEFIELD_ROLES: list[str] = [
+        "Warlord",
+        "Lord of War",
+        "High Command",
+        "Command",
+        "Retinue",
+        "Elites",
+        "War-engine",
+        "Troops",
+        "Support",
+        "Transport",
+        "Heavy Assault",
+        "Heavy Transport",
+        "Armour",
+        "Recon",
+        "Fast Attack"
+    ]
+
+
