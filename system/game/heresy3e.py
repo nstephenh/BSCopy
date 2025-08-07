@@ -36,4 +36,9 @@ class Heresy3e(Game):
         "Fast Attack"
     ]
 
-
+    FACTIONS: list[str] = [
+        "Ultramarines", "Salamanders", "White Scars", "Iron Hands", "Dark Angels", "Space Wolves",
+        "Raven Guard", "Blood Angels", "Imperial Fists", "Sons of Horus",
+        "Emperor's Children", "Iron Warriors", "World Eaters", "Night Lords", "Death Guard", "Thousand Sons",
+        "Word Bearers", "Alpha Legion"
+    ]
