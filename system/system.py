@@ -265,6 +265,9 @@ class System:
             raise ValueError(f"'{full_name}' is not a valid characteristic in the game system")
         return full_name, self.profile_characteristics[profile_type][full_name]
 
+    def get_node_by_id(self, node_id):
+        return self.nodes_with_ids.get(lambda x: x.id == node_id)
+
     def create_or_update_category(self, page, name, text):
         name = name.title()
         if len(text) == 0:
