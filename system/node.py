@@ -104,6 +104,8 @@ class Node:
             if attr == "typeName":
                 self.type_name = value
             attrib[attr] = str(value)  # All values must be strings to serialize properly.
+            if type(value) == bool:
+                attrib[attr] = str(value).lower()
         self.attrib.update(attrib)
 
     def update_pub_and_page(self, page: 'Page'):
