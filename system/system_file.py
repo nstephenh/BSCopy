@@ -59,6 +59,19 @@ class SystemFile:
         parent = self.root_node.get_or_create_child(shared_element_root_tag)
         return parent.get_or_create_child(tag, attrib)
 
+    @property
+    def faction(self):
+        pretty_name = self.root_node.name
+        if not self.system.game:
+            return None
+        if pretty_name in self.system.game.FACTIONS:
+            return pretty_name
+        if " - " in pretty_name:
+            name_component = pretty_name.split(" - ")[1]
+            name_component = name_component.strip()
+            if name_component in self.system.game.FACTIONS:
+                return name_component
+
 
 def get_namespace_from_file(filename: str):
     extension = os.path.splitext(filename)[1]

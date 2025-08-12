@@ -41,6 +41,10 @@ class Game:
 
     category_book_to_full_name_map: dict[str, str] = {}
 
+    BATTLEFIELD_ROLES: list[str] = []
+
+    FACTIONS: list[str] = []
+
     def get_full_characteristic_name(self, characteristic_name, profile_type: str = None):
         # if profile_type is None or profile_type == "Weapon":
         characteristic_list = self.WEAPON_PROFILE_TABLE_HEADERS

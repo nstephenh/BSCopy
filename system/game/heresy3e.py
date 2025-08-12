@@ -36,9 +36,30 @@ class Heresy3e(Game):
         "Fast Attack"
     ]
 
-    FACTIONS: list[str] = [
+    LEGIONS: list[str] = [
         "Ultramarines", "Salamanders", "White Scars", "Iron Hands", "Dark Angels", "Space Wolves",
         "Raven Guard", "Blood Angels", "Imperial Fists", "Sons of Horus",
         "Emperor's Children", "Iron Warriors", "World Eaters", "Night Lords", "Death Guard", "Thousand Sons",
         "Word Bearers", "Alpha Legion"
     ]
+
+    FACTIONS: list[str] = LEGIONS.copy() + ["Legiones Astartes", "Mechanicum", "Anathema Psykana",
+                                            "Questoris Household",
+                                            "Agents of the Divisio Assassinorum", "Legio Custodes", "Solar Auxilia"]
+
+    FACTION_TO_PRIME_SELECTOR_ID: dict[str, str] = {"Legiones Astartes": "a396-b846-c263-6767",
+                                                    "Mechanicum": "4ae1-f3b2-e1c8-165f",
+                                                    "Anathema Psykana": "5f88-9f8a-5fef-2a71",
+                                                    "Questoris Household": "",
+                                                    "Agents of the Divisio Assassinorum": "",
+                                                    "Legio Custodes": "6f4b-388a-b001-abde",
+                                                    "Solar Auxilia": "8180-ce7c-accf-f232",
+                                                    }
+
+    def get_prime_selector(self, faction):
+        if faction in self.FACTION_TO_PRIME_SELECTOR_ID.keys():
+            return self.FACTION_TO_PRIME_SELECTOR_ID[faction]
+        else:
+            if faction in self.LEGIONS:
+                return self.FACTION_TO_PRIME_SELECTOR_ID["Legiones Astartes"]
+
