@@ -50,7 +50,7 @@ if __name__ == '__main__':
                                                           attrib={  # GST Prime Benefits
                                                               'targetId': prime_selector_id
                                                           })
-        if faction_benefits_list is None and created_prime_link:
+        if faction_benefits_list is None:
             faction_benefits_list = prime_benefit_links.get_or_create_child(tag='entryLink',
                                                                         attrib={'import': 'true',
                                                                                 'name': 'Prime Benefits',
