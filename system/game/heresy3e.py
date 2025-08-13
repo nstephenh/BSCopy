@@ -50,7 +50,7 @@ class Heresy3e(Game):
     FACTION_TO_PRIME_SELECTOR_ID: dict[str, str] = {"Legiones Astartes": "a396-b846-c263-6767",
                                                     "Mechanicum": "4ae1-f3b2-e1c8-165f",
                                                     "Anathema Psykana": "5f88-9f8a-5fef-2a71",
-                                                    "Questoris Household": "",
+                                                    "Questoris Household": "682c-89df-2b40-9302",
                                                     "Agents of the Divisio Assassinorum": "",
                                                     "Legio Custodes": "6f4b-388a-b001-abde",
                                                     "Solar Auxilia": "8180-ce7c-accf-f232",
