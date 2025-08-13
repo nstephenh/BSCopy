@@ -4,3 +4,5 @@
 
 /*.xml
 /*.epub
+
+__pycache__/
