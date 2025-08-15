@@ -22,7 +22,7 @@ if __name__ == '__main__':
             continue
         profile_dict = profile_node.get_profile_dict()
         models_with_profiles_count += 1
-        unit_type_text = profile_dict.get("Unit Type")
+        unit_type_text = profile_dict.get("Type")
         if unit_type_text is None:
             models_without_profiles.append(str(model_node))
             continue
