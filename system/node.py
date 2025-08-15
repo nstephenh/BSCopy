@@ -375,7 +375,7 @@ class Node:
         if element is not None:
             element.text = text
 
-    def get_profile_node(self, type_name) -> 'Node':
+    def get_profile_node(self, type_name=None) -> 'Node':
         """
         Returns the first profile node in this node, or the first linked profile from this node.
         :return:
