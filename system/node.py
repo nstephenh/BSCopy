@@ -648,14 +648,13 @@ class Node:
             if category_name not in self.system.categories:
                 self.append_error_comment(f"Could not find type or subtype '{category_name}'", raw_model.name)
                 continue
-            target_id = self.system.categories[category_name].id
-            cat_link = category_links.get_or_create_child('categoryLink',
-                                                          attrib={'targetId': target_id,
-                                                                  },
-                                                          # Won't actually be the real name, may need an update script
-                                                          defaults={'primary': 'false',
-                                                                    'name': category_name},
-                                                          )
+            category_node = self.system.categories[category_name]
+            category_links.get_or_create_child('categoryLink',
+                                               attrib={'targetId': category_node.id,
+                                                       },
+                                               defaults={'primary': 'false',
+                                                         'name': category_node.name},
+                                               )
 
     def create_category(self, name, text, page):
         categories = self.get_or_create_child('categoryEntries')
