@@ -661,6 +661,7 @@ class Node:
         if category_links is None:
             return ["No category links"]
         errors = []
+        expected_ids = []
         existing_link_count = len(category_links.children)
         correct_link_count = 0
         for category_name in raw_model.type_and_subtypes:
@@ -669,6 +670,7 @@ class Node:
                 errors.append(f"Could not find type or subtype '{category_name}'")
                 continue
             category_node = self.system.model_types_and_subtypes[category_name]
+            expected_ids.append(category_node.id)
             cat_link = category_links.get_child('categoryLink',
                                                 attrib={
                                                     'targetId': category_node.id,
@@ -678,8 +680,12 @@ class Node:
                 errors.append(f"{category_node.name} is not linked")
                 continue
             correct_link_count += 1
-        if existing_link_count != correct_link_count:
-            errors.append("There are one or more extra categories")
+        if existing_link_count > correct_link_count:
+            unexpected_links = []
+            for cat_link in category_links.children:
+                if cat_link.target_id not in expected_ids:
+                    unexpected_links.append(cat_link.target_name)
+            errors.append(f"There are {existing_link_count - correct_link_count} extra categories: {unexpected_links}")
         return errors
 
     def create_category(self, name, text, page):
