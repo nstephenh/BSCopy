@@ -675,11 +675,11 @@ class Node:
                                                 }
                                                 )
             if cat_link is None:
-                errors.append(f"{category_node.name} is not linked on {self}")
+                errors.append(f"{category_node.name} is not linked")
                 continue
             correct_link_count += 1
         if existing_link_count != correct_link_count:
-            errors.append("There is an extra category")
+            errors.append("There are one or more extra categories")
         return errors
 
     def create_category(self, name, text, page):
