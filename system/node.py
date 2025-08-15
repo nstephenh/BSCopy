@@ -653,9 +653,9 @@ class Node:
                                                           attrib={'targetId': target_id,
                                                                   },
                                                           # Won't actually be the real name, may need an update script
-                                                          defaults={'name': category_name},
+                                                          defaults={'primary': 'false',
+                                                                    'name': category_name},
                                                           )
-            cat_link.attrib.update({'primary': 'false'})
 
     def create_category(self, name, text, page):
         categories = self.get_or_create_child('categoryEntries')
