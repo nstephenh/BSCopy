@@ -1,6 +1,7 @@
 from book_reader.raw_entry import RawModel
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.system import System
+from util.text_utils import read_type_and_subtypes
 
 if __name__ == '__main__':
 
@@ -25,12 +26,7 @@ if __name__ == '__main__':
         if unit_type_text is None:
             models_without_profiles.append(str(model_node))
             continue
-        print(unit_type_text)
-        if "(" in unit_type_text:
-            type_and_subtypes = [unit_type_text.split("(")[0].strip()]
-            type_and_subtypes += [text.strip() for text in unit_type_text.split("(")[1][:-1].strip().split(",")]
-        else:
-            type_and_subtypes = [unit_type_text.strip()]
+        type_and_subtypes = read_type_and_subtypes(unit_type_text)
 
         print(type_and_subtypes)
         # Make a rawModel so we can set types and subtypes

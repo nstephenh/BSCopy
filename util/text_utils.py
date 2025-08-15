@@ -438,3 +438,13 @@ def get_line_indent(line, offset=0):
         if char != " ":
             return i + offset
     return 0
+
+
+def read_type_and_subtypes(unit_type_text):
+    type_and_subtypes = None
+    if "(" in unit_type_text:
+        type_and_subtypes = [unit_type_text.split("(")[0].strip()]
+        type_and_subtypes += [text.strip() for text in unit_type_text.split("(")[1][:-1].strip().split(",")]
+    else:
+        type_and_subtypes = [unit_type_text.strip()]
+    return type_and_subtypes
