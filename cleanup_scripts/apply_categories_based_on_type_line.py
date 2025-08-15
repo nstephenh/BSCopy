@@ -1,19 +1,12 @@
-import argparse
-
 from book_reader.raw_entry import RawModel
 from system.constants import SystemSettingsKeys, GameImportSpecs
-from system.node import Node
 from system.system import System
-from xml.etree import ElementTree as ET
-
-from util.element_util import get_description
-from util.log_util import print_styled, STYLES, get_diff, prompt_y_n
 
 if __name__ == '__main__':
 
-    system = System('horus-heresy',
+    system = System('horus-heresy-3rd-edition',
                     settings={
-                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E,
+                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY3E,
                     },
                     )
     model_count = 0

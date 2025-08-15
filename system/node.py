@@ -645,10 +645,10 @@ class Node:
 
         for category_name in raw_model.type_and_subtypes:
             category_name = category_name.strip()
-            if category_name not in self.system.categories:
+            if category_name not in self.system.model_types_and_subtypes:
                 self.append_error_comment(f"Could not find type or subtype '{category_name}'", raw_model.name)
                 continue
-            category_node = self.system.categories[category_name]
+            category_node = self.system.model_types_and_subtypes[category_name]
             category_links.get_or_create_child('categoryLink',
                                                attrib={'targetId': category_node.id,
                                                        },

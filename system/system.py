@@ -80,7 +80,8 @@ class System:
 
         self.wargear_by_name = {}
         self.rules_by_name = {}
-        self.categories = {}
+        self.categories = {}  # Don't use this for types and subtypes anymore.
+        self.model_types_and_subtypes = {}
         self.refresh_index()
 
         self.raw_pub_priority = {}
@@ -97,7 +98,10 @@ class System:
                                                                         and not node.collective)}
         categories = {node.name: node for node in
                       self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
+
+        # Map categories to model types and subtypes
         for name, category in categories.items():
+            is_model_type = False
             name = name.strip()
             if name.endswith(":"):
                 name = name[:-1]
@@ -105,8 +109,17 @@ class System:
                 name = name[:-len(" sub-type")]
                 if name.lower().endswith(" unit"):
                     name = name[:-len(" unit")]
+                if name.lower().endswith(" model"):
+                    name = name[:-len(" model")]
+                is_model_type = True
             elif name.lower().endswith(" unit type"):
                 name = name[:-len(" unit type")]
+                is_model_type = True
+            elif name.lower().endswith(" model type"):
+                is_model_type = True
+                name = name[:-len(" model type")]
+            if is_model_type:
+                self.model_types_and_subtypes[name] = category
             self.categories[name] = category
 
     def define_profile_characteristics(self):
