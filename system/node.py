@@ -656,6 +656,32 @@ class Node:
                                                          'name': category_node.name},
                                                )
 
+    def check_types_and_subtypes(self, raw_model: 'RawModel'):
+        category_links = self.get_child('categoryLinks')
+        if category_links is None:
+            return ["No category links"]
+        errors = []
+        existing_link_count = len(category_links.children)
+        correct_link_count = 0
+        for category_name in raw_model.type_and_subtypes:
+            category_name = category_name.strip()
+            if category_name not in self.system.model_types_and_subtypes.keys():
+                errors.append(f"Could not find type or subtype '{category_name}'")
+                continue
+            category_node = self.system.model_types_and_subtypes[category_name]
+            cat_link = category_links.get_child('categoryLink',
+                                                attrib={
+                                                    'targetId': category_node.id,
+                                                }
+                                                )
+            if cat_link is None:
+                errors.append(f"{category_node.name} is not linked on {self}")
+                continue
+            correct_link_count += 1
+        if existing_link_count != correct_link_count:
+            errors.append("There is an extra category")
+        return errors
+
     def create_category(self, name, text, page):
         categories = self.get_or_create_child('categoryEntries')
         category = categories.get_or_create_child('categoryEntry',
