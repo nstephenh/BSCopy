@@ -33,7 +33,8 @@ class Heresy3e(Game):
         "Heavy Transport",
         "Armour",
         "Recon",
-        "Fast Attack"
+        "Fast Attack",
+        "Fortification",
     ]
 
     LEGIONS: list[str] = [
