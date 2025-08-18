@@ -188,6 +188,11 @@ class Node:
         return self.system.try_get_name(target_id)
 
     @property
+    def target(self):
+        target_id = self.target_id if self.target_id is not None else self.condition_search_id
+        return self.system.nodes_with_ids.get(lambda x: x.id == target_id)
+
+    @property
     def parent_name(self):
         if self.parent is None:
             return None
