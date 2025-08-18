@@ -9,7 +9,7 @@ from util.log_util import print_styled, STYLES, get_diff, prompt_y_n
 
 if __name__ == '__main__':
 
-    system = System('horus-heresy')
+    system = System('horus-heresy-3rd-edition')
 
     ids_to_names = {}
     for node in system.nodes_with_ids:
