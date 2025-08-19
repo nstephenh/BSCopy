@@ -39,7 +39,7 @@ class DiffBlock:
         if self.node is not None:
             title += f" {self.node}"
         output_lines.append(title)
-        output_lines.append("'''xml")
+        output_lines.append("```xml")
 
         for line in self.left_lines + self.right_lines:
             if len(line.content) > max_line_width:
@@ -49,7 +49,7 @@ class DiffBlock:
 
         for line in self.left_lines + self.right_lines:
             output_lines.append(line.get_pretty_line(max_line_number_width, max_line_width))
-        output_lines.append("'''")
+        output_lines.append("```")
         output_lines.append("")
         return "\n".join(output_lines)
 
