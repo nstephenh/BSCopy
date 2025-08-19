@@ -43,8 +43,10 @@ if __name__ == '__main__':
             break
     print(main_commit)
     diff_index = main_commit.diff(head_commit)
+    output_lines = []
     for diff_item in diff_index:
         print(diff_item.a_path)
+        output_lines.apend(f"# {diff_item.a_path}")
         if not (diff_item.a_path.endswith('.cat') or diff_item.a_path.endswith('.gst')):
             continue
         a_file = diff_item.a_blob.data_stream.read().decode('utf-8')
@@ -60,8 +62,12 @@ if __name__ == '__main__':
             if file.name == diff_item.a_path:
                 system_file = file
                 break
+
         if system_file is None:
+            output_lines.append(f"Could not find file for {diff_item.a_path}")
             print(f"Could not find file for {diff_item.a_path}")
+        last_line_from_a = False
+        last_line_from_b = False
         for line in diff_lib.compare(a_file.splitlines(), b_file.splitlines()):
             if line.startswith('  '):
                 a_count += 1
@@ -69,11 +75,17 @@ if __name__ == '__main__':
             elif line.startswith('- '):
                 a_count += 1
                 print(a_count, line)
+                last_line_from_a = True
+                last_line_from_b = False
             elif line.startswith('+ '):
                 b_count += 1
+                last_line_from_a = False
+                last_line_from_b = True
                 print(b_count, line)
                 node_candidates = system_file.all_nodes.filter(lambda x: x.start_line_number == b_count)
                 if len(node_candidates) == 1:
                     print(str(node_candidates[0]))
+            elif line.startswith('? '):  # Line is annotation of the above line.
+                pass
     with open("diff_result.txt", mode='w') as file:
-        file.write("Test From a file")
+        file.write("\n".join(output_lines))
