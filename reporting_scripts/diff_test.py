@@ -46,7 +46,7 @@ if __name__ == '__main__':
     output_lines = []
     for diff_item in diff_index:
         print(diff_item.a_path)
-        output_lines.apend(f"# {diff_item.a_path}")
+        output_lines.append(f"# {diff_item.a_path}")
         if not (diff_item.a_path.endswith('.cat') or diff_item.a_path.endswith('.gst')):
             continue
         a_file = diff_item.a_blob.data_stream.read().decode('utf-8')
