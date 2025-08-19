@@ -76,7 +76,6 @@ if __name__ == '__main__':
                 b_count += 1
             elif line.startswith('- '):
                 a_count += 1
-                print(a_count, line)
                 last_line_from_a = True
                 last_line_from_b = False
                 output_lines.append(f"* `- {str(a_count).rjust(justify_width)} {line[2:]}`")
