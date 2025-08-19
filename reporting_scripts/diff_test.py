@@ -68,6 +68,7 @@ if __name__ == '__main__':
             print(f"Could not find file for {diff_item.a_path}")
         last_line_from_a = False
         last_line_from_b = False
+        justify_width = len(str(len(a_file.splitlines())))  # Number of characters of highest line
         for line in diff_lib.compare(a_file.splitlines(), b_file.splitlines()):
             if line.startswith('  '):
                 a_count += 1
@@ -77,15 +78,21 @@ if __name__ == '__main__':
                 print(a_count, line)
                 last_line_from_a = True
                 last_line_from_b = False
+                output_lines.append(f"* `- {str(a_count).rjust(justify_width)} {line[2:]}`")
+                output_lines.append(f"* * We do not yet read nodes from the old version")
             elif line.startswith('+ '):
                 b_count += 1
                 last_line_from_a = False
                 last_line_from_b = True
-                print(b_count, line)
+                output_lines.append(f"* `+ {str(b_count).rjust(justify_width)} {line[2:]}`")
                 node_candidates = system_file.all_nodes.filter(lambda x: x.start_line_number == b_count)
                 if len(node_candidates) == 1:
-                    print(str(node_candidates[0]))
+                    output_lines.append(f"* * {str(node_candidates[0])}")
             elif line.startswith('? '):  # Line is annotation of the above line.
-                pass
+                count_string = str(a_count).rjust(justify_width)
+                if last_line_from_b:
+                    count_string = str(b_count).rjust(justify_width)
+                output_lines.append(f"* `? {str(b_count).rjust(justify_width)} {line[2:]}`")
+
     with open("diff_result.txt", mode='w') as file:
         file.write("\n".join(output_lines))
