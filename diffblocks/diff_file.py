@@ -71,7 +71,7 @@ class DiffFile:
                 self.blocks[block_counter].add_line(diff_line, note_is_left=last_line_is_left)
 
     def get_pretty_diff(self):
-        output_lines = [f"# {self.name}"]
+        output_lines = [f"## {self.name}"]
         if self.system_file_left is None:
             output_lines.append("File was added")
         elif self.system_file_right is None:
@@ -79,6 +79,5 @@ class DiffFile:
         else:
             for block in self.blocks.values():
                 output_lines.append(block.get_pretty_diff())
-
         output_lines.append("")
         return "\n".join(output_lines)

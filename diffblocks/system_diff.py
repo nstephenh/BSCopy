@@ -14,7 +14,7 @@ class SystemDiff:
             self.files.append(DiffFile(self, diff_item))
 
     def get_pretty_diff(self):
-        output_lines = []
+        output_lines = ["# Annotated Summary of Changes"]
         for file in self.files:
             output_lines.append(file.get_pretty_diff())
         return "\n".join(output_lines)

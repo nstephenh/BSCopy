@@ -35,10 +35,12 @@ class DiffBlock:
         max_line_width = 0
         max_line_number_width = 0
         change_type = self.get_type()
-        title = f"## {change_type}"
+        title = f"### {change_type}"
         if self.node is not None:
             title += f" {self.node}"
         output_lines.append(title)
+        output_lines.append("'''xml")
+
         for line in self.left_lines + self.right_lines:
             if len(line.content) > max_line_width:
                 max_line_width = len(line.content)
@@ -47,6 +49,7 @@ class DiffBlock:
 
         for line in self.left_lines + self.right_lines:
             output_lines.append(line.get_pretty_line(max_line_number_width, max_line_width))
+        output_lines.append("'''")
         output_lines.append("")
         return "\n".join(output_lines)
 
@@ -70,7 +73,7 @@ class DiffLine:
             self.node = node_candidates[0]
 
     def get_pretty_line(self, number_justification, line_justification):
-        info_str = f"* `{self.change_type} {str(self.number).rjust(number_justification)} {self.content.ljust(line_justification)}`"
+        info_str = f"{self.change_type} {str(self.number).rjust(number_justification)} {self.content.ljust(line_justification)}"
         if self.node is not None:
-            info_str += f" Node {str(self.node)}"
+            info_str += f" |  {str(self.node)}"
         return info_str
