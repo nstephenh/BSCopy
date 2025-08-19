@@ -75,6 +75,5 @@ if __name__ == '__main__':
                 node_candidates = system_file.all_nodes.filter(lambda x: x.start_line_number == b_count)
                 if len(node_candidates) == 1:
                     print(str(node_candidates[0]))
-
-
-
+    with open("diff_result.txt", mode='w') as file:
+        file.write("Test From a file")
