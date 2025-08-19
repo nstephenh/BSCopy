@@ -2,6 +2,7 @@ import os
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
+from system.line_numbering_parser import LineNumberingParser
 from system.node import Node
 from system.node_collection import NodeCollection
 from util.generate_util import cleanup_file_match_bs_whitespace
@@ -25,7 +26,14 @@ class SystemFile:
 
         self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
-        self._source_tree = ET.parse(path)
+
+        # Temp test:
+        self.system.settings["diff"] = True
+
+        if self.system.settings.get("diff"):
+            self._source_tree = ET.parse(path, parser=LineNumberingParser())
+        else:
+            self._source_tree = ET.parse(path)
 
         self.library = self._source_tree.getroot().get('library') == "true"
         self.id = self._source_tree.getroot().get('id')

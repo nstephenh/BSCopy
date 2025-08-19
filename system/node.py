@@ -1,9 +1,8 @@
-from typing import TYPE_CHECKING
 from typing import Callable
-
+from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
 
-from book_reader.raw_entry import RawProfile, RawModel, RawUnit, HasOptionsMixin
+from book_reader.raw_entry import RawProfile, RawModel, RawUnit
 from system.constants import SystemSettingsKeys, SpecialRulesType
 from util.element_util import get_tag, get_or_create_sub_element, get_sub_element
 from util.generate_util import find_comment_value
@@ -41,6 +40,12 @@ class Node:
         self.condition_percentValue = element.attrib.get('percentValue')
         self.includeChildSelections = element.attrib.get('includeChildSelections')
         self.includeChildForces = element.attrib.get('includeChildForces')
+
+        self.start_line_number = None
+        self.end_line_number = None
+        if self.system.settings["diff"]:
+            self.start_line_number = element._start_line_number
+            self.end_line_number = element._end_line_number
 
         if self.id:
             self.system_file.nodes_with_ids.append(self)
