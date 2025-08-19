@@ -43,7 +43,7 @@ class Node:
 
         self.start_line_number = None
         self.end_line_number = None
-        if self.system.settings["diff"]:
+        if self.system.settings.get("diff"):
             self.start_line_number = element._start_line_number
             self.end_line_number = element._end_line_number
 
