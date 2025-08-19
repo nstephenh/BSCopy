@@ -32,8 +32,12 @@ if __name__ == '__main__':
     system_name = 'horus-heresy-3rd-edition'
 
     repo = Repo(os.path.join(default_data_directory, 'horus-heresy-3rd-edition'))
-    original_head = repo.head.ref
-    print(f"Current head: {original_head}")
+    original_head = None
+    try:
+        original_head = repo.head.ref
+        print(f"Current head: {original_head}")
+    except Exception as e:
+        pass  # This doesn't work with a detached head, so don't worry about it.
     head_commit = list(repo.iter_commits())[0]
     main_commit = None
     for commit in repo.iter_commits():
@@ -62,8 +66,7 @@ if __name__ == '__main__':
                          },
                          )
 
-    # Restore checkout to normal (for local testing)
-    repo.git.checkout(original_head)
+
 
     diff_index = main_commit.diff(head_commit)
 
@@ -74,4 +77,7 @@ if __name__ == '__main__':
     with open("diff_result.txt", mode='w') as file:
         file.write(output)
         print(f"Output written to {file.name}")
-    print(f"Restoring checkout to {original_head}")
+    if original_head:
+        # Restore checkout to normal (for local testing)
+        print(f"Restoring checkout to {original_head}")
+        repo.git.checkout(original_head)
