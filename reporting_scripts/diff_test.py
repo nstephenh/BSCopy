@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 import re
 import sys
@@ -11,7 +12,6 @@ sys.modules['_elementtree'] = None
 print(os.getcwd())
 sys.path.insert(1, os.getcwd() + "/BSCopy")
 
-from diffblocks.diffblock import DiffBlock, DiffLine
 from diffblocks.system_diff import SystemDiff
 from settings import default_data_directory
 
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     # Finally, composite all the lines into readable results.
     output = system_diff.get_pretty_diff()
     with open("diff_result.txt", mode='w') as file:
+        file.write(f"As of {head_commit} at {datetime.datetime.now()}\n")
         file.write(output)
         print(f"Output written to {file.name}")
     if original_head:
