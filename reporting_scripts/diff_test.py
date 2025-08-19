@@ -66,16 +66,21 @@ if __name__ == '__main__':
                          },
                          )
 
-
-
     diff_index = main_commit.diff(head_commit)
 
     system_diff = SystemDiff(system_left, system_right, diff_index)
 
     # Finally, composite all the lines into readable results.
-    output = system_diff.get_pretty_diff()
+    output = f"As of {head_commit} at {datetime.datetime.now()}\n" + system_diff.get_pretty_diff()
+    if len(output) > 65536:
+        lines = output.count("\n")
+        truncated = output[:65400]
+        truncated_lines = truncated.count("\n")
+        truncated = f"Truncated due to length: {lines - truncated_lines} lines dropped\n" \
+                    + truncated + "\n```\nOriginal in test output"
+        print(output)
+        output = truncated
     with open("diff_result.txt", mode='w') as file:
-        file.write(f"As of {head_commit} at {datetime.datetime.now()}\n")
         file.write(output)
         print(f"Output written to {file.name}")
     if original_head:
