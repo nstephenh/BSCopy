@@ -3,6 +3,7 @@
 import argparse
 import difflib
 import os
+import re
 import sys
 
 from git import Repo
@@ -95,4 +96,6 @@ if __name__ == '__main__':
                 output_lines.append(f"* `? {str(b_count).rjust(justify_width)} {line[2:]}`")
 
     with open("diff_result.txt", mode='w') as file:
+        output = "\n".join(output_lines)
+        output = re.sub('`', "\\`", output)
         file.write("\n".join(output_lines))
