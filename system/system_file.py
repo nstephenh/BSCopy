@@ -27,9 +27,6 @@ class SystemFile:
         self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
 
-        # Temp test:
-        self.system.settings["diff"] = True
-
         if self.system.settings.get("diff"):
             self._source_tree = ET.parse(path, parser=LineNumberingParser())
         else:
