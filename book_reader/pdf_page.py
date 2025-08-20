@@ -18,6 +18,17 @@ class PdfPage(Page):
         self.faq_entries = []
         if self.page_number and self.raw_text.rstrip().endswith(str(self.page_number)):
             self.raw_text = self.raw_text.rstrip()[:-len(str(self.page_number))]
+
+        debug_specific_page = 0
+        if debug_specific_page:
+            if self.page_number < debug_specific_page:
+                return  # For debugging
+            if self.page_number > debug_specific_page:
+                exit()  # For debugging
+
+            print_styled(f"\nPage {self.page_number} is Type: {self.page_type}", STYLES.GREEN)
+            print(self.raw_text)
+
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
             self.page_type = PageTypes.BLANK_OR_IGNORED
             return
@@ -505,21 +516,27 @@ class PdfPage(Page):
         # print_styled("Unprocessed non-unit text:", STYLES.GREEN)
         # print_styled(self.special_rules_text, STYLES.YELLOW)
 
-        non_weapon_lines = []
-
-        weapons_dicts = []
-
         # The following is similar to the unit profile detection, but is likely worse at handling notes.
         # The best we can do to detect the end of note/notes is the end of a sentence, or the start of a new table.
         # If a line ends a sentence of a note, it'll unfortunately chop off the
 
-        num_data_cells = len(self.game.WEAPON_PROFILE_TABLE_HEADERS) - 1
-        # Minus one as we deal with special rules separately
-
-        if not len(self.game.WEAPON_PROFILE_TABLE_HEADERS):
+        if not len(self.game.WEAPON_PROFILE_TABLE_HEADER_OPTIONS):
             raise Exception("No weapon profile headers defined")
 
-        last_header = self.game.WEAPON_PROFILE_TABLE_HEADERS[-1]
+        for profile_name, header_raw_and_full_dict in self.game.WEAPON_PROFILE_TABLE_HEADER_OPTIONS.items():
+            self.process_weapons_of_1_profile_type(profile_name, header_raw_and_full_dict['raw'])
+
+    def process_weapons_of_1_profile_type(self, profile_name, headers):
+
+        non_weapon_lines = []
+
+        weapons_dicts = []
+
+        num_data_cells = len(headers) - self.game.NUM_WEAPON_HEADERS_THAT_ARE_TEXT
+        # Deal with Special rules and traits separately
+
+        sr_header = headers[-self.game.NUM_WEAPON_HEADERS_THAT_ARE_TEXT]
+        traits_header = headers[-1]
 
         in_table = False
         in_note = False
@@ -528,22 +545,26 @@ class PdfPage(Page):
         profile_index = -1
         sr_col_index = 0
         name_col_index = 0
+        traits_col_index = 0
 
         for line in self.special_rules_text.split("\n"):
             # print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if text_utils.does_line_contain_header(line, ["R", "S", "Special Rules", "AP"]):
-                print("Malformed table line!")
+                print("Malformed table line!")  # The old world specific check
                 self.weapons.append(RawProfile(name=f"Unable to read profile from {self.special_rules_text}",
                                                page=self, stats={}))
                 self.special_rules_text = "\n".join(line)
                 return
-            if text_utils.does_line_contain_header(line, self.game.WEAPON_PROFILE_TABLE_HEADERS):
-                if not (line.lstrip().startswith(self.game.WEAPON_PROFILE_TABLE_HEADERS[0])
-                        or line.lstrip().startswith("Weapon")):
-                    name_prefix = line.split(f" {self.game.WEAPON_PROFILE_TABLE_HEADERS[0]} ")[0].strip()
+            if text_utils.does_line_contain_header(line, headers):
+                if not (line.lstrip().startswith(headers[0])
+                        or line.lstrip().startswith(profile_name)):
+                    name_prefix = line.split(f" {headers[0]} ")[0].strip()
                 else:
                     name_prefix = ""  # Clear the name prefix as we are starting a new table.
-                sr_col_index = line.index(last_header)
+                sr_col_index = line.index(sr_header)
+                if self.game.NUM_WEAPON_HEADERS_THAT_ARE_TEXT == 2:
+                    traits_col_index = line.index(traits_header)
+
                 in_table = True
                 in_note = False  # A previous note has ended
                 continue
@@ -575,16 +596,22 @@ class PdfPage(Page):
             if in_table:
                 name_and_stats = line
                 special_rules = ""
+                traits = ""
                 if len(line) > sr_col_index:
                     name_and_stats = line[:sr_col_index]
                     if name_and_stats.strip() == "":
                         # print(f"Profile index: {profile_index} Weapons dicts: {str(weapons_dicts)}")
-                        weapons_dicts[profile_index][last_header] += line[sr_col_index:]
+                        weapons_dicts[profile_index][sr_header] += line[sr_col_index:]
                         continue  # Not a full line, just a continuation of special rules.
                     special_rules = line[sr_col_index:]
+                    if traits_col_index > 0:
+                        special_rules = line[sr_col_index:traits_col_index].rstrip()
+                        traits = line[traits_col_index:]
 
                 # print("Name and stats: ", name_and_stats)
                 # print("Special Rules:  ", special_rules)
+                # if traits:
+                #     print("Traits:  ", traits)
 
                 # Name and stats
                 cells = name_and_stats.split()
@@ -647,8 +674,10 @@ class PdfPage(Page):
                             name_cells = [name_prefix, "-"] + name_cells
 
                 stats_for_line.append(special_rules)
-                weapons_dicts.append(dict(zip(self.game.WEAPON_PROFILE_TABLE_HEADERS,
-                                              stats_for_line)))
+                if traits:
+                    stats_for_line.append(traits)
+                weapons_dicts.append(dict(zip(headers, stats_for_line)))
+
                 profile_index += 1
                 weapons_dicts[profile_index]["Name"] = name_cells
             else:

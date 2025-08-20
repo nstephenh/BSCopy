@@ -14,6 +14,21 @@ class Heresy3e(Game):
              },
     }
 
+    WEAPON_PROFILE_TABLE_HEADER_OPTIONS = {
+        "Ranged Weapon":
+            {"raw": ["R", "FP", "RS", "AP", "D", "Special Rules", "Traits"],
+             "full": ["R", "FP", "RS", "AP", "D", "Special Rules", "Traits"],
+             },
+        "Melee Weapon":
+            {"raw": ["IM", "AM", "SM", "AP", "D", "Special Rules", "Traits"],
+             "full": ["IM", "AM", "SM", "AP", "D", "Special Rules", "Traits"],
+             },
+    }
+
+    NUM_WEAPON_HEADERS_THAT_ARE_TEXT = 2  # "Special Rules" and "Traits"
+
+    DASHED_WEAPON_MODES = True
+
     UNIT_SUBHEADINGS: list[str] = ["WARGEAR", "SPECIAL RULES",
                                    "TRAITS", "TYPE",
                                    ]
@@ -63,4 +78,3 @@ class Heresy3e(Game):
         else:
             if faction in self.LEGIONS:
                 return self.FACTION_TO_PRIME_SELECTOR_ID["Legiones Astartes"]
-

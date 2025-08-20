@@ -25,6 +25,8 @@ class Game:
             raise Exception("No weapon profile headers defined")
         return self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS["Weapon"]['full']
 
+    NUM_WEAPON_HEADERS_THAT_ARE_TEXT = 1  # Normally just "Special Rules"
+
     OPTIONS = "Options"
 
     MIDDLE_IN_2_COLUMN = False
