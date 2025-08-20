@@ -33,18 +33,22 @@ class DiffFile:
         a_file = diff_item.a_blob.data_stream.read().decode('utf-8')
         b_file = diff_item.b_blob.data_stream.read().decode('utf-8')
         diff_lib = difflib.Differ()
+        debug = False
         a_count = 0
         b_count = 0
         block_counter = 0
         last_line_is_left = False
+        justify = 16
         for line in diff_lib.compare(a_file.splitlines(), b_file.splitlines()):
             line = line.rstrip()
-            if line.startswith('  '):
+            if line.startswith('  ') or line == " " or line == "":
                 a_count += 1
                 b_count += 1
                 if block_counter in self.blocks.keys():  # End the block
                     block_counter += 1
                 last_line_is_left = False
+                if debug:
+                    print(f"l {a_count} | r {b_count}".ljust(justify) + line)
             elif line.startswith(DiffLine.REMOVE):
                 a_count += 1
                 diff_line = DiffLine(a_count, DiffLine.REMOVE, line[2:], self.system_file_left)
@@ -52,7 +56,8 @@ class DiffFile:
                     self.blocks[block_counter] = DiffBlock()
                 self.blocks[block_counter].add_line(diff_line)
                 last_line_is_left = True
-                print("l", line)
+                if debug:
+                    print(f"l {a_count}".ljust(justify) + line)
             elif line.startswith(DiffLine.ADD):
                 b_count += 1
                 diff_line = DiffLine(b_count, DiffLine.ADD, line[2:], self.system_file_right)
@@ -60,14 +65,13 @@ class DiffFile:
                     self.blocks[block_counter] = DiffBlock()
                 self.blocks[block_counter].add_line(diff_line)
                 last_line_is_left = False
-                print("r", line)
+                if debug:
+                    print(f"r {b_count}".ljust(justify) + line)
             elif line.startswith(DiffLine.NOTE):  # Line is annotation of the above line.
                 if last_line_is_left:
                     diff_line = DiffLine(a_count, DiffLine.NOTE, line[2:])
-                    print("l", line)
                 else:
                     diff_line = DiffLine(b_count, DiffLine.NOTE, line[2:])
-                    print("r", line)
                 self.blocks[block_counter].add_line(diff_line, note_is_left=last_line_is_left)
 
     def get_pretty_diff(self):

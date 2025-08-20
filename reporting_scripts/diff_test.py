@@ -1,7 +1,6 @@
 import argparse
 import datetime
 import os
-import re
 import sys
 
 from git import Repo  # pip install -r GitPython
@@ -27,7 +26,7 @@ if __name__ == '__main__':
     merge_base = args.merge_base
 
     if args.merge_base is None:  # for testing
-        merge_base = "f8adfcf7dc5b689f51c70c6dd99c8c47e22e4704"
+        merge_base = "1930446af7fd78679d559fb80ffeff5c2bb13b46"
 
     system_name = 'horus-heresy-3rd-edition'
 
@@ -56,7 +55,7 @@ if __name__ == '__main__':
                           },
                           )
 
-    # Now, checkout the status on main so we can get information about those lines.
+    # Now, check out the status on main so we can get information about those lines.
     print(f"Checking out system at commit {merge_base}:")
     repo.git.checkout(main_commit)
     system_left = System(system_name,
