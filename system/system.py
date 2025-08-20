@@ -196,13 +196,13 @@ class System:
                     remaining_weapons = page.weapons
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        if self.modify_upgrade_with_conditions(weapon, profile_type="Weapon"):
+                        if self.modify_upgrade_with_conditions(weapon):
                             remaining_weapons.remove(weapon)
                     page.weapons = remaining_weapons
                 if Actions.LOAD_WEAPON_PROFILES in actions_to_take and not page.units:
                     for weapon in page.weapons:
                         print(f"\t\tWeapon: {weapon.name}")
-                        self.create_or_update_upgrade(weapon, profile_type="Weapon")
+                        self.create_or_update_upgrade(weapon)
             if Actions.LOAD_UNITS in all_actions_to_take:
                 self.refresh_index()  # We need to update the index before loading units
                 for page in book.pages:
@@ -294,8 +294,10 @@ class System:
         wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
         self.create_or_update_upgrade(wargear_as_profile, 'Wargear Item')
 
-    def create_or_update_upgrade(self, upgrade_profile, profile_type):
-        # This only updates in the target file.
+    def create_or_update_upgrade(self, upgrade_profile, profile_type=None):
+        if profile_type is None:
+            profile_type = upgrade_profile.profile_type
+            # This only updates in the target file.
         node = upgrade_profile.page.target_system_file.get_or_create_shared_node('selectionEntry', attrib={
             'name': upgrade_profile.name,
             'type': 'upgrade',

@@ -13,11 +13,11 @@ if __name__ == '__main__':
                         ReadSettingsKeys.ACTIONS: [
                             Actions.DUMP_TO_JSON,
                             # Actions.LOAD_SPECIAL_RULES,
-                            # Actions.LOAD_WEAPON_PROFILES,
+                            Actions.LOAD_WEAPON_PROFILES,
                             # Actions.LOAD_UNITS,
                         ],
                     })
-    # system.save_system()
+    system.save_system()
     for error in system.errors:
         print(error)
     print(f"Error count: {len(system.errors)}")

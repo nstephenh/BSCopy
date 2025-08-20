@@ -692,7 +692,7 @@ class PdfPage(Page):
         # rejoin stats and name components.
         for weapon_as_dict in weapons_dicts:
             name = ' '.join(weapon_as_dict.pop("Name"))  # Remove the name from the dict
-            raw_profile = RawProfile(name=name, page=self, stats=weapon_as_dict, profile_type='Weapon')
+            raw_profile = RawProfile(name=name, page=self, stats=weapon_as_dict, profile_type=profile_name)
             self.weapons.append(raw_profile)
 
         self.special_rules_text = "\n".join(non_weapon_lines)

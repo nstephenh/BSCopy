@@ -59,9 +59,9 @@ class Game:
     FACTIONS: list[str] = []
 
     def get_full_characteristic_name(self, characteristic_name, profile_type: str = None):
-        # if profile_type is None or profile_type == "Weapon":
-        characteristic_list = self.WEAPON_PROFILE_TABLE_HEADERS
-        full_characteristic_list = self.WEAPON_PROFILE_TABLE_HEADERS_FULL
+        if profile_type in self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS:
+            characteristic_list = self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['raw']
+            full_characteristic_list = self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['full']
         if profile_type in self.UNIT_PROFILE_TABLE_HEADER_OPTIONS:
             characteristic_list = self.UNIT_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['raw']
             full_characteristic_list = self.UNIT_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['full']
