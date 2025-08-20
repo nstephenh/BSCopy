@@ -9,10 +9,21 @@ class Game:
 
     default_settings = settings.default_settings
 
-    UNIT_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name: {"raw": [list], "full": "list"}
+    UNIT_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name": {"raw": [list], "full": [list]}
 
-    WEAPON_PROFILE_TABLE_HEADERS: list[str] = []
-    WEAPON_PROFILE_TABLE_HEADERS_FULL: list[str] = []
+    WEAPON_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name": {"raw": [list], "full": [list]}
+
+    @property  # Deprecated for options version, left for backwards compat
+    def WEAPON_PROFILE_TABLE_HEADERS(self) -> list[str]:
+        if not self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS:
+            raise Exception("No weapon profile headers defined")
+        return self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS["Weapon"]['raw']
+
+    @property  # Deprecated for options version, left for backwards compat
+    def WEAPON_PROFILE_TABLE_HEADERS_FULL(self) -> list[str]:
+        if not self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS:
+            raise Exception("No weapon profile headers defined")
+        return self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS["Weapon"]['full']
 
     OPTIONS = "Options"
 
