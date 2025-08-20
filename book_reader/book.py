@@ -72,8 +72,10 @@ class Book:
                     self.pages.append(page)
 
     def read_as_pdf(self):
-        self.pdftotext()  # Save a text file of the pdf.
-        self.file_path = self.file_path.replace('.pdf', '.txt')
+        text_file_path = self.file_path.replace('.pdf', '.txt')
+        if not os.path.exists(text_file_path):
+            self.pdftotext()  # Save a text file of the pdf.
+        self.file_path = text_file_path
         with open(self.file_path, "r", encoding='utf-8') as f:
             pdf = f.read()
             # If the next page doesn't have information to help identify it,
