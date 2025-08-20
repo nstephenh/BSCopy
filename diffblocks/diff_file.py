@@ -19,6 +19,7 @@ class DiffFile:
                 break
         if self.system_file_left is None:
             print(f"Could not find file for {diff_item.a_path} in base")
+            return
 
         self.system_file_right = None
         for file in system_diff.system_right.files:
@@ -27,6 +28,7 @@ class DiffFile:
                 break
         if self.system_file_right is None:
             print(f"Could not find file for {diff_item.b_path} in branch")
+            return
 
         self.blocks: {int: DiffBlock} = {}
 
