@@ -83,9 +83,10 @@ class PdfPage(Page):
         self.special_rules_text = col_1 + "\n" + col_2
 
     def handle_weapon_profiles_page(self, prev_page_type):
-        has_armoury_header = "Armoury".lower() in self.raw_text.lstrip().splitlines()[0].lower()
-        if not has_armoury_header and not prev_page_type == PageTypes.WEAPON_PROFILES:
-            return
+        if not self.page_type:
+            has_armoury_header = "Armoury".lower() in self.raw_text.lstrip().splitlines()[0].lower()
+            if not has_armoury_header and not prev_page_type == PageTypes.WEAPON_PROFILES:
+                return
         self.page_type = PageTypes.WEAPON_PROFILES
         self.special_rules_text = self.raw_text
 
