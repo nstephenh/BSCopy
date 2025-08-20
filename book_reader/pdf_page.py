@@ -599,14 +599,19 @@ class PdfPage(Page):
                 traits = ""
                 if len(line) > sr_col_index:
                     name_and_stats = line[:sr_col_index]
-                    if name_and_stats.strip() == "":
+                    if name_and_stats.strip() == "":  # Not a full line, just a continuation of special rules.
                         # print(f"Profile index: {profile_index} Weapons dicts: {str(weapons_dicts)}")
-                        weapons_dicts[profile_index][sr_header] += line[sr_col_index:]
-                        continue  # Not a full line, just a continuation of special rules.
+                        if traits_col_index > 0:
+                            weapons_dicts[profile_index][sr_header] += " " + line[
+                                                                             sr_col_index:traits_col_index].rstrip()
+                            weapons_dicts[profile_index][traits_header] += " " + line[traits_col_index:].rstrip()
+                            continue
+                        weapons_dicts[profile_index][sr_header] += " " + line[sr_col_index:].rstrip()
+                        continue
                     special_rules = line[sr_col_index:]
                     if traits_col_index > 0:
                         special_rules = line[sr_col_index:traits_col_index].rstrip()
-                        traits = line[traits_col_index:]
+                        traits = line[traits_col_index:].rstrip()
 
                 # print("Name and stats: ", name_and_stats)
                 # print("Special Rules:  ", special_rules)
@@ -676,6 +681,8 @@ class PdfPage(Page):
                 stats_for_line.append(special_rules)
                 if traits:
                     stats_for_line.append(traits)
+                for i, stat in enumerate(stats_for_line):
+                    stats_for_line[i] = stat.strip()
                 weapons_dicts.append(dict(zip(headers, stats_for_line)))
 
                 profile_index += 1
