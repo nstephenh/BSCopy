@@ -454,3 +454,19 @@ def remove_copyright_footer(text):
     footer_text = "Permission to print/download for personal use."
     return text.partition(footer_text)[0].rstrip()
 
+
+def looks_like_sentence(line):
+    """
+    See if this line of text contains words not commonly found in tables, but are commonly found in sentences.
+    :param line:
+    :return:
+    """
+    if ". " in line:
+        return True
+
+    # Not "the" or "of" because weapons could be named "the something of something"
+    suspicious_words = ["are", "at", "than", "a", "an", "by"]
+    for word in suspicious_words:
+        if f" {word} " in line:
+            return True
+    return False

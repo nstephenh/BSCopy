@@ -588,6 +588,9 @@ class PdfPage(Page):
                 in_table = False
                 in_note = False
                 name_col_index = 0
+            if not in_note and text_utils.looks_like_sentence(line):
+                in_table = False
+                name_col_index = 0
             if name_col_index and line[:name_col_index].strip() != "":
                 # If this line is before the first letter of the name column, the table has probably ended.
                 in_table = False
