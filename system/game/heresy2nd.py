@@ -4,7 +4,7 @@ from system.game.game import Game
 
 class Heresy2nd(Game):
     GAME_FORMAT_CONSTANT = GameImportSpecs.HERESY2E
-    SYSTEM_NAME = "horus-heresy"
+    SYSTEM_NAME = "horus-heresy-2nd-edition"
 
     ProfileLocator = "Unit Composition"
 
