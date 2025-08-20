@@ -448,3 +448,9 @@ def read_type_and_subtypes(unit_type_text):
     else:
         type_and_subtypes = [unit_type_text.strip()]
     return type_and_subtypes
+
+
+def remove_copyright_footer(text):
+    footer_text = "Permission to print/download for personal use."
+    return text.partition(footer_text)[0].rstrip()
+
