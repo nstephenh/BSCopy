@@ -1,8 +1,6 @@
 import re
 from typing import TYPE_CHECKING
 
-from bs4 import BeautifulSoup, Tag
-
 if TYPE_CHECKING:
     from book_reader.book import Book
     from system.system_file import SystemFile
@@ -58,6 +56,8 @@ class Page:
 
 class EpubPage(Page):
     def __init__(self, book, page_item):
+        from bs4 import BeautifulSoup, Tag
+
         page_name = page_item.get_name()
         try:
             page_name_components = page_name.split('.xhtml')[0].split("-")
