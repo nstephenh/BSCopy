@@ -32,7 +32,7 @@ class PdfPage(Page):
                 exit()  # For debugging
 
             print_styled(f"\nPage {self.page_number} is Type: {self.page_type}", STYLES.GREEN)
-            print(self.raw_text)
+            # print (self.raw_text)
 
         if self.raw_text.strip() == "" or len(self.raw_text.strip().splitlines()) < 3:
             self.page_type = PageTypes.BLANK_OR_IGNORED
@@ -471,8 +471,8 @@ class PdfPage(Page):
         return False, raw_text, ""
 
     def process_unit(self, unit_text):
-        print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
-        print_styled(unit_text, STYLES.CYAN)
+        # print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
+        # print_styled(unit_text, STYLES.CYAN)
         if self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
             self.process_hh3_unit(unit_text)
         else:
@@ -585,14 +585,11 @@ class PdfPage(Page):
                 stats.append(cells[-num_data_cells:])
                 profile_index += 1
 
-        print_styled("Profiles:", STYLES.DARKCYAN)
-
         # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
             raw_profile = RawModel(name=name, page=self, stats=dict(zip(unit_profile_headers + ['Note'],
                                                                         stats[index])), profile_type=unit_profile_type)
-            print_styled(raw_profile.stats, STYLES.GREEN)
             raw_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])
