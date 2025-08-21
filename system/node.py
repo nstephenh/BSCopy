@@ -500,7 +500,7 @@ class Node:
         if type(profile) is RawModel:
             profile_type = profile.profile_type
             characteristics_dict.update({
-                "Unit Type": profile.unit_type_text
+                self.system.game.MODEL_TYPE_CHARACTERISTIC: profile.unit_type_text
             })
         if profile_type is None:
             raise Exception(f"Could not find profile type for {profile.profile_type}")

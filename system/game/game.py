@@ -11,6 +11,8 @@ class Game:
 
     UNIT_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name": {"raw": [list], "full": [list]}
 
+    MODEL_TYPE_CHARACTERISTIC = "Type"
+
     WEAPON_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name": {"raw": [list], "full": [list]}
 
     @property  # Deprecated for options version, left for backwards compat

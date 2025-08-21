@@ -1,3 +1,5 @@
+import traceback
+
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile, RawModel
@@ -60,6 +62,7 @@ class PdfPage(Page):
                 unit.process_subheadings()
             except Exception as e:
                 print(e)
+                print_styled(traceback.format_exc(), style=STYLES.RED)
 
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
@@ -79,6 +82,8 @@ class PdfPage(Page):
                 except Exception as e:
                     print(f"Could not process unit on page {self.page_number}")
                     print(e)
+                    print_styled(traceback.format_exc(), style=STYLES.RED)
+
             if len(self.units):  # if we found any units, this page is a units page
                 self.page_type = PageTypes.UNIT_PROFILES
 

@@ -11,8 +11,11 @@ class Heresy3e(Game):
     UNIT_PROFILE_TABLE_HEADER_OPTIONS = {
         "Profile":
             {"raw": ["M", "WS", "BS", "S", "T", "W", "I", "A", "LD", "CL", "WP", "IN", "SAV", "INV"],
+             "full": ["M", "WS", "BS", "S", "T", "W", "I", "A", "LD", "CL", "WP", "IN", "SAV", "INV"],
              },
     }
+
+    MODEL_TYPE_CHARACTERISTIC = "Type"
 
     WEAPON_PROFILE_TABLE_HEADER_OPTIONS = {
         "Ranged Weapon":

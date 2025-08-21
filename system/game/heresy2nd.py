@@ -22,6 +22,7 @@ class Heresy2nd(Game):
              "full": ["Move", "WS", "BS", "S", "Front", "Side", "Rear", "I", "A", "HP"],
              },
     }
+    MODEL_TYPE_CHARACTERISTIC = "Unit Type"
 
     WEAPON_PROFILE_TABLE_HEADERS = ["Range", "Str", "AP", "Type"]
     WEAPON_PROFILE_TABLE_HEADERS_FULL: list[str] = ["Range", "Strength", "AP", "Type"]
