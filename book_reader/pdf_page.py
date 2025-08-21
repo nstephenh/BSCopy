@@ -348,12 +348,7 @@ class PdfPage(Page):
             # print(self.special_rules_text)
 
         # At this point wargear and on no longer has any special rules or profiles.
-        # progressively split wargear and on in reverse order, till we get back up to just the wargear and special rules
-        header_sections = {}
-        for header in reversed(headers):
-            was_split, wargear_and_on, content = split_at_header(header, wargear_and_on)
-            if was_split:
-                header_sections[header] = content
+        wargear_and_on, after_2_col_section = self.split_subheadings_after_2_col_section(wargear_and_on)
 
         # print_styled("Upper Half without any special rules text", STYLES.GREEN)
         # print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
@@ -376,12 +371,27 @@ class PdfPage(Page):
 
         # Now lets put everything together:
         new_text = "\n".join(  # Add a newline between sections to ensure no overlap if table doesn't end in one.
-            [profiles, upper_half, wargear, special_rules_list] + [header_sections[header] for header in
-                                                                   reversed(header_sections.keys())]
+            [profiles, upper_half, wargear, special_rules_list, after_2_col_section]
         )
         return new_text
 
-    def split_before_line_before_statline(self, raw_text):
+    def split_subheadings_after_2_col_section(self, subheadings_text) -> (str, str):
+        """
+        Remove the subheadings after the 2-column section
+        :param subheadings_text: The parts of the datasheet only containing subheadings
+        :return: the 2-column section, the part after the 2-column section.
+        """
+        # progressively split up in reverse order, till we get back up to just the 2-column section.
+        headers = self.game.SUBHEADINGS_AFTER_2_COL_SECTION
+        header_sections = {}
+        for header in reversed(headers):
+            was_split, subheadings_text, subheading_content = split_at_header(header, subheadings_text)
+            if was_split:
+                header_sections[header] = subheading_content
+        after_2_col_section = "\n".join([header_sections[header] for header in reversed(header_sections.keys())])
+        return subheadings_text, after_2_col_section
+
+    def split_before_statline(self, raw_text, expected_occurrences=1) -> (bool, str, str):
         """
         Split at the SECOND occurrence of a statline in a given block
         :param raw_text:
