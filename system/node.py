@@ -693,12 +693,11 @@ class Node:
                 errors.append(f"{category_node} is not linked")
                 continue
             correct_link_count += 1
-        if existing_link_count > correct_link_count:
-            unexpected_links = []
-            for cat_link in category_links.children:
-                if cat_link.target_id not in expected_ids:
-                    unexpected_links.append(cat_link.target_name)
-            errors.append(f"There are {existing_link_count - correct_link_count} extra categories: {unexpected_links}")
+        for cat_link in category_links.children:
+            if cat_link.target_id not in expected_ids:
+                if cat_link.target_name in self.system.game.BATTLEFIELD_ROLES:
+                    errors.append(f"Models should not reference battlefield roles: {cat_link}")
+                # Permissively allowing other categories.
         return errors
 
     def create_category(self, name, text, page):
