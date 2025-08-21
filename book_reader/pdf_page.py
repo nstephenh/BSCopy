@@ -382,7 +382,7 @@ class PdfPage(Page):
         """
         Split at the occurrence of a statline in a given block. Will trim out blank lines.
         :param raw_text:
-        :param expected_occurrences:   set to 2, I can only assume, for tables which have the headers repeated
+        :param expected_occurrences:   set to 2, I can only assume, for tables which have the headers repeated,
                                         and you need the second occurrence.
 
         :return:
@@ -395,7 +395,7 @@ class PdfPage(Page):
                 occurrence += 1
                 if occurrence < expected_occurrences:
                     continue
-                return True, "\n".join(lines[:prev_line_with_text]), "\n".join(lines[prev_line_with_text:])
+                return True, "\n".join(lines[:prev_line_with_text+1]), "\n".join(lines[prev_line_with_text+1:])
             if line.strip() != "":
                 prev_line_with_text = index
         return False, raw_text, ""
