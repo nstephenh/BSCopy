@@ -311,6 +311,29 @@ def split_into_columns_at_divider(text: str, divider_end, divider_start=None, de
 
     return (non_column_text, col_1_text, col_2_text, original_text)
 
+def split_2_columns_at_right_header(two_column_section, header) -> (bool, str, str):
+    """
+    Given text in a two-column format, split the text at the position of a header
+    :param two_column_section:
+    :param header:
+    :return: was_split, left, right
+    """
+    # If special rules, split wargear_and_on at that position
+    # instead of using the find column and split there code.
+    two_column_section = two_column_section  # Default, assume no special rules and this is just wargear.
+    special_rules_list = ""
+    if header in two_column_section:
+        sr_row_index = get_index_of_line_with_headers(two_column_section, [header])
+        if header not in two_column_section.splitlines()[sr_row_index]:
+            print(f"Could not properly locate Special Rules")
+            return two_column_section, ""
+        sr_col_index = two_column_section.splitlines()[sr_row_index].index("Special Rules")
+
+        # At this point, wargear and on is just wargear and special rules,
+        # So we can split it with our two-column split code.
+        _, two_column_section, special_rules_list, _ = \
+            split_into_columns_at_divider(two_column_section, sr_col_index, debug_print_level=0)
+    return two_column_section, special_rules_list
 
 def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool, str, str):
     if header_at_end_of_line:

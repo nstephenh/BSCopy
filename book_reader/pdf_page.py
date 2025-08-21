@@ -5,7 +5,8 @@ from system.game.game import Game
 from import_scripts.text_to_rules import text_to_rules_dict
 from util import text_utils
 from util.log_util import STYLES, print_styled
-from util.text_utils import split_into_columns, split_at_header, split_after_header
+from util.text_utils import split_into_columns, split_at_header, split_after_header, get_line_indent, split_at_unindent, \
+    un_justify, split_on_header_line, split_2_columns_at_right_header
 
 
 class PdfPage(Page):
@@ -353,21 +354,7 @@ class PdfPage(Page):
         # print_styled("Upper Half without any special rules text", STYLES.GREEN)
         # print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
 
-        # If special rules, split wargear_and_on at that position
-        # instead of using the find column and split there code.
-        wargear = wargear_and_on  # Default, assume no special rules and this is just wargear.
-        special_rules_list = ""
-        if "Special Rules" in wargear_and_on:
-            sr_row_index = text_utils.get_index_of_line_with_headers(wargear_and_on, "Special Rules")
-            if "Special Rules" not in wargear_and_on.splitlines()[sr_row_index]:
-                print(f"Could not properly locate Special Rules")
-                return
-            sr_col_index = wargear_and_on.splitlines()[sr_row_index].index("Special Rules")
-
-            # At this point, wargear and on is just wargear and special rules,
-            # So we can split it with our two-column split code.
-            _, wargear, special_rules_list, _ = \
-                text_utils.split_into_columns_at_divider(wargear_and_on, sr_col_index, debug_print_level=0)
+        special_rules_list, wargear = split_2_columns_at_right_header(wargear_and_on, "Special Rules")
 
         # Now lets put everything together:
         new_text = "\n".join(  # Add a newline between sections to ensure no overlap if table doesn't end in one.
