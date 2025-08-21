@@ -320,20 +320,22 @@ def split_2_columns_at_right_header(two_column_section, header) -> (bool, str, s
     """
     # If special rules, split wargear_and_on at that position
     # instead of using the find column and split there code.
-    left = ""
-    right = ""
+    sr_col_index = get_2nd_colum_index_from_header(header, two_column_section)
+    if sr_col_index is None:
+        print(f"Could not properly locate column {header}")
+        return False, two_column_section, ""
+    _, left, right, _ = split_into_columns_at_divider(two_column_section, sr_col_index, debug_print_level=0)
+    return True, left, right
+
+
+def get_2nd_colum_index_from_header(header: str, two_column_section: str) -> int:
+    sr_col_index = None
     if header in two_column_section:
         sr_row_index = get_index_of_line_with_headers(two_column_section, [header])
-        if header not in two_column_section.splitlines()[sr_row_index]:
-            print(f"Could not properly locate column {header}")
-            return False, two_column_section, ""
-        sr_col_index = two_column_section.splitlines()[sr_row_index].index("Special Rules")
+        if header in two_column_section.splitlines()[sr_row_index]:
+            sr_col_index = two_column_section.splitlines()[sr_row_index].index("Special Rules")
+    return sr_col_index
 
-        # At this point, wargear and on is just wargear and special rules,
-        # So we can split it with our two-column split code.
-        _, left, right, _ = \
-            split_into_columns_at_divider(two_column_section, sr_col_index, debug_print_level=0)
-    return True, left, right
 
 def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool, str, str):
     if header_at_end_of_line:
