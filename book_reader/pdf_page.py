@@ -469,15 +469,13 @@ class PdfPage(Page):
         print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
         print_styled(unit_text, STYLES.CYAN)
         if self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
-            unit = self.process_hh3_unit(unit_text)
+            self.process_hh3_unit(unit_text)
         else:
-            unit = self.process_hh2_unit(unit_text)
-        if unit:
-            self.process_unit_common(unit, unit_text)
+            self.process_hh2_unit(unit_text)
 
     def process_hh3_unit(self, unit_text):
         # profile_locator should be the second line, and above that should be the unit name.
-        _, unit_name, everything_but_name = split_on_header_line(self.raw_text, self.game.ProfileLocator)
+        _, unit_name, everything_but_name = split_on_header_line(unit_text, self.game.ProfileLocator)
         unit_name = unit_name.splitlines()[0].strip()  # Multiline names are subtitles, ignore the subtitle.
         # For now assume no line wrapping
         unit_comp_line = everything_but_name.splitlines()[0]
@@ -487,7 +485,8 @@ class PdfPage(Page):
             return
         points = split_comp_line[-2]
 
-        return RawUnit(name=unit_name, points=points, page=self)
+        unit = RawUnit(name=unit_name, points=points, page=self)
+        self.process_unit_common(unit, unit_text)
 
     def process_hh2_unit(self, unit_text):
         # First get the name, from what should hopefully be the first line in raw_unit
@@ -515,10 +514,7 @@ class PdfPage(Page):
                 points = None
                 print_styled("Was not able to read points", STYLES.RED)
 
-
-
         raw_unit = RawUnit(name=unit_name, points=points, page=self)
-
 
         if self.game.FORCE_ORG_IN_FLAVOR:
             for line in self.flavor_text_col.splitlines():
@@ -527,12 +523,10 @@ class PdfPage(Page):
 
                     break
 
-        return raw_unit
+        self.process_unit_common(raw_unit, unit_text)
 
     def process_unit_common(self, raw_unit: RawUnit, unit_text):
-
         unit_name = raw_unit.name
-        max_selections_of_unit = None
         if unit_name.startswith("0-"):
             first_space = unit_name.index(" ")
             max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
@@ -556,7 +550,7 @@ class PdfPage(Page):
         lines = unit_text.split("\n")
         profiles_end = None
         for line_number, line in enumerate(lines):
-            # print(f"{line}, In Table: {in_table}, In Note: {in_note}")
+            print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if self.does_line_contain_profile_header(line):
                 in_table = True
                 in_note = False  # Note has ended
@@ -565,8 +559,12 @@ class PdfPage(Page):
                 stats[profile_index] += [line.split("Note: ")[1]]
                 in_note = True
                 continue
-
-            if line.startswith(self.game.ProfileLocator):
+            # hh2 profile locator is after stats
+            if in_table and line.startswith(self.game.ProfileLocator):
+                profiles_end = line_number
+                break
+            # hh3 profile locator is before, but WARGEAR should always be right after
+            if line.startswith(self.game.UNIT_SUBHEADINGS[0]):
                 profiles_end = line_number
                 break
             if in_note:
@@ -582,11 +580,14 @@ class PdfPage(Page):
                 stats.append(cells[-num_data_cells:])
                 profile_index += 1
 
+        print_styled("Profiles:", STYLES.DARKCYAN)
+
         # rejoin stats and name components.
         for index, name in enumerate(names):
             name = ' '.join(name)
             raw_profile = RawModel(name=name, page=self, stats=dict(zip(unit_profile_headers + ['Note'],
                                                                         stats[index])), profile_type=unit_profile_type)
+            print_styled(raw_profile.stats, STYLES.GREEN)
             raw_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])

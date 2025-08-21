@@ -35,7 +35,7 @@ class Heresy3e(Game):
                                    "TYPE",
                                    "OPTIONS",
                                    "ACCESS POINTS"
-                                   ]
+                                   ]  # Not doing "Using this Unit" (pre profiles, post-flavor text)
 
     SUBHEADINGS_AFTER_2_COL_SECTION: list[str] = ["OPTIONS",
                                                   "ACCESS POINTS"]
