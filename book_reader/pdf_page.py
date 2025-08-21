@@ -515,15 +515,10 @@ class PdfPage(Page):
                 points = None
                 print_styled("Was not able to read points", STYLES.RED)
 
-        max_selections_of_unit = None
-        if unit_name.startswith("0-"):
-            first_space = unit_name.index(" ")
-            max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
-            unit_name = unit_name[first_space + 1:]
+
 
         raw_unit = RawUnit(name=unit_name, points=points, page=self)
-        if max_selections_of_unit:
-            raw_unit.max = int(max_selections_of_unit)
+
 
         if self.game.FORCE_ORG_IN_FLAVOR:
             for line in self.flavor_text_col.splitlines():
@@ -535,6 +530,17 @@ class PdfPage(Page):
         return raw_unit
 
     def process_unit_common(self, raw_unit: RawUnit, unit_text):
+
+        unit_name = raw_unit.name
+        max_selections_of_unit = None
+        if unit_name.startswith("0-"):
+            first_space = unit_name.index(" ")
+            max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
+            unit_name = unit_name[first_space + 1:]
+            if max_selections_of_unit:
+                raw_unit.max = int(max_selections_of_unit)
+                raw_unit.name = unit_name
+
         names = []
         stats = []
         # Then, get the table out of the header.
