@@ -42,6 +42,9 @@ class Game:
 
     SUBHEADINGS_AFTER_2_COL_SECTION: list[str] = []  # MUST BE IN ORDER
 
+    # Has a 2 column section but then after that each section splits into 2 columns, wrapping independently.
+    SUBHEADINGS_AFTER_2_COL_ARE_2_COL = False
+
     SUBHEADINGS_ON_SAME_LINE = False
 
     SUBHEADING_SEPARATORS: str = None  # Bullets, commas, or Commas and "and"

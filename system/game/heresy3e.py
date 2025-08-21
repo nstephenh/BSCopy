@@ -6,7 +6,7 @@ class Heresy3e(Game):
     GAME_FORMAT_CONSTANT = GameImportSpecs.HERESY3E
     SYSTEM_NAME = "horus-heresy-3rd-edition"
 
-    ProfileLocator = "UNIT COMPOSITION:"
+    ProfileLocator = "unit composition:"
 
     UNIT_PROFILE_TABLE_HEADER_OPTIONS = {
         "Profile":
@@ -39,6 +39,9 @@ class Heresy3e(Game):
 
     SUBHEADINGS_AFTER_2_COL_SECTION: list[str] = ["OPTIONS",
                                                   "ACCESS POINTS"]
+
+    # HH3 has a 2 column section but then after that each section splits into 2 columns, wrapping independently.
+    SUBHEADINGS_AFTER_2_COL_ARE_2_COL = True
 
     BATTLEFIELD_ROLES: list[str] = [
         "Warlord",

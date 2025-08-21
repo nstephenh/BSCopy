@@ -3,10 +3,12 @@ from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile, RawModel
 from system.game.game import Game
 from import_scripts.text_to_rules import text_to_rules_dict
+from system.game.heresy3e import Heresy3e
 from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header, get_line_indent, split_at_unindent, \
-    un_justify, split_on_header_line, split_2_columns_at_right_header
+    un_justify, split_on_header_line, split_2_columns_at_right_header, get_2nd_colum_index_from_header, \
+    split_into_columns_at_divider
 
 
 class PdfPage(Page):
@@ -196,7 +198,11 @@ class PdfPage(Page):
         if num_units == 0:
             return
 
-        if self.game.COULD_HAVE_STAGGERED_HEADERS:
+        if self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
+            # New implementation for HH3
+            self.units_text = [self.cleanup_unit_text_hh3(num_units)]
+            return
+        elif self.game.COULD_HAVE_STAGGERED_HEADERS:  # HH2
             # TODO make this more generic
             header_that_may_be_staggered = None
             for staggered_row_header_option in ["Wargear", "Options", "Unit Composition"]:  # Wargear might not exist
@@ -314,6 +320,56 @@ class PdfPage(Page):
         #     print(unit)
         return unit_text
 
+    def cleanup_unit_text_hh3(self, rules_text) -> str:
+
+        profile_locator = self.game.ProfileLocator
+
+        # profile_locator should be the second line, and above that should be the unit name.
+        was_split, unit_name, everything_but_name = split_on_header_line(self.raw_text, profile_locator)
+        if not was_split:
+            print(f"Could not split at {profile_locator}")
+            return ""  # If this datasheet doesn't have Unit composition, something is wrong
+        print("\n")
+        print(unit_name)
+        print(everything_but_name)
+        # Split at the stat lines.
+
+        was_split, header_and_flavor, profiles_and_on = self.split_before_statline(everything_but_name)
+        if not was_split:
+            print(f"Could not find any statlines")
+            return ""  # If this datasheet doesn't have a statline, something is wrong.
+
+        # Remove flavor text
+        was_split, unit_composition, flavor = split_at_unindent(header_and_flavor)
+        # Start putting content into our unit.
+        name_and_comp = un_justify(unit_name + "\n" + unit_composition)
+
+        # The first header should be the first on our list.
+        was_split, profiles, wargear_list_and_on = split_on_header_line(profiles_and_on, self.game.UNIT_SUBHEADINGS[0])
+
+        # Anything after the subheadings will be indented (2 spaces, at least so far)
+        # Find where the unit subheadings end and the traits/special rules/wargear begin
+        for indented_heading in ["  THE ", "  WARGEAR", " SPECIAL RULES"]:  # THE %SOMETHING% TRAIT or TYPE
+            was_split, unit_subheadings_text, non_unit_rules = split_on_header_line(wargear_list_and_on,
+                                                                                    indented_heading,
+                                                                                    True)
+            if was_split:
+                break
+
+        self.special_rules_text = non_unit_rules
+
+        # Now split at any of our after 2-column headers ("Options" and "Access points")
+        two_colum_section, after_2_col_section = self.split_subheadings_after_2_col_section(unit_subheadings_text)
+
+        # Wargear and special rules profiles will be indented
+        was_split, left_col, right_col = split_2_columns_at_right_header(two_colum_section, "SPECIAL RULES")
+        if not was_split:
+            print(f"Not a valid HH3 datasheet, there should be a * None Special Rules column")
+            return ""
+        unit_rules_text = "\n".join([name_and_comp, profiles, left_col, right_col, after_2_col_section])
+
+        return unit_rules_text
+
     def cleanup_unit_text(self, rules_text):
         """
         Take the rules text from the page and clean it up.
@@ -375,6 +431,15 @@ class PdfPage(Page):
             was_split, subheadings_text, subheading_content = split_at_header(header, subheadings_text)
             if was_split:
                 header_sections[header] = subheading_content
+        if self.game.SUBHEADINGS_AFTER_2_COL_ARE_2_COL:  # HH3 only right now, make "SPECIAL RULES" a parameter for generic
+            index = get_2nd_colum_index_from_header("SPECIAL RULES", subheadings_text)
+            if index is None:
+                print_styled("Could not find 'SPECIAL RULES' in: ", STYLES.RED)
+                print(subheadings_text)
+                exit()
+            for header in header_sections:
+                _, left, right, _ = split_into_columns_at_divider(header_sections[header], index, debug_print_level=0)
+                header_sections[header] = header + "\n" + left + "\n" + right # Header gets caught in non-col lines
         after_2_col_section = "\n".join([header_sections[header] for header in reversed(header_sections.keys())])
         return subheadings_text, after_2_col_section
 
@@ -395,7 +460,7 @@ class PdfPage(Page):
                 occurrence += 1
                 if occurrence < expected_occurrences:
                     continue
-                return True, "\n".join(lines[:prev_line_with_text+1]), "\n".join(lines[prev_line_with_text+1:])
+                return True, "\n".join(lines[:prev_line_with_text + 1]), "\n".join(lines[prev_line_with_text + 1:])
             if line.strip() != "":
                 prev_line_with_text = index
         return False, raw_text, ""

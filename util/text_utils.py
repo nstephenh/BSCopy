@@ -311,6 +311,7 @@ def split_into_columns_at_divider(text: str, divider_end, divider_start=None, de
 
     return (non_column_text, col_1_text, col_2_text, original_text)
 
+
 def split_2_columns_at_right_header(two_column_section, header) -> (bool, str, str):
     """
     Given text in a two-column format, split the text at the position of a header
@@ -338,6 +339,13 @@ def get_2nd_colum_index_from_header(header: str, two_column_section: str) -> int
 
 
 def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool, str, str):
+    """
+    Split DIRECTLY on a header index, including in the middle of a line.
+    :param header:
+    :param datasheet_text:
+    :param header_at_end_of_line: default true, expect header to be directly followed by a linebreak
+    :return: was_split, a, b
+    """
     if header_at_end_of_line:
         header = header + "\n"
     lower_half = ""
@@ -347,6 +355,21 @@ def split_at_header(header, datasheet_text, header_at_end_of_line=True) -> (bool
         datasheet_text = datasheet_text[:header_index]
         return True, datasheet_text, lower_half
     return False, datasheet_text, lower_half
+
+
+def split_on_header_line(raw_text, header, ignore_indent=True) -> (bool, str, str):
+    """
+    Split at a line starting with the header line, returning the line with the header.
+    :param raw_text:
+    :param header:
+    :param ignore_indent: Defaults to true, allowing the header to be indented. If passing our own indent, set to false.
+    :return: was_split, a, b(inclusive of header)
+    """
+    lines = raw_text.split("\n")
+    for index, line in enumerate(lines):
+        if line.startswith(header) or (ignore_indent and line.lstrip().startswith(header)):
+            return True, "\n".join(lines[:index]), "\n".join(lines[index:])
+    return False, raw_text, ""
 
 
 def split_after_header(raw_text, header):
@@ -409,6 +432,20 @@ def get_index_of_line_with_headers(text: str, in_order_headers: [str]):
                 line = line[line.index(header) + len(header):]
                 if header == in_order_headers[-1]:
                     return index
+
+
+def split_at_unindent(text) -> (bool, str, str):
+    """
+    Given a block of text that starts indented, split it when the indent becomes broken
+    :param text:
+    :return: was_split, a, b
+    """
+    lines = text.splitlines()
+    header_indent = get_line_indent(lines[0])
+    for i, line_text in enumerate(lines):
+        if line_text[:header_indent].strip() != "":
+            return True, "\n".join(lines[:i]), "\n".join(lines[i:])
+    return False, text, ""
 
 
 def un_justify(text, move_bullets=False):
