@@ -690,7 +690,7 @@ class Node:
                                                 }
                                                 )
             if cat_link is None:
-                errors.append(f"{category_node.name} is not linked")
+                errors.append(f"{category_node} is not linked")
                 continue
             correct_link_count += 1
         if existing_link_count > correct_link_count:
