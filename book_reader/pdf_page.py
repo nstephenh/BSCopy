@@ -336,7 +336,7 @@ class PdfPage(Page):
         _, upper_half, wargear_and_on = split_at_header("Wargear", upper_half, header_at_end_of_line=False)
 
         # Find the fist section after special rules
-        headers = self.game.UNIT_SUBHEADINGS[self.game.UNIT_SUBHEADINGS.index("Special Rules") + 1:]
+        headers = self.game.SUBHEADINGS_AFTER_2_COL_SECTION
         end_of_wargear_sr_bullets = text_utils.get_first_non_list_or_header_line(wargear_and_on, headers)
         lines = wargear_and_on.splitlines()
         if end_of_wargear_sr_bullets:  # Otherwise, there will be no options, access points, dedicated transport, etc

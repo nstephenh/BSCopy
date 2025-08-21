@@ -29,9 +29,16 @@ class Heresy3e(Game):
 
     DASHED_WEAPON_MODES = True
 
-    UNIT_SUBHEADINGS: list[str] = ["WARGEAR", "SPECIAL RULES",
-                                   "TRAITS", "TYPE",
+    UNIT_SUBHEADINGS: list[str] = ["WARGEAR",
+                                   "TRAITS",
+                                   "SPECIAL RULES",
+                                   "TYPE",
+                                   "OPTIONS",
+                                   "ACCESS POINTS"
                                    ]
+
+    SUBHEADINGS_AFTER_2_COL_SECTION: list[str] = ["OPTIONS",
+                                                  "ACCESS POINTS"]
 
     BATTLEFIELD_ROLES: list[str] = [
         "Warlord",

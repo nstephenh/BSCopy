@@ -40,6 +40,8 @@ class Game:
 
     UNIT_SUBHEADINGS: list[str] = []  # MUST BE IN ORDER
 
+    SUBHEADINGS_AFTER_2_COL_SECTION: list[str] = []  # MUST BE IN ORDER
+
     SUBHEADINGS_ON_SAME_LINE = False
 
     SUBHEADING_SEPARATORS: str = None  # Bullets, commas, or Commas and "and"

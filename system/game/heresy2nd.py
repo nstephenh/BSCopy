@@ -38,6 +38,8 @@ class Heresy2nd(Game):
                                    "Options:",
                                    "Options"]  # Check options both with and without colons.
 
+    SUBHEADINGS_AFTER_2_COL_SECTION = UNIT_SUBHEADINGS[UNIT_SUBHEADINGS.index("Special Rules") + 1:]
+
     SUBHEADINGS_ON_SAME_LINE = True
 
     DASHED_WEAPON_MODES = True
