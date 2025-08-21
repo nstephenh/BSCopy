@@ -333,7 +333,7 @@ def get_2nd_colum_index_from_header(header: str, two_column_section: str) -> int
     if header in two_column_section:
         sr_row_index = get_index_of_line_with_headers(two_column_section, [header])
         if header in two_column_section.splitlines()[sr_row_index]:
-            sr_col_index = two_column_section.splitlines()[sr_row_index].index("Special Rules")
+            sr_col_index = two_column_section.splitlines()[sr_row_index].index(header)
     return sr_col_index
 
 
