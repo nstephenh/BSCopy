@@ -4,6 +4,7 @@ from xml.etree import ElementTree as ET
 
 from book_reader.raw_entry import RawProfile, RawModel, RawUnit
 from system.constants import SystemSettingsKeys, SpecialRulesType
+from system.game.heresy3e import Heresy3e
 from util.element_util import get_tag, get_or_create_sub_element, get_sub_element
 from util.generate_util import find_comment_value
 from util.log_util import print_styled, STYLES
@@ -446,6 +447,8 @@ class Node:
         # TODO: Handle multiple profiles
 
     def set_force_org(self, raw_unit: 'RawUnit'):
+        if self.system.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
+            return
         category_links = self.get_or_create_child('categoryLinks')
         category_links.get_or_create_child('categoryLink',
                                            attrib={'targetId': '36c3-e85e-97cc-c503',
