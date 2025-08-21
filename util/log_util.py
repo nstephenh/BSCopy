@@ -21,7 +21,7 @@ def style_text(text, style: str or list[str] = STYLES.BOLD):
         for s in style:
             text = style_text(text, s)
         return text
-    return style + text + STYLES.END
+    return style + str(text) + STYLES.END
 
 
 def print_styled(text, style=STYLES.BOLD):
