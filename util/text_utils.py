@@ -361,13 +361,28 @@ def does_line_contain_header(line, headers, header_index=0):
     return False
 
 
-def get_index_of_line_with_headers(text, stagger_row_headers):
+def get_index_of_line_with_headers(text: str, in_order_headers: [str]):
+    """
+    Find the index of the line which contains at least the last header in the array.
+    If multiple headers are provided, the appearance must be in order.
+    ex: headers: ["a", "b", "c"] finds the following lines:
+        a b c
+        b c
+        c,
+    but if a or b come after c, we will not find c. ex:
+        c a ; (We ignore c because we trim the line after a first).
+    This is very useful for finding the line where a table starts, and if the array only has 1 parameter, 
+    it's essentially looking up a line with a specific header.
+    :param text:    text to get line index of header row.
+    :param in_order_headers: array of ordered headers.
+    :return:
+    """
     lines = text.splitlines()
     for index, line in enumerate(lines):
-        for header in stagger_row_headers:
+        for header in in_order_headers:
             if header in line:
                 line = line[line.index(header) + len(header):]
-                if header == stagger_row_headers[-1]:
+                if header == in_order_headers[-1]:
                     return index
 
 
