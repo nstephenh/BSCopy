@@ -380,8 +380,11 @@ class PdfPage(Page):
 
     def split_before_statline(self, raw_text, expected_occurrences=1) -> (bool, str, str):
         """
-        Split at the SECOND occurrence of a statline in a given block
+        Split at the occurrence of a statline in a given block. Will trim out blank lines.
         :param raw_text:
+        :param expected_occurrences:   set to 2, I can only assume, for tables which have the headers repeated
+                                        and you need the second occurrence.
+
         :return:
         """
         occurrence = 0
@@ -390,16 +393,16 @@ class PdfPage(Page):
         for index, line in enumerate(lines):
             if self.does_line_contain_profile_header(line):
                 occurrence += 1
-                if occurrence < 2:
+                if occurrence < expected_occurrences:
                     continue
-                return "\n".join(lines[:prev_line_with_text]), "\n".join(lines[prev_line_with_text:])
+                return True, "\n".join(lines[:prev_line_with_text]), "\n".join(lines[prev_line_with_text:])
             if line.strip() != "":
                 prev_line_with_text = index
-        return raw_text, ""
+        return False, raw_text, ""
 
     def process_unit(self, unit_text):
-        # print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
-        # print_styled(unit_text, STYLES.CYAN)
+        print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
+        print_styled(unit_text, STYLES.CYAN)
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
         points = None
