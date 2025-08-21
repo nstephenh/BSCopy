@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess as sp
 from typing import TYPE_CHECKING
 
@@ -83,6 +84,8 @@ class Book:
             prev_page_type = None
             page_offset = None  # Consider pulling default page offset from book json.
             for page_counter, page_text in tqdm(enumerate(pdf.split('')), unit="Pages"):
+                # Replace backspace characters with whitespace. This is appearing at ends of entries.
+                page_text = re.sub("", " ", page_text)
                 page_number = try_get_page_number(page_text)
                 if page_counter < 5 and page_offset is not None:  # Try getting page number for the first 5 pages.
                     page_offset = try_get_page_offset(page_text, page_counter)
