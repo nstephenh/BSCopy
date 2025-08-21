@@ -14,7 +14,7 @@ if __name__ == '__main__':
                             Actions.DUMP_TO_JSON,
                             # Actions.LOAD_SPECIAL_RULES,
                             Actions.LOAD_WEAPON_PROFILES,
-                            # Actions.LOAD_UNITS,
+                            Actions.LOAD_UNITS,
                         ],
                     })
     system.save_system()

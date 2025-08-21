@@ -328,10 +328,10 @@ class PdfPage(Page):
         was_split, unit_name, everything_but_name = split_on_header_line(self.raw_text, profile_locator)
         if not was_split:
             print(f"Could not split at {profile_locator}")
-            return ""  # If this datasheet doesn't have Unit composition, something is wrong
-        print("\n")
-        print(unit_name)
-        print(everything_but_name)
+            exit()
+            # If this datasheet doesn't have Unit composition,
+            # this is being called in the wrong context
+
         # Split at the stat lines.
 
         was_split, header_and_flavor, profiles_and_on = self.split_before_statline(everything_but_name)
@@ -439,7 +439,7 @@ class PdfPage(Page):
                 exit()
             for header in header_sections:
                 _, left, right, _ = split_into_columns_at_divider(header_sections[header], index, debug_print_level=0)
-                header_sections[header] = header + "\n" + left + "\n" + right # Header gets caught in non-col lines
+                header_sections[header] = header + "\n" + left + "\n" + right  # Header gets caught in non-col lines
         after_2_col_section = "\n".join([header_sections[header] for header in reversed(header_sections.keys())])
         return subheadings_text, after_2_col_section
 
@@ -468,6 +468,28 @@ class PdfPage(Page):
     def process_unit(self, unit_text):
         print_styled("Cleaned Unit Text:", STYLES.DARKCYAN)
         print_styled(unit_text, STYLES.CYAN)
+        if self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
+            unit = self.process_hh3_unit(unit_text)
+        else:
+            unit = self.process_hh2_unit(unit_text)
+        if unit:
+            self.process_unit_common(unit, unit_text)
+
+    def process_hh3_unit(self, unit_text):
+        # profile_locator should be the second line, and above that should be the unit name.
+        _, unit_name, everything_but_name = split_on_header_line(self.raw_text, self.game.ProfileLocator)
+        unit_name = unit_name.splitlines()[0].strip()  # Multiline names are subtitles, ignore the subtitle.
+        # For now assume no line wrapping
+        unit_comp_line = everything_but_name.splitlines()[0]
+        split_comp_line = unit_comp_line.strip().split(" ")
+        if split_comp_line[-1].lower() != "points":
+            print(f"Expected points in {unit_comp_line}")
+            return
+        points = split_comp_line[-2]
+
+        return RawUnit(name=unit_name, points=points, page=self)
+
+    def process_hh2_unit(self, unit_text):
         # First get the name, from what should hopefully be the first line in raw_unit
         unit_name = ""
         points = None
@@ -499,16 +521,20 @@ class PdfPage(Page):
             max_selections_of_unit = unit_name[:first_space][2]  # 3rd character should max
             unit_name = unit_name[first_space + 1:]
 
-        constructed_unit = RawUnit(name=unit_name, points=points, page=self)
+        raw_unit = RawUnit(name=unit_name, points=points, page=self)
         if max_selections_of_unit:
-            constructed_unit.max = int(max_selections_of_unit)
+            raw_unit.max = int(max_selections_of_unit)
 
         if self.game.FORCE_ORG_IN_FLAVOR:
             for line in self.flavor_text_col.splitlines():
                 if line.strip().isupper():
-                    constructed_unit.force_org = line.strip()
+                    raw_unit.force_org = line.strip()
 
                     break
+
+        return raw_unit
+
+    def process_unit_common(self, raw_unit: RawUnit, unit_text):
         names = []
         stats = []
         # Then, get the table out of the header.
@@ -555,7 +581,7 @@ class PdfPage(Page):
             name = ' '.join(name)
             raw_profile = RawModel(name=name, page=self, stats=dict(zip(unit_profile_headers + ['Note'],
                                                                         stats[index])), profile_type=unit_profile_type)
-            constructed_unit.model_profiles.append(raw_profile)
+            raw_unit.model_profiles.append(raw_profile)
 
         unit_text = "\n".join(lines[profiles_end:])
 
@@ -566,13 +592,13 @@ class PdfPage(Page):
                 header = header[:-1]  # Strip colon of the end of header for our cleaned data
             if was_split:
                 if content[len(header):].splitlines()[0].strip() == ":":
-                    constructed_unit.subheadings[header] = "\n".join(
+                    raw_unit.subheadings[header] = "\n".join(
                         content.splitlines()[1:])  # If we leave a colon behind on the name, strip it off
 
                 else:
-                    constructed_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
+                    raw_unit.subheadings[header] = content[len(header):]  # Cut the header label off.
 
-        self.units.append(constructed_unit)
+        self.units.append(raw_unit)
 
     def process_weapon_profiles(self):
         if not self.special_rules_text:

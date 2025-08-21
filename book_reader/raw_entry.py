@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from system.game.heresy3e import Heresy3e
 from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural
@@ -169,6 +170,17 @@ class RawUnit(HasOptionsMixin, RawEntry):
         return dict_to_return
 
     def process_subheadings(self):
+        if self.page.book.system.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT:
+            self.process_hh3_subheadings()
+        else:
+            self.process_hh2_subheadings()
+
+
+    def process_hh3_subheadings(self):
+        pass
+
+
+    def process_hh2_subheadings(self):
         # Set the default with unit composition.
         if "Unit Composition" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Composition").splitlines()):
