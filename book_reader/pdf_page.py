@@ -354,7 +354,7 @@ class PdfPage(Page):
         # print_styled("Upper Half without any special rules text", STYLES.GREEN)
         # print("\n".join(upper_half.splitlines() + wargear_and_on.splitlines()))
 
-        special_rules_list, wargear = split_2_columns_at_right_header(wargear_and_on, "Special Rules")
+        wargear, special_rules_list, = split_2_columns_at_right_header(wargear_and_on, "Special Rules")
 
         # Now lets put everything together:
         new_text = "\n".join(  # Add a newline between sections to ensure no overlap if table doesn't end in one.
