@@ -485,6 +485,7 @@ class Node:
             model_se.update_pub_and_page(raw_unit.page)
             model_se.set_model_profile(raw_model)
             model_se.set_constraints_from_object(raw_model)
+            model_se.set_rule_info_links(raw_model)
             model_se.set_wargear(raw_model)
             model_se.set_options(raw_model)
             model_se.set_types_and_subtypes(raw_model)
