@@ -177,7 +177,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
 
     def process_hh3_subheadings(self):
-        pass
+        if "TYPE" in self.subheadings:
+            for line in split_at_dot(self.subheadings.pop("TYPE").splitlines()):
+                self.process_unit_types(line)
 
 
     def process_hh2_subheadings(self):
