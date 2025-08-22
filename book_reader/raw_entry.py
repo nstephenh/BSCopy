@@ -184,12 +184,16 @@ class RawUnit(HasOptionsMixin, RawEntry):
         else:
             print("What's wrong with the dark emissary?")
             print(self.serialize())
+            return
 
         if "SPECIAL RULES" in self.subheadings:
             self.process_hh3_special_rules()
         else:
             print("What's wrong with the Chieftain Squad?")
             print(self.serialize())
+            return
+
+        self.process_wargear("WARGEAR")
 
     def process_hh3_special_rules(self):
         special_rules_list = self.subheadings.pop("SPECIAL RULES")
@@ -231,27 +235,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 model_profile.min = default_number
                 model_profile.max = default_number
 
-        if "Wargear" in self.subheadings:
-            for model in self.model_profiles:
-                for line in split_at_dot(self.subheadings["Wargear"].splitlines()):
-                    if "only)" in line:
-                        if model.name not in line:
-                            continue
-                        line = line.split("(")[0].strip()
-                    model.original_wargear.append(line)
-                    model.default_wargear.append(line)
-
-                # Check the special rules list for wargear in case it's not in the system.
-                # To avoid modifying the dict while iterating through
-                new_page_dict = dict(self.page.special_rules_dict)
-                for special_rule_name, text in self.page.special_rules_dict.items():
-                    if special_rule_name in model.original_wargear:
-                        new_page_dict.pop(special_rule_name)  # Move from the page to this unit
-                        model.wargear_descriptions[special_rule_name] = text
-                self.page.special_rules_dict = new_page_dict
-                for weapon in filter(lambda x: x.name in model.original_wargear, self.page_weapons):
-                    model.wargear_profiles.append(weapon)
-            self.subheadings.pop("Wargear")
+        self.process_wargear("Wargear")
 
         # Going through all the options also gets us the points per model we wil use later.
         if "Options" in self.subheadings:
@@ -285,6 +269,29 @@ class RawUnit(HasOptionsMixin, RawEntry):
         if "Unit Type" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Type").splitlines()):
                 self.process_unit_types(line)
+
+    def process_wargear(self, wargear_subheading):
+        if wargear_subheading in self.subheadings:
+            for model in self.model_profiles:
+                for line in split_at_dot(self.subheadings[wargear_subheading].splitlines()):
+                    if "only)" in line:
+                        if model.name not in line:
+                            continue
+                        line = line.split("(")[0].strip()
+                    model.original_wargear.append(line)
+                    model.default_wargear.append(line)
+
+                # Check the special rules list for wargear in case it's not in the system.
+                # To avoid modifying the dict while iterating through
+                new_page_dict = dict(self.page.special_rules_dict)
+                for special_rule_name, text in self.page.special_rules_dict.items():
+                    if special_rule_name in model.original_wargear:
+                        new_page_dict.pop(special_rule_name)  # Move from the page to this unit
+                        model.wargear_descriptions[special_rule_name] = text
+                self.page.special_rules_dict = new_page_dict
+                for weapon in filter(lambda x: x.name in model.original_wargear, self.page_weapons):
+                    model.wargear_profiles.append(weapon)
+            self.subheadings.pop(wargear_subheading)
 
     def get_profile_for_name(self, model_name):
         if model_name.endswith("*"):
