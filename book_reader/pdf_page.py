@@ -490,8 +490,16 @@ class PdfPage(Page):
             return
         points = split_comp_line[-2]
 
+        _, unit_composition, stats_and_subheaders = self.split_before_statline(everything_but_name)
+
         unit = RawUnit(name=unit_name, points=points, page=self)
-        self.process_unit_common(unit, unit_text)
+
+        unit_comp_first_line = unit_comp_line[
+                               len(self.game.ProfileLocator):unit_composition.index(f"{points} Points")
+                               ].strip()
+        unit.subheadings["UNIT COMPOSITION"] = "\n".join([unit_comp_first_line] + unit_composition.splitlines()[1:])
+
+        self.process_unit_common(unit, stats_and_subheaders)
 
     def process_hh2_unit(self, unit_text):
         # First get the name, from what should hopefully be the first line in raw_unit

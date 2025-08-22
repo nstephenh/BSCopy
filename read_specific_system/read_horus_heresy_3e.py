@@ -17,7 +17,7 @@ if __name__ == '__main__':
                             Actions.LOAD_UNITS,
                         ],
                     })
-    system.save_system()
+    # system.save_system()
     for error in system.errors:
         print(error)
     print(f"Error count: {len(system.errors)}")
