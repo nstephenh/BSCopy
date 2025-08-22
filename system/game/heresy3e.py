@@ -13,6 +13,14 @@ class Heresy3e(Game):
             {"raw": ["M", "WS", "BS", "S", "T", "W", "I", "A", "LD", "CL", "WP", "IN", "SAV", "INV"],
              "full": ["M", "WS", "BS", "S", "T", "W", "I", "A", "LD", "CL", "WP", "IN", "SAV", "INV"],
              },
+        "Vehicle":
+            {"raw": ["M", "BS", "Front", "Side", "Rear", "HP", "Capacity"],
+             "full": ["M", "BS", "Front Armour", "Side Armour", "Rear Armour", "HP", "Transport Capacity"],
+             },
+        "Knight":
+            {"raw": ["M", "WS", "BS", "Front", "Rear", "I", "A", "HP"],
+             "full": ["M", "WS", "BS", "Front", "Rear", "I", "A", "HP"],
+             },
     }
 
     MODEL_TYPE_CHARACTERISTIC = "Type"
