@@ -562,6 +562,8 @@ class PdfPage(Page):
         profile_index = -1
         lines = unit_text.split("\n")
         profiles_end = None
+        partial_row_is_start_of_row = self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT
+        previous_row_buffer = []
         for line_number, line in enumerate(lines):
             print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if self.does_line_contain_profile_header(line):
@@ -586,11 +588,16 @@ class PdfPage(Page):
             if in_table:
                 cells = line.split()
                 if len(cells) < num_data_cells:
-                    # partial row that's a continuation of a previous row
-                    names[profile_index] += cells
-                    continue
-                names.append(cells[:-num_data_cells])
+                    if partial_row_is_start_of_row:
+                        previous_row_buffer = cells
+                        continue
+                    else:
+                        # partial row that's a continuation of a previous row
+                        names[profile_index] += cells
+                        continue
+                names.append(previous_row_buffer + cells[:-num_data_cells])
                 stats.append(cells[-num_data_cells:])
+                previous_row_buffer = []  # Clear the buffer
                 profile_index += 1
 
         # rejoin stats and name components.
