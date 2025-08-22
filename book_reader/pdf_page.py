@@ -60,8 +60,8 @@ class PdfPage(Page):
             unit.page_weapons = self.weapons
             try:  # TODO Do want to delay this?
                 unit.process_subheadings()
-            except Exception as e:
-                print(e)
+            except Exception:
+                print_styled(f"Error processing {unit.name}", style=STYLES.RED)
                 print_styled(traceback.format_exc(), style=STYLES.RED)
 
     def try_handle_units(self):
@@ -565,7 +565,7 @@ class PdfPage(Page):
         partial_row_is_start_of_row = self.game.GAME_FORMAT_CONSTANT == Heresy3e.GAME_FORMAT_CONSTANT
         previous_row_buffer = []
         for line_number, line in enumerate(lines):
-            print(f"{line}, In Table: {in_table}, In Note: {in_note}")
+            # print(f"{line}, In Table: {in_table}, In Note: {in_note}")
             if self.does_line_contain_profile_header(line):
                 in_table = True
                 in_note = False  # Note has ended

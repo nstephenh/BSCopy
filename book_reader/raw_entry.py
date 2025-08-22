@@ -3,7 +3,8 @@ from typing import TYPE_CHECKING
 from system.game.heresy3e import Heresy3e
 from util import text_utils
 from util.log_util import STYLES, print_styled
-from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural
+from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural, \
+    split_at_header
 
 if TYPE_CHECKING:
     from book_reader.page import Page
@@ -25,6 +26,7 @@ class RawProfile(RawEntry):
         if special_rules:
             for rule in special_rules:
                 self.special_rules.append(rule.strip())
+        # hh2 only, but not a problem for hh3 because of different naming
         elif self.profile_type == "Weapon" and stats.get('Type'):
             self.special_rules = [rule.strip() for rule in stats.get('Type').split(',')[1:]]
 
@@ -175,12 +177,46 @@ class RawUnit(HasOptionsMixin, RawEntry):
         else:
             self.process_hh2_subheadings()
 
-
     def process_hh3_subheadings(self):
         if "TYPE" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("TYPE").splitlines()):
                 self.process_unit_types(line)
+        else:
+            print("What's wrong with the dark emissary?")
+            print(self.serialize())
 
+        if "SPECIAL RULES" in self.subheadings:
+            self.process_hh3_special_rules()
+        else:
+            print("What's wrong with the Chieftain Squad?")
+            print(self.serialize())
+
+    def process_hh3_special_rules(self):
+        special_rules_list = self.subheadings.pop("SPECIAL RULES")
+        special_rules_are_by_model = False
+        for model in self.model_profiles:
+            if model.name in special_rules_list:
+                special_rules_are_by_model = True
+                break
+
+        special_rules_lines = special_rules_list.splitlines()
+        if not special_rules_are_by_model:
+            self.special_rules = split_at_dot(special_rules_lines)
+            return
+
+        # Order in the special rules list will not always be the same as in the profiles, so get the order.
+        models_in_order = []
+        for line in special_rules_lines:
+            for model in self.model_profiles:
+                if model.name == line:
+                    models_in_order.append(model)
+
+        for model in reversed(models_in_order):
+            # print_styled(f"Splitting the following on {model.name}", STYLES.BLUE)
+            # print(special_rules_list)
+            _, special_rules_list, rules_for_model = split_at_header(model.name, special_rules_list)
+            model.special_rules = split_at_dot(rules_for_model[len(model.name):].splitlines())
+            # print(f"Set model special rules to {model.special_rules}")
 
     def process_hh2_subheadings(self):
         # Set the default with unit composition.
