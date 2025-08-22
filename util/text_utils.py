@@ -402,6 +402,8 @@ def does_line_contain_header(line, headers, header_index=0):
     if header_index >= len(headers):
         return True
     header_to_find = headers[header_index]
+    if header_to_find == "WP" and header_to_find not in line:
+        header_to_find = "WL"  # HH3 hotfix for the legacies document
     if header_to_find in line:
         # print(f"Found {header_to_find} in {line}")
         line = line[line.index(header_to_find):]
