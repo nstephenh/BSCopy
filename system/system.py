@@ -363,11 +363,20 @@ class System:
 
         # Then create any we couldn't find
         print_styled(f"\t\t\tCreating unit in {raw_unit.page.target_system_file.name}", STYLES.GREEN)
-        return raw_unit.page.target_system_file.get_or_create_shared_node('selectionEntry',
+        highest_index = 0
+        for existing_unit in raw_unit.page.target_system_file.root_node.get_child('sharedSelectionEntries').children:
+            index = int(existing_unit.attrib.get('sortIndex', 0))
+            if index > highest_index:
+                highest_index = index
+
+        unit = raw_unit.page.target_system_file.get_or_create_shared_node('selectionEntry',
                                                                           attrib={
                                                                               'name': raw_unit.name,
                                                                               'type': 'unit',
                                                                           })
+        if highest_index:
+            unit.attrib['sortIndex'] = str(highest_index+1)
+        return unit
 
     def get_duplicates(self) -> dict[str, list['Node']]:
         duplicate_groups = {}
