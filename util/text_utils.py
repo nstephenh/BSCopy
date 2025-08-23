@@ -39,6 +39,9 @@ def split_at_dash(line):
 
 
 def remove_plural(model_name):
+    if " with " in model_name:
+        components = model_name.split(" with ") # Ravagers with jump packs
+        return remove_plural(components[0]) + " with " + remove_plural(components[1])
     if model_name.endswith('naires'):
         return model_name.replace('naires', 'ary')
     if model_name.endswith('s'):
@@ -47,6 +50,9 @@ def remove_plural(model_name):
 
 
 def make_plural(model_name):
+    if " with " in model_name:
+        components = model_name.split(" with ")  # Ravagers with jump packs
+        return make_plural(components[0]) + " with " + make_plural(components[1])
     if model_name.endswith('s'):
         return model_name
     if model_name.endswith('y'):
