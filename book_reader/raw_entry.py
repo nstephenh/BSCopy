@@ -226,14 +226,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
         # Set the default with unit composition.
         if "Unit Composition" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Composition").splitlines()):
-                first_space = line.index(' ')
-                default_number = int(line[:first_space])
-                model_name = line[first_space:].strip()
-                model_profile = self.get_profile_for_name(model_name)
-                if model_profile is None:
-                    return
-                model_profile.min = default_number
-                model_profile.max = default_number
+                self.set_default_composition_from_text_line(line)
 
         self.process_wargear("Wargear")
 
@@ -269,6 +262,15 @@ class RawUnit(HasOptionsMixin, RawEntry):
         if "Unit Type" in self.subheadings:
             for line in split_at_dot(self.subheadings.pop("Unit Type").splitlines()):
                 self.process_unit_types(line)
+
+    def set_default_composition_from_text_line(self, line):
+        first_space = line.index(' ')
+        default_number = int(line[:first_space])
+        model_name = line[first_space:].strip()
+        model_profile = self.get_profile_for_name(model_name)
+        if model_profile is not None:
+            model_profile.min = default_number
+            model_profile.max = default_number
 
     def process_wargear(self, wargear_subheading):
         if wargear_subheading in self.subheadings:
