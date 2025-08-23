@@ -335,28 +335,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
                 if name.startswith("Up to"):
                     additional_models_str = name.split('Up to')[1].split('additional')[0].strip()
-                    if "additional " in additional_models_str:
-                        model_name = name.split('additional ')[1]
-                    else:
-                        words = additional_models_str.split(" ")
-                        additional_models_str = words[0]
-                        model_name = " ".join(words[1:])
-                    if additional_models_str.isdigit():
-                        additional_models = int(additional_models_str)
-                    else:
-                        additional_models = text_utils.number_word_to_int(additional_models_str)
-
-                    # print(f"{model_name} x{additional_models} at {pts} each")
-                    profile = self.get_profile_for_name(model_name)
-                    if profile is None:
-                        continue  # get_profile_for_name will have added the error.
-                    profile.pts = pts
-                    if profile.max is None:
-                        profile.max = 0  # Start at 0 if these models aren't necessarily additional.
-                    profile.max += additional_models
-                    if profile.min:
-                        # Reduce the points cost of the unit by the cost of each required model
-                        self.points -= (profile.pts * profile.min)
+                    self.set_max_and_pts_from_line(additional_models_str, name, pts)
             return  # this section was points per model options, so we don't need to generate an options group.
 
         option_group = OptionGroup(title=option_title)
@@ -420,6 +399,29 @@ class RawUnit(HasOptionsMixin, RawEntry):
             model.option_groups.append(option_group)
         if len(option_models) == 0 and len(option_group.options):
             self.option_groups.append(option_group)
+
+    def set_max_and_pts_from_line(self, additional_models_str, name, pts):
+        if "additional " in additional_models_str:
+            model_name = name.split('additional ')[1]
+        else:
+            words = additional_models_str.split(" ")
+            additional_models_str = words[0]
+            model_name = " ".join(words[1:])
+        if additional_models_str.isdigit():
+            additional_models = int(additional_models_str)
+        else:
+            additional_models = text_utils.number_word_to_int(additional_models_str)
+        print(f"{model_name} x{additional_models} at {pts} each")
+        profile = self.get_profile_for_name(model_name)
+        if profile is None:
+            return
+        profile.pts = pts
+        if profile.max is None:
+            profile.max = 0  # Start at 0 if these models aren't necessarily additional.
+        profile.max += additional_models
+        if profile.min:
+            # Reduce the points cost of the unit by the cost of each required model
+            self.points -= (profile.pts * profile.min)
 
     def process_unit_types(self, line):
         model_name = None
