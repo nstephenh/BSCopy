@@ -18,6 +18,8 @@ class PdfPage(Page):
     def __init__(self, book, raw_text, page_number, file_page_number, prev_page_type=None):
         super().__init__(book, page_number, file_page_number)
         self.raw_text = text_utils.replace_quote_alikes(raw_text)
+        self.raw_text = self.raw_text.replace("\ue536", "1")  # This seems to be something odd in hh3
+        self.raw_text = self.raw_text.replace("\ue537", "2")  # This as well
         self.raw_text = text_utils.remove_copyright_footer(self.raw_text)
         self.cleaned_text = None
         self.faq_entries = []
