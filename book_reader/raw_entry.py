@@ -75,7 +75,7 @@ class RawModel(HasOptionsMixin, RawProfile):
         self.wargear_profiles: [RawProfile] = []
         self.unit_type_text: str = ""  # We use this as part of heresy characteristics
         self.type_and_subtypes: [str] = []
-        self.pts = None
+        self.pts = 0
         self.errors: [str] = []
 
     def serialize(self):
@@ -193,7 +193,41 @@ class RawUnit(HasOptionsMixin, RawEntry):
             print(self.serialize())
             return
 
+        self.process_hh3_unit_composition()
+
         self.process_wargear("WARGEAR")
+
+    def process_hh3_unit_composition(self):
+        unit_comp_text = self.subheadings.pop("UNIT COMPOSITION")
+        unit_comp_sections = []
+
+        if "•" in unit_comp_text:
+            unit_comp_sections = split_at_dot(unit_comp_text.splitlines())
+            base_comp_line = unit_comp_sections.pop(0)
+        else:
+            base_comp_line = unit_comp_text
+
+        for line in base_comp_line.split(","):
+            self.set_default_composition_from_text_line(line)
+
+        for option in unit_comp_sections:
+            print(option)
+            if " +" in option:
+                pts = int(option.split(" +")[1].split(" ")[0])
+                option = option.split(" +")[0]
+                if option.endswith(" at"):
+                    option = option[:-3]
+                if option.endswith(" for"):
+                    option = option[:-4]
+            elif " for Free" in option:
+                pts = 0
+                option = option.split(" for Free")[0]
+            else:
+                self.errors.append(f"Could not understand cost of {option}")
+                continue
+            if option.startswith("May include "):
+                additional_models_str = option.split('up to')[1].split('additional')[0].strip()
+                self.set_max_and_pts_from_line(additional_models_str, option, pts)
 
     def process_hh3_special_rules(self):
         special_rules_list = self.subheadings.pop("SPECIAL RULES")
@@ -264,6 +298,8 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 self.process_unit_types(line)
 
     def set_default_composition_from_text_line(self, line):
+        line = line.strip()
+        print(line)
         first_space = line.index(' ')
         default_number = int(line[:first_space])
         model_name = line[first_space:].strip()
@@ -298,7 +334,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
     def get_profile_for_name(self, model_name):
         if model_name.endswith("*"):
             model_name = model_name[:-1]
-            self.errors.append("{model_name} has an asterisk! What does it mean?!?")
+            self.errors.append(f"{model_name} has an asterisk! What does it mean?!?")
         model_name_options = [model_name, remove_plural(model_name), make_plural(model_name)]
         model_profile = None
         for option in model_name_options:
@@ -333,8 +369,8 @@ class RawUnit(HasOptionsMixin, RawEntry):
         if "may include" in option_title or ("may take" in option_title and "additional" in line):
             for option in options:
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
-                if name.startswith("Up to"):
-                    additional_models_str = name.split('Up to')[1].split('additional')[0].strip()
+                if name.startswith("up to"):
+                    additional_models_str = name.split('up to')[1].split('additional')[0].strip()
                     self.set_max_and_pts_from_line(additional_models_str, name, pts)
             return  # this section was points per model options, so we don't need to generate an options group.
 
