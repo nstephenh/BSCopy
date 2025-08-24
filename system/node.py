@@ -536,14 +536,12 @@ class Node:
                                  }
         if minimum is not None and minimum > 0:
             constraints_el.get_or_create_child('constraint',
-
                                                attrib={'type': 'min',
                                                        'value': minimum,
                                                        } | constraint_attributes,
                                                )
         if maximum is not None:
             constraints_el.get_or_create_child('constraint',
-
                                                attrib={'type': 'max',
                                                        'value': maximum,
                                                        } | constraint_attributes,
