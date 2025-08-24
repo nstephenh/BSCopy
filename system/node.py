@@ -308,6 +308,19 @@ class Node:
                 return True
         return False
 
+    def get_descendants_with(self, condition_function: Callable[['Node'], bool]):
+        """
+        Depth-first search to find if a child fulfils a particular condition.
+        :param condition_function:
+        :return:
+        """
+        matching_nodes = []
+        for child in self.children:
+            if condition_function(child):
+                matching_nodes.append(child)
+            matching_nodes += child.get_descendants_with(condition_function)
+        return matching_nodes
+
     @property
     def is_wargear_link(self):
         if not self.is_link():
