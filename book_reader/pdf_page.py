@@ -66,6 +66,8 @@ class PdfPage(Page):
                 print_styled(f"Error processing {unit.name}", style=STYLES.RED)
                 print_styled(traceback.format_exc(), style=STYLES.RED)
 
+                exit()
+
     def try_handle_units(self):
         if self.book.system.game.ProfileLocator in self.raw_text:
             self.get_text_units()
@@ -340,7 +342,6 @@ class PdfPage(Page):
             # this is being called in the wrong context
 
         # Split at the stat lines.
-
         was_split, header_and_flavor, profiles_and_on = self.split_before_statline(everything_but_name)
         if not was_split:
             print(f"Could not find any statlines")
@@ -490,7 +491,7 @@ class PdfPage(Page):
         if split_comp_line[-1].lower() != "points":
             print(f"Expected points in {unit_comp_line}")
             return
-        points = split_comp_line[-2]
+        points = int(split_comp_line[-2])
 
         _, unit_composition, stats_and_subheaders = self.split_before_statline(everything_but_name)
 

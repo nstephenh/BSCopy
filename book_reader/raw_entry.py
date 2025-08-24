@@ -226,8 +226,25 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 self.errors.append(f"Could not understand cost of {option}")
                 continue
             if option.startswith("May include "):
-                additional_models_str = option.split('up to')[1].split('additional')[0].strip()
+                additional_models_str = option.split(' up to ')[1].split(' additional ')[0].strip()
                 self.set_max_and_pts_from_line(additional_models_str, option, pts)
+            if option.startswith("This Model may be replaced with"):
+                additional_models_str = option.split("may be replaced with ")[1]
+                words = additional_models_str.split(" ")
+                model_name = " ".join(words[1:])  # Split off the number 1
+                profile = self.get_profile_for_name(model_name)
+                if profile is None:
+                    continue
+                profile.pts = pts
+                profile.max = 1
+                profile.min = 0
+                if len(self.model_profiles) == 2:
+                    for other_profile in self.model_profiles:
+                        if profile == other_profile:
+                            continue
+                        other_profile.min = 0
+                        other_profile.max = 1
+                        self.errors.append(f"Needs replace by constraints and default set to {other_profile.name}")
 
     def process_hh3_special_rules(self):
         special_rules_list = self.subheadings.pop("SPECIAL RULES")
