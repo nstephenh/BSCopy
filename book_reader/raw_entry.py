@@ -211,7 +211,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
             self.set_default_composition_from_text_line(line)
 
         for option in unit_comp_sections:
-            print(option)
+            # print(option)
             if " +" in option:
                 pts = int(option.split(" +")[1].split(" ")[0])
                 option = option.split(" +")[0]
@@ -316,7 +316,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
     def set_default_composition_from_text_line(self, line):
         line = line.strip()
-        print(line)
+        # print(line)
         first_space = line.index(' ')
         default_number = int(line[:first_space])
         model_name = line[first_space:].strip()
@@ -464,7 +464,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
             additional_models = int(additional_models_str)
         else:
             additional_models = text_utils.number_word_to_int(additional_models_str)
-        print(f"{model_name} x{additional_models} at {pts} each")
+        # print(f"{model_name} x{additional_models} at {pts} each")
         profile = self.get_profile_for_name(model_name)
         if profile is None:
             return
