@@ -331,7 +331,7 @@ class System:
         node = self.get_or_create_unit(raw_unit)
         if node is None:  # May be null if there are two instances of the unit in the target file.
             return
-        print(raw_unit.serialize())
+        # print(raw_unit.serialize())
         node.update_pub_and_page(raw_unit.page)
         node.set_force_org(raw_unit)
         node.set_cost(raw_unit.points)

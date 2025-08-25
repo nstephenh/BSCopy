@@ -230,8 +230,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                         # Melta bombs [selected for it] for +5 Points.
                         options_text_list = [selected_for_it_split[0].rstrip() + selected_for_it_split[1].rstrip()]
                     else:
-                        print(f"Expected 'selected for it' in '{line}'")
-                        exit(1)
+                        self.errors.append(f"Expected 'selected for it' in '{line}'")
                 if option_title:
                     from_wargear_list, option_group, option_models, default_options = self.setup_option_group(
                         option_title, [])
