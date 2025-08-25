@@ -119,6 +119,7 @@ class OptionGroup:
         self.max = 1
         self.min = 0
         self.options: [Option] = []
+        self.max_shared = False
 
     def remove(self, name):
         # Get all options that don't have a name equal to the existing option.
@@ -492,13 +493,19 @@ class RawUnit(HasOptionsMixin, RawEntry):
         option_group.max = 1
         if "and/or" in option_title or "up to two" in option_title:
             option_group.max = 2
+        if "Up to two" in option_title and "in this unit may each" in option_title:
+            option_group.max_shared = True
+            self.errors.append(f"Shared on model level not yet implemented for {option_title}")
+
         option_models = []  # Temporary list of models that this option group applies to.
         for model in self.model_profiles:
             model_name = model.name
             if "this model" in option_title.lower():
                 option_models.append(model)
-            if "any model" in option_title.lower() or \
-                    (not option_title.startswith("One") and model_name in option_title):
+            if "any model" in option_title.lower() or model_name in option_title:
+                if option_title.startswith("One"):
+                    option_group.max_shared = True
+                    self.errors.append(f"Shared on model level not yet implemented for {option_title}")
                 # If the option is a "One model may" we leave this on the unit
                 option_models.append(model)
         # if len(option_models) > 0:
