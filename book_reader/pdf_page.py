@@ -360,7 +360,8 @@ class PdfPage(Page):
         non_unit_rules = ""
         was_split = False
         for level_of_spacing in range(2, 4):  # 2 or 3 spaces:
-            for indented_heading in ["THE ", "WARGEAR", "SPECIAL RULES"]:  # THE %SOMETHING% TRAIT or TYPE
+            for indented_heading in ["THE ", "WARGEAR", "SPECIAL RULES", # THE %SOMETHING% TRAIT or TYPE
+                                     "Arlatax Weapons"]:
                 indented_heading = level_of_spacing * " " + indented_heading
                 was_split, unit_subheadings_text, non_unit_rules = split_on_header_line(wargear_list_and_on,
                                                                                         indented_heading,
