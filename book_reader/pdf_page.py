@@ -3,12 +3,12 @@ import traceback
 from book_reader.constants import PageTypes
 from book_reader.page import Page
 from book_reader.raw_entry import RawUnit, RawProfile, RawModel
-from system.game.game import Game
 from import_scripts.text_to_rules import text_to_rules_dict
+from system.game.game import Game
 from system.game.heresy3e import Heresy3e
 from util import text_utils
 from util.log_util import STYLES, print_styled
-from util.text_utils import split_into_columns, split_at_header, split_after_header, get_line_indent, split_at_unindent, \
+from util.text_utils import split_into_columns, split_at_header, split_after_header, split_at_unindent, \
     un_justify, split_on_header_line, split_2_columns_at_right_header, get_2nd_colum_index_from_header, \
     split_into_columns_at_divider
 
@@ -439,6 +439,7 @@ class PdfPage(Page):
             was_split, subheadings_text, subheading_content = split_at_header(header, subheadings_text)
             if was_split:
                 header_sections[header] = subheading_content
+
         if self.game.SUBHEADINGS_AFTER_2_COL_ARE_2_COL:  # HH3 only right now, make "SPECIAL RULES" a parameter for generic
             index = get_2nd_colum_index_from_header("SPECIAL RULES", subheadings_text)
             if index is None:
@@ -447,7 +448,8 @@ class PdfPage(Page):
                 exit()
             for header in header_sections:
                 _, left, right, _ = split_into_columns_at_divider(header_sections[header], index, debug_print_level=0)
-                header_sections[header] = header + "\n" + left + "\n" + right  # Header gets caught in non-col lines
+                if left.strip() != "":
+                    header_sections[header] = header + "\n" + left + "\n" + right  # Header gets caught in non-col lines
         after_2_col_section = "\n".join([header_sections[header] for header in reversed(header_sections.keys())])
         return subheadings_text, after_2_col_section
 
