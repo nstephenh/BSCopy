@@ -203,14 +203,14 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
         if "OPTIONS" in self.subheadings:
             option_groups_text = self.subheadings.pop("OPTIONS")
-            print_styled(f"Option Groups on {self.name}", STYLES.CYAN)
-            print_styled(option_groups_text, STYLES.PURPLE)
+            # print_styled(f"Option Groups on {self.name}", STYLES.CYAN)
+            # print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
                 # First check to see if this is an option group like HH2 with a colon and dots.
                 if self.process_option_group(line, do_not_apply_error=True):
                     continue
                 # If not, then it's a line referencing either "this model" or "This model name"
-                print(line)
+                # print(line)
                 option_title = None
                 options_text_list = []
                 if "exchanged for" in line:  # Some number of options
@@ -241,11 +241,11 @@ class RawUnit(HasOptionsMixin, RawEntry):
                         self.errors.append(f"Exchange was not applied on {option_title}")
                     options_text_list = default_options + options_text_list
 
-                    print(f"Option Group: {option_title}")
-                    print(f"\tModels: {[model.name for model in option_models]}")
-                    print(f"\tSelections: {options_text_list}")
+                    # print(f"Option Group: {option_title}")
+                    # print(f"\tModels: {[model.name for model in option_models]}")
+                    # print(f"\tSelections: {options_text_list}")
                     for option in options_text_list:
-                        print(f"\t\t{option}")
+                        # print(f"\t\t{option}")
                         name = option
                         pts = 0
                         default = False
@@ -262,7 +262,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                         if name.startswith("one "):
                             name = name[4:]
                         option_group.options.append(Option(name=name.strip(), pts=pts, default=default))
-                    print(option_group.serialize())
+                    # print(option_group.serialize())
                     for model in option_models:
                         model.option_groups.append(option_group)
                     if len(option_models) == 0 and len(option_group.options):
@@ -270,7 +270,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 else:
                     self.errors.append(f"Could not process option '{line}'.")
 
-        print(self.errors)
+        # print(self.errors)
 
     def process_hh3_unit_composition(self):
         unit_comp_text = self.subheadings.pop("UNIT COMPOSITION")
