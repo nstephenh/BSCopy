@@ -495,7 +495,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
         option_models = []  # Temporary list of models that this option group applies to.
         for model in self.model_profiles:
             model_name = model.name
-            if "Any model" in option_title or \
+            if "this model" in option_title.lower():
+                option_models.append(model)
+            if "any model" in option_title.lower() or \
                     (not option_title.startswith("One") and model_name in option_title):
                 # If the option is a "One model may" we leave this on the unit
                 option_models.append(model)
