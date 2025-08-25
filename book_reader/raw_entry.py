@@ -101,13 +101,16 @@ class RawModel(HasOptionsMixin, RawProfile):
 
 
 class Option:
-    def __init__(self, name, pts=0):
+    def __init__(self, name, pts=0, default=False):
         self.name = name
         self.pts = pts
-        self.default = False  # Not yet implemented
+        self.default = default  # Not yet implemented
 
     def serialize(self):
-        return {"Name": self.name, "pts": self.pts}
+        as_dict = {"Name": self.name, "pts": self.pts}
+        if self.default:
+            as_dict["Default"] = self.default
+        return as_dict
 
 
 class OptionGroup:
@@ -199,10 +202,74 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
         if "OPTIONS" in self.subheadings:
             option_groups_text = self.subheadings.pop("OPTIONS")
-            # print_styled(f"Option Groups on {self.name}", STYLES.CYAN)
-            # print_styled(option_groups_text, STYLES.PURPLE)
+            print_styled(f"Option Groups on {self.name}", STYLES.CYAN)
+            print_styled(option_groups_text, STYLES.PURPLE)
             for line in split_at_dot(option_groups_text.splitlines()):
-                self.process_option_group(line)
+                # First check to see if this is an option group like HH2 with a colon and dots.
+                if self.process_option_group(line, do_not_apply_error=True):
+                    continue
+                # If not, then it's a line referencing either "this model" or "This model name"
+                print(line)
+                option_title = None
+                options_text_list = []
+                if "exchanged for" in line:  # Some number of options
+                    option_title = line.split("exchanged for ")[0] + "exchanged for "
+                    options_as_text = line.split("exchanged for ")[1]
+                    for text_opt in options_as_text.split(", "):
+                        if " or " in text_opt:
+                            options_text_list += text_opt.split(" or ")
+                        else:
+                            options_text_list.append(text_opt)
+
+                elif "may have" in line:  # Only 1 option
+                    option_title = line
+                    options_as_text = line.split("may have")[1]
+                    if "selected for it" in line:
+                        selected_for_it_split = options_as_text.split("selected for it")
+                        # Melta bombs [selected for it] for +5 Points.
+                        options_text_list = [selected_for_it_split[0].rstrip() + selected_for_it_split[1].rstrip()]
+                    else:
+                        print(f"Expected 'selected for it' in '{line}'")
+                        exit(1)
+                if option_title:
+                    from_wargear_list, option_group, option_models, default_options = self.setup_option_group(
+                        option_title, [])
+                    if from_wargear_list:
+                        option_group.min = option_group.max
+                    if "exchange" in option_title and len(default_options) == 0:
+                        self.errors.append(f"Exchange was not applied on {option_title}")
+                    options_text_list = default_options + options_text_list
+
+                    print(f"Option Group: {option_title}")
+                    print(f"\tModels: {[model.name for model in option_models]}")
+                    print(f"\tSelections: {options_text_list}")
+                    for option in options_text_list:
+                        print(f"\t\t{option}")
+                        name = option
+                        pts = 0
+                        default = False
+                        if option.endswith(" ... "):
+                            name = option[:-5]
+                            pts = 0
+                            default = True
+                        elif "for +" in option:
+                            name, pts_str = option.split("for +")
+                            if "each" in pts_str:
+                                self.errors.append(
+                                    f"The option '{name}' may need a 'multiply by number of models' modifier")
+                            pts = int(pts_str.split(" Points")[0])
+                        if name.startswith("one "):
+                            name = name[4:]
+                        option_group.options.append(Option(name=name.strip(), pts=pts, default=default))
+                    print(option_group.serialize())
+                    for model in option_models:
+                        model.option_groups.append(option_group)
+                    if len(option_models) == 0 and len(option_group.options):
+                        self.option_groups.append(option_group)
+                else:
+                    self.errors.append(f"Could not process option '{line}'.")
+
+        print(self.errors)
 
     def process_hh3_unit_composition(self):
         unit_comp_text = self.subheadings.pop("UNIT COMPOSITION")
@@ -380,16 +447,17 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 # raise Exception(error_message)
         return model_profile
 
-    def process_option_group(self, line):
+    def process_option_group(self, line, do_not_apply_error=False):
         if ":" not in line:
-            self.errors.append(f"{line} is not an option group, there could be invisible text on the page")
+            if not do_not_apply_error:
+                self.errors.append(f"{line} is not an option group, there could be invisible text on the page")
             return
         first_colon = line.index(":")
         option_title = line[:first_colon] + ":"
         options = split_at_dash(line[first_colon + 1:])
         # print(option_title)
 
-        # This is an "additional models" line
+        # This is an "additional models" line, not relevant for hh3.
         if "may include" in option_title or ("may take" in option_title and "additional" in line):
             for option in options:
                 name, pts = option_process_line(option)  # set points, don't do anything with entries
@@ -429,7 +497,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
             model_name = model.name
             if "Any model" in option_title or \
                     (not option_title.startswith("One") and model_name in option_title):
-                # If the option is a "One model may" we leave this on the
+                # If the option is a "One model may" we leave this on the unit
                 option_models.append(model)
         # if len(option_models) > 0:
         # print(f"\tApplies to {', '.join([model.name for model in option_models])}")
@@ -441,7 +509,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 wargear_removed_by_this_option = []
                 for wargear in model.original_wargear:
                     # Default wargear shouldn't have 'and' in it, so we can pull straight from the list.
-                    if wargear in option_title:
+                    if wargear.lower() in option_title.lower():
                         wargear_removed_by_this_option.append(wargear)
                 for wargear in wargear_removed_by_this_option:
                     if wargear not in model.default_wargear:
