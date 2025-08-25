@@ -40,6 +40,7 @@ def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None):
     attrib_path_str = "{*}" + tag  # Any namespace
     if attrib:
         for key, value in attrib.items():
+            value = value.replace("'", "&apos;")  # Handling for single apostrophe
             attrib_path_str += f"[@{key}='{value}']"
     else:
         attrib = {}
