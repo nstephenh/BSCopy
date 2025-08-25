@@ -398,14 +398,33 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     self.set_max_and_pts_from_line(additional_models_str, name, pts)
             return  # this section was points per model options, so we don't need to generate an options group.
 
-        option_group = OptionGroup(title=option_title)
+        from_wargear_list, option_group, option_models, options = self.setup_option_group(option_title, options)
+        defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
 
+        # Read name and points from the source text
+        for option in options:
+            # print("Option:", option)
+            if option.strip() == "":
+                continue
+            name, pts = option_process_line(option)
+            if line.endswith(" each"):
+                self.errors.append(f"The option '{name}' may need a 'multiply by number of models' modifier")
+            # print(f"\t\t{name} for {pts} pts{defaulted_message}")
+            defaulted_message = ""  # Clear our defaulted message now that we've shown it.
+            option_group.options.append(Option(name=name, pts=pts))
+
+        for model in option_models:
+            model.option_groups.append(option_group)
+        if len(option_models) == 0 and len(option_group.options):
+            self.option_groups.append(option_group)
+        return True
+
+    def setup_option_group(self, option_title, options):
+        option_group = OptionGroup(title=option_title)
         option_group.max = 1
         if "and/or" in option_title or "up to two" in option_title:
             option_group.max = 2
-
         option_models = []  # Temporary list of models that this option group applies to.
-
         for model in self.model_profiles:
             model_name = model.name
             if "Any model" in option_title or \
@@ -414,9 +433,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 option_models.append(model)
         # if len(option_models) > 0:
         # print(f"\tApplies to {', '.join([model.name for model in option_models])}")
-
         from_wargear_list = False  # If the first entry is from the wargear list, and thus the default
-
         if "exchange" in option_title:
             # For wargear that gets exchanged, remove it from the default wargear, and add it to this list.
             add_to_options_list = []
@@ -441,24 +458,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                 from_wargear_list = True  # use this to set the default
         elif "up to" in option_title:
             option_group.min = 0
-        defaulted_message = ", default (from wargear list)" if from_wargear_list else ""
-
-        # Read name and points from the source text
-        for option in options:
-            # print("Option:", option)
-            if option.strip() == "":
-                continue
-            name, pts = option_process_line(option)
-            if line.endswith(" each"):
-                self.errors.append(f"The option '{name}' may need a 'multiply by number of models' modifier")
-            # print(f"\t\t{name} for {pts} pts{defaulted_message}")
-            defaulted_message = ""  # Clear our defaulted message now that we've shown it.
-            option_group.options.append(Option(name=name, pts=pts))
-
-        for model in option_models:
-            model.option_groups.append(option_group)
-        if len(option_models) == 0 and len(option_group.options):
-            self.option_groups.append(option_group)
+        return from_wargear_list, option_group, option_models, options
 
     def set_max_and_pts_from_line(self, additional_models_str, name, pts):
         if "additional " in additional_models_str:
