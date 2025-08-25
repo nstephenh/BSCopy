@@ -197,6 +197,13 @@ class RawUnit(HasOptionsMixin, RawEntry):
 
         self.process_wargear("WARGEAR")
 
+        if "OPTIONS" in self.subheadings:
+            option_groups_text = self.subheadings.pop("OPTIONS")
+            # print_styled(f"Option Groups on {self.name}", STYLES.CYAN)
+            # print_styled(option_groups_text, STYLES.PURPLE)
+            for line in split_at_dot(option_groups_text.splitlines()):
+                self.process_option_group(line)
+
     def process_hh3_unit_composition(self):
         unit_comp_text = self.subheadings.pop("UNIT COMPOSITION")
         unit_comp_sections = []

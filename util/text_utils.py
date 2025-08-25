@@ -40,7 +40,7 @@ def split_at_dash(line):
 
 def remove_plural(model_name):
     if " with " in model_name:
-        components = model_name.split(" with ") # Ravagers with jump packs
+        components = model_name.split(" with ")  # Ravagers with jump packs
         return remove_plural(components[0]) + " with " + remove_plural(components[1])
     if model_name.endswith('naires'):
         return model_name.replace('naires', 'ary')
@@ -108,7 +108,10 @@ def cleanup_disallowed_bs_characters(in_str):
 
 
 def option_process_line(line):
-    name = line[:line.index('.')].strip()
+    if "�" in line:  # HH3 legacies doc
+        name = line[:line.index('�')].strip()
+    else:
+        name = line[:line.index('.')].strip()
     pts = 0
     try:
         pts_string = line[line.index('+') + 1:]
