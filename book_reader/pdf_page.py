@@ -357,10 +357,16 @@ class PdfPage(Page):
 
         # Anything after the subheadings will be indented (2 spaces, at least so far)
         # Find where the unit subheadings end and the traits/special rules/wargear begin
-        for indented_heading in ["  THE ", "  WARGEAR", " SPECIAL RULES"]:  # THE %SOMETHING% TRAIT or TYPE
-            was_split, unit_subheadings_text, non_unit_rules = split_on_header_line(wargear_list_and_on,
-                                                                                    indented_heading,
-                                                                                    True)
+        non_unit_rules = ""
+        was_split = False
+        for level_of_spacing in range(2, 4):  # 2 or 3 spaces:
+            for indented_heading in ["THE ", "WARGEAR", "SPECIAL RULES"]:  # THE %SOMETHING% TRAIT or TYPE
+                indented_heading = level_of_spacing * " " + indented_heading
+                was_split, unit_subheadings_text, non_unit_rules = split_on_header_line(wargear_list_and_on,
+                                                                                        indented_heading,
+                                                                                        False)
+                if was_split:
+                    break
             if was_split:
                 break
 
