@@ -80,6 +80,7 @@ class System:
 
         self.wargear_by_name = {}
         self.rules_by_name = {}
+        self.wargear_lists_by_name = {}
         self.categories = {}  # Don't use this for types and subtypes anymore.
         self.model_types_and_subtypes = {}
         self.refresh_index()
@@ -96,6 +97,14 @@ class System:
                                 self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry'
                                                                         and node.shared
                                                                         and not node.collective)}
+
+        for file in self.files:
+            ssegs = file.root_node.get_child('sharedSelectionEntryGroups')
+            if ssegs is None:
+                continue
+            for node in ssegs.children:
+                self.wargear_lists_by_name[node.name.lower()] = node
+
         categories = {node.name: node for node in
                       self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
 
@@ -265,6 +274,12 @@ class System:
             return lookup_name, self.wargear_by_name[lookup_name.lower()].id
         return lookup_name, None
 
+    def get_wargear_list_node_by_name(self, wargear_list_name: str) -> 'Node' or None:
+        if wargear_list_name.lower() in self.wargear_lists_by_name:
+            node = self.wargear_lists_by_name[wargear_list_name.lower()]
+            return node
+        return None
+
     def get_profile_type_id(self, profile_type: str):
         return self.nodes_with_ids.filter(lambda node: (
                 node.type == f"profileType"
@@ -375,7 +390,7 @@ class System:
                                                                               'type': 'unit',
                                                                           })
         if highest_index:
-            unit.attrib['sortIndex'] = str(highest_index+1)
+            unit.attrib['sortIndex'] = str(highest_index + 1)
         return unit
 
     def get_duplicates(self) -> dict[str, list['Node']]:

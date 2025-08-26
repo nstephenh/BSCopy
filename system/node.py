@@ -631,17 +631,29 @@ class Node:
         if found_locally:
             # TODO: Handle creating an option from a local profile if given.
             return
-        # Lookup option in system
-        found_name, wargear_id = self.system.get_wargear_name_and_id(name)
-        if wargear_id is None:
-            if owner_name is None:
-                owner_name = self.name
-            if self.type_name != "model":  # Bring this error out of the option group because the group names are long.
-                self.parent.parent.append_error_comment(f"Could not find wargear in {self.name}")
-            self.append_error_comment(f"Could not find wargear {name}", owner_name)
-            if found_name != self.name:
-                self.append_error_comment(f"\t Checked under {found_name}", owner_name)
-            return
+        if name.startswith("item from the"):
+            list_name = name.split("item from the")[1]
+            if " list" in list_name:
+                list_name = list_name.split(" list")[0]
+            list_name = list_name.strip()
+            list_node = self.system.get_wargear_list_node_by_name(list_name)
+            if list_node is None:
+                self.append_error_comment(f"Could not find wargear list '{list_name}'", owner_name)
+                return
+            wargear_id = list_node.id
+            found_name = list_node.name
+        else:
+            # Lookup option in system
+            found_name, wargear_id = self.system.get_wargear_name_and_id(name)
+            if wargear_id is None:
+                if owner_name is None:
+                    owner_name = self.name
+                if self.type_name != "model":  # Bring this error out of the option group because the group names are long.
+                    self.parent.parent.append_error_comment(f"Could not find wargear in {self.name}")
+                self.append_error_comment(f"Could not find wargear {name}", owner_name)
+                if found_name != self.name:
+                    self.append_error_comment(f"\t Checked under {found_name}", owner_name)
+                return
 
         # Create link:
         link = self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name,
