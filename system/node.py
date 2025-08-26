@@ -651,13 +651,14 @@ class Node:
 
     def create_entrylink(self, name, target_id, pts=None, min_n=1, max_n=1, name_override=None, default_n=None):
         entry_links = self.get_or_create_child('entryLinks')
+        target_node = self.system.get_node_by_id(target_id)
         option_link = entry_links.get_or_create_child('entryLink', attrib={
-            'name': name,
             'hidden': 'false',
-            'type': 'selectionEntry',
+            'type': target_node.tag,
             'targetId': target_id,
             # TODO: Set as default if should be default (need to set that in RawEntry)
         })
+        option_link.update_attributes({'name': target_node.name})
         if pts and pts > 0:
             option_link.set_cost(pts)
         if name_override and name_override != name:
