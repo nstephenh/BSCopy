@@ -497,6 +497,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
             self.errors.append(f"Shared on model level not yet implemented for {option_title}")
 
         option_models = []  # Temporary list of models that this option group applies to.
+        # TODO: Handle one model name in another #33
         for model in self.model_profiles:
             model_name = model.name
             if "this model" in option_title.lower():
