@@ -12,7 +12,7 @@ from util.log_util import print_styled, STYLES
 if TYPE_CHECKING:
     from system.system_file import SystemFile
 
-bsc_error_label = "!BSC Errors from "  # Trailing space will be followed by timestamp
+bsc_error_label = "warning: !BSC "  # Trailing space will be followed by timestamp
 
 
 class Node:
@@ -763,12 +763,19 @@ class Node:
         if comment_node.text is None or comment_node.text == "":
             comment_node.delete()
             return
-        if bsc_error_label not in comment_node.text:
+        if bsc_error_label in comment_node.text:
+            self.non_error_comments = comment_node.text.split(bsc_error_label)[0]
+            self.previous_errors_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
+            self.previous_errors = comment_node.text.split(bsc_error_label + self.previous_errors_timestamp)[1]
+        elif "!BSC Errors from " in comment_node.text:
+            self.non_error_comments = comment_node.text.split("!BSC Errors from ")[0]
+            self.previous_errors_timestamp = comment_node.text.split("!BSC Errors from ")[1].split()[
+                0]  # newline or space
+            self.previous_errors = comment_node.text.split("!BSC Errors from " + self.previous_errors_timestamp)[1]
+        else:
             self.non_error_comments = comment_node.text
-            return
-        self.non_error_comments = comment_node.text.split(bsc_error_label)[0]
-        self.previous_errors_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
-        self.previous_errors = comment_node.text.split(bsc_error_label + self.previous_errors_timestamp)[1]
+            return  # Don't delete the comment node we just created and are populating
+
         comment_node.text = self.non_error_comments
 
         if comment_node.text is None or comment_node.text == "":
@@ -787,6 +794,10 @@ class Node:
         if bsc_error_label in comment_node.text:
             existing_timestamp = comment_node.text.split(bsc_error_label)[1].split()[0]  # newline or space
             existing_errors_text = comment_node.text.split(bsc_error_label + existing_timestamp)[1]
+            new_errors_text = existing_errors_text + new_errors_text
+        elif "!BSC Errors from " in comment_node.text:  # Migration from old label
+            existing_timestamp = comment_node.text.split("!BSC Errors from ")[1].split()[0]  # newline
+            existing_errors_text = comment_node.text.split("!BSC Errors from " + existing_timestamp)[1]
             new_errors_text = existing_errors_text + new_errors_text
 
         timestamp_to_use = self.system.run_timestamp
