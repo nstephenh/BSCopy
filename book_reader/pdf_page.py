@@ -1,3 +1,4 @@
+import json
 import traceback
 
 from book_reader.constants import PageTypes
@@ -31,6 +32,7 @@ class PdfPage(Page):
             if self.page_number < debug_specific_page:
                 return  # For debugging
             if self.page_number > debug_specific_page:
+                print(json.dumps(self.book.pages[-1].serialize(), indent=2))
                 exit()  # For debugging
 
             print_styled(f"\nPage {self.page_number} is Type: {self.page_type}", STYLES.GREEN)
