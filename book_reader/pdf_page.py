@@ -362,7 +362,7 @@ class PdfPage(Page):
         non_unit_rules = ""
         was_split = False
         for level_of_spacing in range(2, 4):  # 2 or 3 spaces:
-            for indented_heading in ["THE ", "WARGEAR", "SPECIAL RULES", # THE %SOMETHING% TRAIT or TYPE
+            for indented_heading in ["THE ", "WARGEAR", "SPECIAL RULES",  # THE %SOMETHING% TRAIT or TYPE
                                      "Arlatax Weapons"]:
                 indented_heading = level_of_spacing * " " + indented_heading
                 was_split, unit_subheadings_text, non_unit_rules = split_on_header_line(wargear_list_and_on,
@@ -497,21 +497,29 @@ class PdfPage(Page):
         _, unit_name, everything_but_name = split_on_header_line(unit_text, self.game.ProfileLocator)
         unit_name = unit_name.splitlines()[0].strip()  # Multiline names are subtitles, ignore the subtitle.
         # For now assume no line wrapping
-        unit_comp_line = everything_but_name.splitlines()[0]
-        split_comp_line = unit_comp_line.strip().split(" ")
-        if split_comp_line[-1].lower() != "points":
-            print(f"Expected points in {unit_comp_line}")
-            return
-        points = int(split_comp_line[-2])
 
         _, unit_composition, stats_and_subheaders = self.split_before_statline(everything_but_name)
 
+        unit_comp_first_line = unit_composition[
+                               len(self.game.ProfileLocator):unit_composition.index(f" Points")
+                               ].strip().replace("\n", " ")
+
+        unit_comp_options = unit_composition[unit_composition.index(f" Points") + len(" Points"):]
+
+        if unit_comp_options.strip() and not unit_comp_options.startswith("\n"):
+            print('\n')
+            print(unit_composition.replace(" ", "·"))
+            print("Broke assumption that points is at end of line with no whitespace")
+            exit(1)
+
+        split_comp_line = unit_comp_first_line.strip().split(" ")
+        default_comp = " ".join(split_comp_line[:-1]).strip()
+
+        points = int(split_comp_line[-1])
+
         unit = RawUnit(name=unit_name, points=points, page=self)
 
-        unit_comp_first_line = unit_comp_line[
-                               len(self.game.ProfileLocator):unit_composition.index(f"{points} Points")
-                               ].strip()
-        unit.subheadings["UNIT COMPOSITION"] = "\n".join([unit_comp_first_line] + unit_composition.splitlines()[1:])
+        unit.subheadings["UNIT COMPOSITION"] = default_comp + unit_comp_options
 
         self.process_unit_common(unit, stats_and_subheaders)
 
