@@ -92,10 +92,10 @@ class System:
 
     def refresh_index(self):
         self.rules_by_name = {node.name.lower(): node for node in
-                              self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared)}
+                              self.nodes_with_ids.filter(lambda node: node.tag == 'rule' and node.shared and node.name)}
         self.wargear_by_name = {node.name.lower(): node for node in
                                 self.nodes_with_ids.filter(lambda node: node.tag == 'selectionEntry'
-                                                                        and node.shared
+                                                                        and node.shared and node.name
                                                                         and not node.collective)}
 
         for file in self.files:
