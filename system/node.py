@@ -627,6 +627,7 @@ class Node:
 
     def create_wargear_or_option(self, name, pts=None, min_n=1, max_n=1, default_n=None, owner_name=None):
         # Lookup option in page and get local options
+        name_override = None
         found_locally = False
         if found_locally:
             # TODO: Handle creating an option from a local profile if given.
@@ -645,10 +646,12 @@ class Node:
         else:
             # Lookup option in system
             found_name, wargear_id = self.system.get_wargear_name_and_id(name)
+            name_override = name
             if wargear_id is None:
                 if owner_name is None:
                     owner_name = self.name
-                if self.type_name != "model":  # Bring this error out of the option group because the group names are long.
+                if self.type_name != "model":
+                    # Bring this error out of the option group because the group names are long.
                     self.parent.parent.append_error_comment(f"Could not find wargear in {self.name}")
                 self.append_error_comment(f"Could not find wargear {name}", owner_name)
                 if found_name != self.name:
@@ -656,7 +659,7 @@ class Node:
                 return
 
         # Create link:
-        link = self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name,
+        link = self.create_entrylink(found_name, wargear_id, pts=pts, name_override=name_override,
                                      min_n=min_n, max_n=max_n, default_n=default_n)
         if name.endswith("*"):
             link.append_error_comment("Name ends in a star, check the rules for special handling")
@@ -673,7 +676,7 @@ class Node:
         option_link.update_attributes({'name': target_node.name})
         if pts and pts > 0:
             option_link.set_cost(pts)
-        if name_override and name_override != name:
+        if name_override and name_override.lower() != name.lower():
             option_link.set_name_modifier(name_override)
         option_link.set_constraints(min_n, max_n)
         return option_link
