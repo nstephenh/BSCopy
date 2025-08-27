@@ -11,6 +11,7 @@ from util.log_util import print_styled, STYLES
 
 if TYPE_CHECKING:
     from system.system_file import SystemFile
+    from book_reader.page import Page
 
 
 class Book:
@@ -25,7 +26,7 @@ class Book:
         self.name = os.path.split(file_path)[1]
 
         self.page_configs = {}
-        self.pages = []
+        self.pages: ['Page'] = []
 
         self.pub_id = None
         self.priority = 0
