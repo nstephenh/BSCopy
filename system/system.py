@@ -201,6 +201,8 @@ class System:
                     for unit_type, text in page.wargear_dict.items():
                         print(f"\t\tWargear: {unit_type}")
                         self.create_or_update_wargear(page, unit_type, text)
+                    for group in page.wargear_lists:
+                        page.target_system_file.root_node.create_shared_option_group(group)
                 if Actions.MODIFY_WEAPONS in actions_to_take and not page.units:
                     remaining_weapons = page.weapons
                     for weapon in page.weapons:

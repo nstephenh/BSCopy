@@ -609,16 +609,22 @@ class Node:
             return
         option_entries = self.get_or_create_child('selectionEntryGroups')
         for group in option_groups:
-            group_entry = option_entries.get_or_create_child('selectionEntryGroup', attrib={
-                'name': group.title,
-            })
-            for option in group.options:
-                group_entry.create_wargear_or_option(option.name, pts=option.pts,
-                                                     min_n=0, max_n=group.max,
-                                                     owner_name=raw_with_options.name
-                                                     )
+            option_entries.create_option_group(group, raw_with_options.name)
 
-            group_entry.set_constraints_from_object(group)
+    def create_shared_option_group(self, group):
+        option_entries = self.get_or_create_child('sharedSelectionEntryGroups')
+        option_entries.create_option_group(group, self.system_file.name)
+
+    def create_option_group(self, group, owner_name):
+        group_entry = self.get_or_create_child('selectionEntryGroup', attrib={
+            'name': group.title,
+        })
+        for option in group.options:
+            group_entry.create_wargear_or_option(option.name, pts=option.pts,
+                                                 min_n=0, max_n=group.max,
+                                                 owner_name=owner_name
+                                                 )
+        group_entry.set_constraints_from_object(group)
 
     def set_wargear(self, raw_model: 'RawModel'):
         if len(raw_model.default_wargear) == 0:
