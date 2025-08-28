@@ -31,8 +31,9 @@ class BasicSystemTests(unittest.TestCase):
 
         for node in system.nodes_with_ids:
             if node.target_id:
-                with self.subTest(f"{node.target_id} is a valid target"):
-                    self.assertIn(node.target_id, id_list)
+                with self.subTest(f"Link validity on {node}"):
+                    self.assertTrue(node.target_id in id_list,
+                                    f"Link {node.attrib['name']} targets {node.target_id} which does not exist")
 
     @staticmethod
     def get_duplicate_counts(my_list):
@@ -49,7 +50,6 @@ class BasicSystemTests(unittest.TestCase):
                 with self.subTest(f"{node} should be named {ids_to_names[node.target_id]}"):
                     # Using node.attrib because we don't set node.name on links
                     self.assertEqual(node.attrib['name'], ids_to_names[node.target_id])
-
 
 
 if __name__ == '__main__':
