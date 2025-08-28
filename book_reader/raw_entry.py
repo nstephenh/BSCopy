@@ -257,7 +257,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                             if "each" in pts_str:
                                 self.errors.append(
                                     f"The option '{name}' may need a 'multiply by number of models' modifier")
-                            pts = int(pts_str.split(" Points")[0])
+                            pts = int(pts_str.split(" Point")[0])
                         if name.startswith("one "):
                             name = name[4:]
                         option_group.options.append(Option(name=name.strip(), pts=pts, default=default))
