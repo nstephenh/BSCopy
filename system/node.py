@@ -215,9 +215,11 @@ class Node:
     @property
     def root_name(self):
         if self.is_base_level:
-            return self.name.strip()
+            if self.name:
+                return self.name.strip()
+            return ""
         if self.parent is None:
-            return None
+            return ""
         return self.parent.root_name.strip()
 
     @property
