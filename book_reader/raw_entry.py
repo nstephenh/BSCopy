@@ -412,6 +412,8 @@ class RawUnit(HasOptionsMixin, RawEntry):
                         if model.name not in line:
                             continue
                         line = line.split("(")[0].strip()
+                    if "(see " in line:
+                        line = line.split("(see ")[0].strip()
                     model.original_wargear.append(line)
                     model.default_wargear.append(line)
 
