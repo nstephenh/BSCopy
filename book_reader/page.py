@@ -28,6 +28,7 @@ class Page:
 
         self.special_rules_dict: dict[str: str] = {}
         self.wargear_dict: dict[str: str] = {}
+        self.wargear_lists_raw: dict[str: str] = {}
         self.types_and_subtypes_dict: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
@@ -51,6 +52,8 @@ class Page:
             dict_to_serialize['Types and Subtypes'] = self.types_and_subtypes_dict
         if self.weapons:
             dict_to_serialize['Weapons'] = [profile.serialize() for profile in self.weapons]
+        if self.wargear_lists_raw:
+            dict_to_serialize['Wargear Lists (Raw)'] = self.wargear_lists_raw
         return dict_to_serialize
 
 

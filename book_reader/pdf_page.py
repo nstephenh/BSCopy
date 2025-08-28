@@ -52,6 +52,8 @@ class PdfPage(Page):
             self.handle_wargear_page(prev_page_type)
         if not self.page_type or self.page_type == PageTypes.TYPES_AND_SUBTYPES:
             self.handle_types_page(prev_page_type)
+        if self.page_type == PageTypes.WARGEAR_LISTS:
+            self.handle_wargear_list_page()
         if self.page_type == PageTypes.FAQ:
             self.handle_faq_page()  # For now just read into cleaned_text
 
@@ -153,6 +155,22 @@ class PdfPage(Page):
             faq_entries.append(entry)
 
         self.faq_entries = faq_entries
+
+    def handle_wargear_list_page(self):
+        _, a, b = self.handle_simple_two_column_page()
+        self.wargear_lists_raw = {}
+        current_title = None
+        for line in (a + "\n" + b).splitlines():
+            if line.strip() == "":
+                continue
+            if line.startswith("•"):
+                if current_title is None:
+                    print_styled("Wargear list starts with a bullet but we don't have a section title", STYLES.RED)
+                    exit(1)
+                self.wargear_lists_raw[current_title] += line + "\n"
+            else:
+                current_title = line.strip()
+                self.wargear_lists_raw[current_title] = ""
 
     def handle_types_page(self, prev_page_type):
         has_types_header = "Unit Types".lower() in self.raw_text.lstrip().splitlines()[0].lower()

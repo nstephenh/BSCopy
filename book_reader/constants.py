@@ -21,4 +21,5 @@ class PageTypes(StrEnum):
     UNIT_PROFILES = "unit_profile_pages"
     TYPES_AND_SUBTYPES = "types_and_subtypes_pages"
     WARGEAR = "wargear_pages"
+    WARGEAR_LISTS = "wargear_list_pages"
     BLANK_OR_IGNORED = "blank_or_ignored_pages"
