@@ -236,9 +236,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     else:
                         self.errors.append(f"Expected 'selected for it' in '{line}'")
                 if option_title:
-                    from_wargear_list, option_group, option_models, default_options = self.setup_option_group(
+                    from_default_wargear, option_group, option_models, default_options = self.setup_option_group(
                         option_title, [])
-                    if from_wargear_list:
+                    if from_default_wargear:
                         option_group.min = option_group.max
                     if "exchange" in option_title and len(default_options) == 0:
                         self.errors.append(f"Exchange was not applied on {option_title}")
