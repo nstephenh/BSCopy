@@ -15,8 +15,9 @@ class BasicSystemTests(unittest.TestCase):
         self.system = System(game_name)
 
     def test_system_exists(self):
-        print(default_data_directory)
-        print(self.system.files)
+        self.assertTrue(os.path.isdir(default_data_directory))
+        self.assertTrue(os.path.isdir(os.path.join(default_data_directory,os.getenv("SYSTEM_NAME"))))
+
 
     def test_ids(self):
         system = self.system
