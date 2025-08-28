@@ -3,7 +3,7 @@ import traceback
 
 from book_reader.constants import PageTypes
 from book_reader.page import Page
-from book_reader.raw_entry import RawUnit, RawProfile, RawModel
+from book_reader.raw_entry import RawUnit, RawProfile, RawModel, OptionGroup, Option
 from import_scripts.text_to_rules import text_to_rules_dict
 from system.game.game import Game
 from system.game.heresy3e import Heresy3e
@@ -11,7 +11,7 @@ from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_into_columns, split_at_header, split_after_header, split_at_unindent, \
     un_justify, split_on_header_line, split_2_columns_at_right_header, get_2nd_colum_index_from_header, \
-    split_into_columns_at_divider
+    split_into_columns_at_divider, split_at_dot, option_process_line
 
 
 class PdfPage(Page):
@@ -158,7 +158,7 @@ class PdfPage(Page):
 
     def handle_wargear_list_page(self):
         _, a, b = self.handle_simple_two_column_page()
-        self.wargear_lists_raw = {}
+        wargear_lists_raw = {}
         current_title = None
         for line in (a + "\n" + b).splitlines():
             if line.strip() == "":
@@ -167,10 +167,18 @@ class PdfPage(Page):
                 if current_title is None:
                     print_styled("Wargear list starts with a bullet but we don't have a section title", STYLES.RED)
                     exit(1)
-                self.wargear_lists_raw[current_title] += line + "\n"
+                wargear_lists_raw[current_title] += line + "\n"
             else:
                 current_title = line.strip()
-                self.wargear_lists_raw[current_title] = ""
+                wargear_lists_raw[current_title] = ""
+        for name, text in wargear_lists_raw.items():
+            group = OptionGroup(title=name)
+            for option in split_at_dot(text.splitlines()):
+                if option.strip() == "":
+                    continue
+                name, pts = option_process_line(option)
+                group.options.append(Option(name, pts))
+            self.wargear_lists.append(group)
 
     def handle_types_page(self, prev_page_type):
         has_types_header = "Unit Types".lower() in self.raw_text.lstrip().splitlines()[0].lower()

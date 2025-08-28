@@ -4,7 +4,7 @@ from util.log_util import style_text, STYLES, print_styled
 errors = ""
 
 
-def split_at_dot(lines):
+def split_at_dot(lines: [str]) -> [str]:
     """
     Given an entry split at line breaks containing bullet points, combine and split at bullet points
     :param lines:

@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from system.system_file import SystemFile
 
 from book_reader.constants import ReadSettingsKeys
-from book_reader.raw_entry import RawProfile, RawUnit
+from book_reader.raw_entry import RawProfile, RawUnit, OptionGroup
 from util.log_util import print_styled, STYLES
 
 
@@ -28,7 +28,7 @@ class Page:
 
         self.special_rules_dict: dict[str: str] = {}
         self.wargear_dict: dict[str: str] = {}
-        self.wargear_lists_raw: dict[str: str] = {}
+        self.wargear_lists: list[OptionGroup] = []
         self.types_and_subtypes_dict: dict[str: str] = {}
         self.weapons: list[RawProfile] = []
         self.units_text: list[str] = []
@@ -52,8 +52,8 @@ class Page:
             dict_to_serialize['Types and Subtypes'] = self.types_and_subtypes_dict
         if self.weapons:
             dict_to_serialize['Weapons'] = [profile.serialize() for profile in self.weapons]
-        if self.wargear_lists_raw:
-            dict_to_serialize['Wargear Lists (Raw)'] = self.wargear_lists_raw
+        if self.wargear_lists:
+            dict_to_serialize['Wargear Lists'] = [group.serialize() for group in self.wargear_lists]
         return dict_to_serialize
 
 
