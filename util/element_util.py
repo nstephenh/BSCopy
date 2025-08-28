@@ -40,8 +40,13 @@ def get_or_create_sub_element(element, tag, attrib: dict[str:str] = None):
     attrib_path_str = "{*}" + tag  # Any namespace
     if attrib:
         for key, value in attrib.items():
-            value = value.replace("'", "&apos;")  # Handling for single apostrophe
-            attrib_path_str += f"[@{key}='{value}']"
+            if "'" in value and '"' in value:
+                raise ValueError("Cannot support both single and double quote in attribute")
+            if "'" in value:
+                quote = '"'
+            else:
+                quote = "'"
+            attrib_path_str += f"[@{key}={quote}{value}{quote}]"
     else:
         attrib = {}
     sub_element = element.find(attrib_path_str)
