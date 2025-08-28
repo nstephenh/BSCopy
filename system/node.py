@@ -276,6 +276,8 @@ class Node:
         self._element.remove(child._element)  # Remove from XML
         self.children.remove(child)  # Remove from list of children in the python view
         # The node is still likely in all nodes list. Do we want this (for copying?)
+        if len(self.children) == 0:
+            self.parent.remove(self)
 
     def delete(self):
         self.parent.remove(self)
