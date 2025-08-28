@@ -11,8 +11,8 @@ class BasicSystemTests(unittest.TestCase):
 
     def setUp(self):
         game_name = os.getenv("SYSTEM_NAME")
-        print(f"Testing System {game_name}")
         self.assertIsNotNone(game_name, "Missing SYSTEM_NAME environment variable")
+        self.assertNotEquals(game_name, "", "Missing SYSTEM_NAME environment variable")
         self.system = System(game_name)
 
     def test_system_exists(self):
