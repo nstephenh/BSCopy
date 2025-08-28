@@ -144,10 +144,13 @@ class Node:
 
     def __str__(self):
         location_string = f"in {self.system_file}"
-        if not self.is_base_level or not self.is_root_node:
-            location_string = f"on {self.root_name.strip()} {location_string}"
-        if self.root_name != self.parent_name:
-            location_string = f"for {self.parent_name.strip()} {location_string}"
+        if self.is_root_node:
+            location_string = f"root of {self.system_file}"
+        elif not self.is_base_level:
+            location_string = f"on {self.root_name} {location_string}"
+
+        if self.root_name != self.parent_name:  # TBD how this is different from is_base_level
+            location_string = f"for {self.parent_name} {location_string}"
 
         identifier_string = f"{self.type} {location_string}"
         if self.id:
@@ -211,10 +214,10 @@ class Node:
     @property
     def root_name(self):
         if self.is_base_level:
-            return self.name
+            return self.name.strip()
         if self.parent is None:
             return None
-        return self.parent.root_name
+        return self.parent.root_name.strip()
 
     @property
     def type(self):
