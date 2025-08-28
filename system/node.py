@@ -145,9 +145,9 @@ class Node:
     def __str__(self):
         location_string = f"in {self.system_file}"
         if not self.is_base_level or not self.is_root_node:
-            location_string = f"on {self.root_name} {location_string}"
+            location_string = f"on {self.root_name.strip()} {location_string}"
         if self.root_name != self.parent_name:
-            location_string = f"for {self.parent_name} {location_string}"
+            location_string = f"for {self.parent_name.strip()} {location_string}"
 
         identifier_string = f"{self.type} {location_string}"
         if self.id:
