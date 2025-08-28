@@ -36,6 +36,8 @@ class Heresy3e(Game):
              },
     }
 
+    FIRST_PARAGRAPH_IS_FLAVOR = True
+
     NUM_WEAPON_HEADERS_THAT_ARE_TEXT = 2  # "Special Rules" and "Traits"
 
     DASHED_WEAPON_MODES = True
