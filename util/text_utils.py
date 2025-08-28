@@ -558,3 +558,13 @@ def looks_like_sentence(line):
         if f" {word} " in line:
             return True
     return False
+
+
+def remove_singular_prefix(name):
+    if name.startswith("one "):
+        name = name[4:]
+    elif name.startswith("an "):
+        name = name[3:]
+    elif name.startswith("a "):
+        name = name[2:]
+    return name

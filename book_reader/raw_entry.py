@@ -4,7 +4,7 @@ from system.game.heresy3e import Heresy3e
 from util import text_utils
 from util.log_util import STYLES, print_styled
 from util.text_utils import split_at_dot, remove_plural, split_at_dash, option_process_line, make_plural, \
-    split_at_header
+    split_at_header, remove_singular_prefix
 
 if TYPE_CHECKING:
     from book_reader.page import Page
@@ -258,10 +258,9 @@ class RawUnit(HasOptionsMixin, RawEntry):
                                 self.errors.append(
                                     f"The option '{name}' may need a 'multiply by number of models' modifier")
                             pts = int(pts_str.split(" Point")[0])
-                        if name.startswith("one "):
-                            name = name[4:]
                         elif "for Free" in option:
                             name = option.split("for Free")[0]
+                        name = remove_singular_prefix(name)
                         option_group.options.append(Option(name=name.strip(), pts=pts, default=default))
                     # print(option_group.serialize())
                     for model in option_models:
