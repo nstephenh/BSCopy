@@ -264,7 +264,7 @@ class RawUnit(HasOptionsMixin, RawEntry):
                             pts = int(pts_str.split(" Point")[0])
                         elif "for Free" in option:
                             name = option.split("for Free")[0]
-                        name = remove_singular_prefix(name)
+                        name = remove_singular_prefix(name.strip())
                         option_group.options.append(Option(name=name.strip(), pts=pts, default=default))
                     # print(option_group.serialize())
                     for model in option_models:
