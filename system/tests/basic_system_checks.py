@@ -3,6 +3,7 @@ import os
 import unittest
 from collections import Counter
 
+from settings import default_data_directory
 from system.system import System
 
 
@@ -12,6 +13,10 @@ class BasicSystemTests(unittest.TestCase):
         game_name = os.getenv("SYSTEM_NAME")
         self.assertIsNotNone(game_name, "Missing SYSTEM_NAME environment variable")
         self.system = System(game_name)
+
+    def test_system_exists(self):
+        print(default_data_directory)
+        print(self.system.files)
 
     def test_ids(self):
         system = self.system
