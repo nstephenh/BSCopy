@@ -195,6 +195,8 @@ class Node:
     @property
     def target_name(self):
         target_id = self.target_id if self.target_id is not None else self.condition_search_id
+        if target_id is None:
+            return "Self"
         return self.system.try_get_name(target_id)
 
     @property
