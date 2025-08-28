@@ -1,3 +1,4 @@
+import collections
 from typing import Callable
 from typing import TYPE_CHECKING
 from xml.etree import ElementTree as ET
@@ -919,3 +920,16 @@ class Node:
                 rule_link.set_name_modifier(rule_name)
             if not rule_already_existed:
                 rule_link.set_hidden().set_conditional_option("1231-877a-96d9-cacd")
+
+    @staticmethod
+    def are_attribs_equal(attribs, expected_attribs):
+        first_seq, second_seq = list(attribs), list(expected_attribs)
+        try:
+            first = collections.Counter(first_seq)
+            second = collections.Counter(second_seq)
+        except TypeError:
+            pass  # Unhashable elements
+        else:
+            if first == second:
+                return True
+        return False
