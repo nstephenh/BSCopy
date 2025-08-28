@@ -217,6 +217,10 @@ class RawUnit(HasOptionsMixin, RawEntry):
                     option_title = line.split("exchanged for ")[0] + "exchanged for "
                     options_as_text = line.split("exchanged for ")[1]
                     for text_opt in options_as_text.split(", "):
+                        if text_opt.startswith("or "):
+                            text_opt = text_opt[3:]
+                            if text_opt.startswith("for "):
+                                text_opt = text_opt[4:]
                         if " or " in text_opt:
                             options_text_list += text_opt.split(" or ")
                         else:
