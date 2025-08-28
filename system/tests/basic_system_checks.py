@@ -29,10 +29,10 @@ class BasicSystemTests(unittest.TestCase):
             duplicates = self.get_duplicate_counts(id_list)
             duplicate_sets = []
             for node_id, count in duplicates.items():
-                duplicate_sets = {
+                duplicate_sets.append({
                     f"{node_id} appears {count} times": [str(node) for node in
                                                          system.nodes_with_ids.filter(lambda x: x.id == node_id)]
-                }
+                })
             self.assertTrue(len(duplicate_sets) == 0, "Duplicate IDs found: " + json.dumps(duplicate_sets, indent=2))
 
         for node in system.nodes_with_ids:
