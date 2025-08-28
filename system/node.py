@@ -330,7 +330,8 @@ class Node:
     @property
     def is_wargear_se(self):
         return self.get_child("profiles") and (
-                self.get_child("profiles").get_child("profile", attrib={"typeName": "Wargear Item"})
+                self.get_child("profiles").get_child("profile", attrib={"typeName":
+                                                                            self.system.game.WARGEAR_PROFILE_NAME})
                 or
                 self.get_child("profiles").get_child("profile", attrib={"typeName": "Weapon"})
         )

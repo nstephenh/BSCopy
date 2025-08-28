@@ -307,7 +307,7 @@ class System:
 
     def create_or_update_wargear(self, page, wargear_name, wargear_text):
         wargear_as_profile = RawProfile(wargear_name, page, {'Description': wargear_text})
-        self.create_or_update_upgrade(wargear_as_profile, 'Wargear Item')
+        self.create_or_update_upgrade(wargear_as_profile, self.game.WARGEAR_PROFILE_NAME)
 
     def create_or_update_upgrade(self, upgrade_profile, profile_type=None):
         if profile_type is None:

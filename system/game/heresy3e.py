@@ -25,6 +25,8 @@ class Heresy3e(Game):
 
     MODEL_TYPE_CHARACTERISTIC = "Type"
 
+    WARGEAR_PROFILE_NAME = "Wargear"
+
     WEAPON_PROFILE_TABLE_HEADER_OPTIONS = {
         "Ranged Weapon":
             {"raw": ["R", "FP", "RS", "AP", "D", "Special Rules", "Traits"],

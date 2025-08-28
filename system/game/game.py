@@ -13,6 +13,8 @@ class Game:
 
     MODEL_TYPE_CHARACTERISTIC = "Type"
 
+    WARGEAR_PROFILE_NAME = "Wargear Item"
+
     WEAPON_PROFILE_TABLE_HEADER_OPTIONS: {str: {str: [str]}} = {}  # "name": {"raw": [list], "full": [list]}
 
     @property  # Deprecated for options version, left for backwards compat
@@ -66,13 +68,19 @@ class Game:
     FACTIONS: list[str] = []
 
     def get_full_characteristic_name(self, characteristic_name, profile_type: str = None):
+        characteristic_list = None
+        full_name = characteristic_name
         if profile_type in self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS:
             characteristic_list = self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['raw']
             full_characteristic_list = self.WEAPON_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['full']
         if profile_type in self.UNIT_PROFILE_TABLE_HEADER_OPTIONS:
             characteristic_list = self.UNIT_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['raw']
             full_characteristic_list = self.UNIT_PROFILE_TABLE_HEADER_OPTIONS[profile_type]['full']
-        full_name = characteristic_name
+        if characteristic_list is None:
+            if profile_type == self.WARGEAR_PROFILE_NAME:
+                return "Description"
+            else:
+                raise ValueError(f"No characteristics defined for {profile_type}")
         if characteristic_name in characteristic_list and len(full_characteristic_list):
             i = characteristic_list.index(characteristic_name)
             full_name = full_characteristic_list[i]

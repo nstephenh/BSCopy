@@ -44,7 +44,7 @@ if __name__ == '__main__':
         writer = csv.DictWriter(csvfile, fieldnames=["name", "page", "publication"])
         writer.writeheader()
 
-        for rule in system.nodes_with_ids.filter(lambda x: x.type == "profile:Wargear Item"):
+        for rule in system.nodes_with_ids.filter(lambda x: x.type == f"profile:{system.game.WARGEAR_PROFILE_NAME}"):
             if rule.name is None:
                 continue  # Not sure why there's some blanks here, maybe links are being counted?
             rule_as_dict = {
