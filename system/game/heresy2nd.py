@@ -6,6 +6,9 @@ class Heresy2nd(Game):
     GAME_FORMAT_CONSTANT = GameImportSpecs.HERESY2E
     SYSTEM_NAME = "horus-heresy-2nd-edition"
 
+    POINTS_NAME = "Pts"
+    POINTS_ID = "d2ee-04cb-5f8a-2642"
+
     ProfileLocator = "Unit Composition"
 
     UNIT_PROFILE_TABLE_HEADER_OPTIONS = {

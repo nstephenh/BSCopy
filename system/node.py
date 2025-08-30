@@ -574,9 +574,11 @@ class Node:
     def set_cost(self, points: int or str):
         costs = self.get_or_create_child('costs')
         cost = costs.get_or_create_child('cost')
+        if self.system.game.POINTS_ID is None:
+            raise Exception("A python game system definition file with a defined points ID is needed")
         cost.update_attributes({
-            'name': "Pts",
-            'typeId': "d2ee-04cb-5f8a-2642",
+            'name': self.system.game.POINTS_NAME,
+            'typeId': self.system.game.POINTS_ID,
             'value': points,
         })
 

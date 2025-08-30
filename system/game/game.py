@@ -5,6 +5,10 @@ class Game:
     # Generic game class
     GAME_FORMAT_CONSTANT = ""
     SYSTEM_NAME = ""  # What does this repo check out as by default
+
+    POINTS_NAME = "Pts"
+    POINTS_ID = None
+
     ProfileLocator = "Troop Type:"
 
     default_settings = settings.default_settings
