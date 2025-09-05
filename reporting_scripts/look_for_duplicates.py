@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from system.constants import SystemSettingsKeys, GameImportSpecs
 from system.node import Node
@@ -14,11 +15,7 @@ if __name__ == '__main__':
     parser.add_argument("--interactive", '-i', action='store_true',
                         help="Prompt of special rules are identical")
     args = parser.parse_args()
-    system = System('moreus-heresy',
-                    settings={
-                        SystemSettingsKeys.GAME_IMPORT_SPEC: GameImportSpecs.HERESY2E,
-                    },
-                    )
+    system = System('wh40k-10e')
     duplicate_groups = system.get_duplicates()
     confirmed_duplicates = {}
 
@@ -126,16 +123,19 @@ if __name__ == '__main__':
                     link_node.set_target_id(best_option.id)
                     link_update_count += 1
                 node.delete()
+                if node is not None:
+                    try:
+                        grandparent = node.parent.parent
 
-                grandparent = node.parent.parent
-
-                info_link_section = grandparent.get_or_create_child('infoLinks')
-                rule_link = info_link_section.get_or_create_child('infoLink', attrib={
-                    'id': node.id,
-                    'name': best_option.name,
-                    'targetId': best_option.id,
-                    'type': node.tag
-                })
+                        info_link_section = grandparent.get_or_create_child('infoLinks')
+                        rule_link = info_link_section.get_or_create_child('infoLink', attrib={
+                            'id': node.id,
+                            'name': best_option.name,
+                            'targetId': best_option.id,
+                            'type': node.tag
+                        })
+                    except Exception as e:
+                        pass
 
     print(f"There are {len(duplicate_groups)} groups of duplicates")
     print(f"There were {len(confirmed_duplicates)} confirmed duplicate groups with {total_count} duplicates")
