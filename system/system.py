@@ -27,12 +27,12 @@ class System:
 
     def __init__(self, system_name: str = default_system, data_directory: str = default_data_directory,
                  settings=None,
-                 include_raw=False, raw_import_settings=None):
+                 include_raw=False, raw_import_settings=None, load_silent=False):
 
         self.run_timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
-        print(f"Initializing {system_name}")
+        if not load_silent:
+            print(f"Initializing {system_name}")
         self.errors = []
-        print(settings)
         if settings is None:
             settings = {}
         self.game = get_game(system_name, settings.get(SystemSettingsKeys.GAME_IMPORT_SPEC))
@@ -68,8 +68,10 @@ class System:
         i = 0
         for filepath in temp_file_list:
             i += 1
-            print('\r', end="")
-            print(f"Loading file ({i}/{count}): {filepath}", end="")
+            if not load_silent:
+                print('\r', end="")
+                print(f"Loading file ({i}/{count}): {filepath}", end="")
+                print("")
             file = SystemFile(self, filepath)
             self.files.append(file)
             if file.is_gst:
