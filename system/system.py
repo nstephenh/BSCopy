@@ -71,12 +71,12 @@ class System:
             if not load_silent:
                 print('\r', end="")
                 print(f"Loading file ({i}/{count}): {filepath}", end="")
-                print("")
             file = SystemFile(self, filepath)
             self.files.append(file)
             if file.is_gst:
                 self.gst = file
-        print()  # Newline after progress bar
+        if not load_silent:
+            print("\n")  # Newline after progress bar
 
         self.define_profile_characteristics()  # These should not be updated during a session, so it's OK to index them.
 
