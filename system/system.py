@@ -227,6 +227,17 @@ class System:
                                          STYLES.YELLOW)
                             continue
                         self.create_or_update_unit(unit)
+            if Actions.CHECK_UNITS in all_actions_to_take:
+                self.refresh_index()  # We need to update the index before loading units
+                for page in book.pages:
+                    print(f"\t{page.page_number} {str(page.page_type or '')}")
+                    for unit in page.units:
+                        print(f"\t\tUnit: {unit.name}")
+                        if page.target_system_file is None:
+                            print_styled(f"\t\tNo target file, skipping",
+                                         STYLES.YELLOW)
+                            continue
+                        self.check_unit(unit)
 
         if Actions.DUMP_TO_JSON in all_actions_to_take:
             with open(os.path.join(self.game_system_location, 'raw', "processed.json"), "w",
@@ -345,6 +356,9 @@ class System:
         print(f"Need to modify {node} with {upgrade_profile.name}")
         node.modify_profile(upgrade_profile, profile_type)
         return True
+
+    def check_unit(self, raw_unit: 'RawUnit'):
+        pass
 
     def create_or_update_unit(self, raw_unit: 'RawUnit'):
         node = self.get_or_create_unit(raw_unit)
