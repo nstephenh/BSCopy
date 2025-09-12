@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument("--interactive", '-i', action='store_true',
                         help="Prompt of special rules are identical")
     args = parser.parse_args()
-    system = System('wh40k-10e')
+    system = System('horus-heresy-3rd-edition')
     duplicate_groups = system.get_duplicates()
     confirmed_duplicates = {}
 
@@ -135,7 +135,12 @@ if __name__ == '__main__':
                             'type': node.tag
                         })
                     except Exception as e:
-                        pass
+                        print_styled(
+                            f"\tCould not replace {node.tag} {node.id} "
+                            f"because it caused an error: {e}",
+                            STYLES.RED)
+                        exit()
+
 
     print(f"There are {len(duplicate_groups)} groups of duplicates")
     print(f"There were {len(confirmed_duplicates)} confirmed duplicate groups with {total_count} duplicates")
