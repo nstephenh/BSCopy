@@ -104,7 +104,7 @@ def cleanup_disallowed_bs_characters(in_str):
     :return:
     '''
     return in_str.replace('"', '&quot;').replace('”', '&quot;').replace('“', '&quot;') \
-        .replace('&', '&amp;').replace("'", '&apos;')
+        .replace('&', '&amp;').replace("'", '&apos;').replace("’", '&apos;')
 
 
 def option_process_line(line):
