@@ -545,7 +545,8 @@ class Node:
                                                                attrib={'typeId': characteristic_id,
                                                                        'name': name,
                                                                        })
-            char_element.text = value.strip()
+            if isinstance(value, str):
+                char_element.text = value.strip()
 
     def set_constraints_from_object(self, object_with_min_max):
         if not (hasattr(object_with_min_max, 'min') and hasattr(object_with_min_max, 'max')):
