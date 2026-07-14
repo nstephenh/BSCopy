@@ -308,7 +308,7 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     res = {}
 
     # 1. Attributes
-    # BS often has name and id first.
+    # BS often has name and id first in its JSON.
     for attr in ["name", "id", "targetId", "typeName", "type"]:
         if attr in element.attrib:
             res[attr] = element.attrib[attr]
@@ -332,10 +332,6 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
         plural_form, singular_form = get_plural_and_singular(tag)
         if singular_form in _PLURAL_CONTAINER_SINGULARS:
             # Check if this tag is indeed a plural container (e.g. "rules" containing "rule")
-            # We can check if all children of this child have the singular tag.
-            # But the requirement is to copy logic from _dict_to_element_recursive.
-            # In _dict_to_element_recursive, it wraps singular items into plural containers.
-            # So here we should unwrap them.
             all_children_are_singular = True
             for grand_child in child:
                 if get_tag(grand_child) != singular_form:
@@ -343,19 +339,16 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
                     break
             if all_children_are_singular:
                 is_plural_container = True
+            
+        # Forces common plural containers to be treated as such even if empty or containing other things (though they shouldn't)
+        if tag in ['sharedSelectionEntries', 'sharedSelectionEntryGroups', 'sharedInfoLinks', 'sharedProfiles', 'sharedRules',
+                    'selectionEntries', 'selectionEntryGroups', 'infoLinks', 'rules', 'profiles', 'costs', 'constraints',
+                    'modifiers', 'modifierGroups', 'characteristics', 'conditions', 'conditionGroups', 'repeats',
+                    'categoryEntries', 'categoryLinks', 'catalogueLinks', 'entryLinks', 'forceEntryLinks']:
+            is_plural_container = True
 
         if is_plural_container:
             # Key is plural_form (e.g. "rules"), we want to store it as singular items (e.g. "rule": [...])
-            # Wait, _dict_to_element_recursive expects the key in the dict to be the singular tag
-            # if it's a plural container, unless it's a shared container.
-            
-            # Re-evaluating based on _dict_to_element_recursive:
-            # If we have <rules><rule/><rule/></rules>, _dict_to_element_recursive wants
-            # data = { "rule": [ {...}, {...} ] }
-            # If we have <sharedRules><rule/></sharedRules>, it wants
-            # data = { "sharedRule": [ {...} ] } or maybe { "sharedRules": [ {...} ] }?
-            # Let's look at _dict_to_element_recursive lines 215-226.
-            
             key_in_dict = tag # default
             is_shared_key = tag.startswith('shared') and len(tag) > 6 and tag[6].isupper()
             if is_shared_key:
@@ -412,6 +405,13 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
                 key_in_dict = 'repeat'
             else:
                 key_in_dict = singular_form
+            
+            # Special case for shared containers in catalogue: preserve the container tag as key
+            if clean_parent_tag == 'catalogue' and tag.startswith('shared'):
+                # But wait, sharedSelectionEntries -> selectionEntry in some JSONs?
+                # Let's check the original Alpha Legion.json again.
+                # Actually, Alpha Legion.json HAS sharedSelectionEntries as a key.
+                key_in_dict = tag
 
             # Extract the children as a list
             items = []
@@ -420,10 +420,6 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
             
             if not items:
                 # If there are no items, we still want the key in the dict to represent an empty list
-                # but only if it's supposed to be a plural container.
-                # In _dict_to_element_recursive, an empty list would result in no container being added
-                # unless something else adds it.
-                # However, for round-trip consistency, let's keep it.
                 if key_in_dict not in res:
                     res[key_in_dict] = []
                 continue
