@@ -153,6 +153,8 @@ def get_plural_and_singular(word: str) -> (str, str):
     # Exceptions for BattleScribe
     if word == 'alias' or word == 'aliases':
         return 'aliases', 'alias'
+    if word == 'description' or word == 'descriptions':
+        return 'description', 'description'
 
     if word.endswith('s') and not word.endswith('ss'):
         return word, word[:-1]
@@ -218,7 +220,7 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
                 # JSON has it as an attribute, but XML had it as a child.
                 pass
 
-            if key == 'description' and (clean_tag == 'rule' or clean_tag == 'descriptions'):
+            if key == 'description':
                 # Rule description is a child in BS XML, but an attribute in JSON.
                 element.append(_dict_to_element_recursive('description', value))
                 continue
@@ -335,7 +337,7 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
         is_plural_container = False
         plural_form, singular_form = get_plural_and_singular(tag)
 
-        if tag == plural_form:
+        if tag == plural_form and plural_form != singular_form:
             # It's a plural form tag, check if it's a container
             if not len(child):
                 is_plural_container = True  # Empty container
@@ -387,6 +389,9 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     # 3. Attributes
     for key, value in element.attrib.items():
         res[key] = try_convert(value)
+
+    if len(res) == 1 and "$text" in res:
+        return res["$text"]
 
     return res
 
