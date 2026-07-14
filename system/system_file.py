@@ -149,23 +149,17 @@ def get_plural_and_singular(word: str) -> (str, str):
         return word, word[:-3] + 'y'
     if word.endswith('y'):
         return word[:-1] + 'ies', word
-    if word.endswith('s'):
+
+    # Exceptions for BattleScribe
+    if word == 'alias' or word == 'aliases':
+        return 'aliases', 'alias'
+
+    if word.endswith('s') and not word.endswith('ss'):
         return word, word[:-1]
     return word + 's', word
 
 
-# Singular forms of elements that are nested inside a pluralized "container" element,
-# e.g. <rules><rule/></rules>.
-_PLURAL_CONTAINER_SINGULARS = {
-    'forceEntry', 'costType', 'selectionEntry', 'selectionEntryGroup', 'rule', 'profile',
-    'infoLink', 'forceEntryLink', 'catalogueLink', 'entryLink', 'cost', 'constraint',
-    'modifier', 'modifierGroup', 'characteristic', 'condition', 'conditionGroup', 'repeat',
-    'categoryLink', 'categoryEntry', 'publication', 'profileType', 'characteristicType'
-}
-
-# Singular forms which, when found directly under a catalogue, are wrapped in a "shared"
-# container (e.g. sharedRules) instead of their regular plural container (e.g. rules).
-_CATALOGUE_SHARED_SINGULARS = {'selectionEntry', 'selectionEntryGroup', 'rule', 'profile'}
+# No longer using hardcoded lists for plural containers
 
 
 def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Element:
@@ -174,17 +168,14 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
     element = ET.Element(tag)
     if isinstance(data, dict):
         # We need to collect singular items that belong in plural containers
-        wrapped_items = {} # plural_tag -> [ (singular_tag, item_data), ... ]
-        
-        # Attributes should be processed after children to avoid name collisions in some cases,
-        # but here we use types to differentiate.
-        
+        wrapped_items = {}  # plural_tag -> [ (singular_tag, item_data), ... ]
+
         for key, value in data.items():
             if key == "_text" or key == "$text":
                 element.text = str(value)
                 continue
-            
-            if key == "alias":
+
+            if key == "alias" or key == "aliases":
                 if isinstance(value, list):
                     for item in value:
                         element.append(_dict_to_element_recursive('alias', item))
@@ -200,48 +191,45 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
 
             if key == "comment":
                 # JSON has it as an attribute, but XML had it as a child.
-                pass 
+                pass
 
-            if key == 'description' and clean_tag == 'rule':
+            if key == 'description' and (clean_tag == 'rule' or clean_tag == 'descriptions'):
                 # Rule description is a child in BS XML, but an attribute in JSON.
                 element.append(_dict_to_element_recursive('description', value))
                 continue
-            
+
             if not isinstance(value, (dict, list)):
                 # Attribute
                 if key != 'xmlns' and not key.startswith('xmlns:'):
                     element.set(key, str(value))
                 continue
-            
+
             # Key is a child element or list of children
             plural_container_tag = None
             singular_tag = key
 
-            # 1. Determine if this key belongs in a plural container
-            is_shared_key = key.startswith('shared') and len(key) > 6 and key[6].isupper()
-            base_key = key[6].lower() + key[7:] if is_shared_key else key
-            plural_form, singular_form = get_plural_and_singular(base_key)
+            plural_form, singular_form = get_plural_and_singular(key)
 
-            if singular_form in _PLURAL_CONTAINER_SINGULARS:
-                singular_tag = singular_form
-                if is_shared_key or (clean_tag == 'catalogue' and key == singular_form
-                                      and singular_form in _CATALOGUE_SHARED_SINGULARS):
-                    plural_container_tag = 'shared' + plural_form[0].upper() + plural_form[1:]
+            if isinstance(value, list):
+                # If it's a list, it's definitely a plural container in XML
+                plural_container_tag = plural_form
+                # Determine the singular tag for children
+                if key.startswith('shared') and len(key) > 6 and key[6].isupper():
+                    # sharedSelectionEntries -> selectionEntry
+                    singular_tag = singular_form[6].lower() + singular_form[7:]
                 else:
-                    plural_container_tag = plural_form
+                    singular_tag = singular_form
 
-            if plural_container_tag:
                 if plural_container_tag not in wrapped_items:
                     wrapped_items[plural_container_tag] = []
-                
-                if isinstance(value, list):
-                    for item in value:
-                        wrapped_items[plural_container_tag].append((singular_tag, item))
-                else:
-                    wrapped_items[plural_container_tag].append((singular_tag, value))
+                for item in value:
+                    wrapped_items[plural_container_tag].append((singular_tag, item))
             else:
-                # Key is not a singular item needing wrapping
-                element.append(_dict_to_element_recursive(key, value))
+                # Singular child, but use the singular tag name
+                singular_tag = singular_form
+                if key.startswith('shared') and len(key) > 6 and key[6].isupper():
+                    singular_tag = singular_form[6].lower() + singular_form[7:]
+                element.append(_dict_to_element_recursive(singular_tag, value))
 
         # Add wrapped items into containers
         for plural_tag, items in wrapped_items.items():
@@ -313,10 +301,7 @@ def element_to_dict(element: ET.Element) -> dict:
 def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     res = {}
 
-
-
     # 1. Children
-    clean_parent_tag = get_tag(element)
     for child in element:
         tag = get_tag(child)
         child_res = _element_to_dict_recursive(child)
@@ -324,99 +309,34 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
         # Check if we should collapse this child into a list on the parent
         is_plural_container = False
         plural_form, singular_form = get_plural_and_singular(tag)
-        if singular_form in _PLURAL_CONTAINER_SINGULARS:
-            # Check if this tag is indeed a plural container (e.g. "rules" containing "rule")
-            all_children_are_singular = True
-            for grand_child in child:
-                if get_tag(grand_child) != singular_form:
-                    all_children_are_singular = False
-                    break
-            if all_children_are_singular:
-                is_plural_container = True
-            
-        # Forces common plural containers to be treated as such even if empty or containing other things (though they shouldn't)
-        if tag in ['sharedSelectionEntries', 'sharedSelectionEntryGroups', 'sharedInfoLinks', 'sharedProfiles', 'sharedRules',
-                    'selectionEntries', 'selectionEntryGroups', 'infoLinks', 'rules', 'profiles', 'costs', 'constraints',
-                    'modifiers', 'modifierGroups', 'characteristics', 'conditions', 'conditionGroups', 'repeats',
-                    'categoryEntries', 'categoryLinks', 'catalogueLinks', 'entryLinks', 'forceEntryLinks']:
-            is_plural_container = True
+
+        if tag == plural_form:
+            # It's a plural form tag, check if it's a container
+            if not len(child):
+                is_plural_container = True  # Empty container
+            else:
+                all_children_match = True
+                for grand_child in child:
+                    g_tag = get_tag(grand_child)
+                    # Container 'sharedSelectionEntries' contains 'selectionEntry'
+                    if tag.startswith('shared') and len(tag) > 6 and tag[6].isupper():
+                        expected_singular = singular_form[6].lower() + singular_form[7:]
+                    else:
+                        expected_singular = singular_form
+
+                    if g_tag != expected_singular:
+                        all_children_match = False
+                        break
+                if all_children_match:
+                    is_plural_container = True
 
         if is_plural_container:
-            # Key is plural_form (e.g. "rules"), we want to store it as singular items (e.g. "rule": [...])
-            key_in_dict = tag # default
-            is_shared_key = tag.startswith('shared') and len(tag) > 6 and tag[6].isupper()
-            if is_shared_key:
-                # sharedRules -> sharedRule
-                base_plural = tag[6].lower() + tag[7:] # "Rules" -> "rules"
-                _, base_singular = get_plural_and_singular(base_plural)
-                key_in_dict = 'shared' + base_singular[0].upper() + base_singular[1:]
-            elif tag == 'sharedSelectionEntries':
-                key_in_dict = 'selectionEntry'
-            elif tag == 'sharedSelectionEntryGroups':
-                key_in_dict = 'selectionEntryGroup'
-            elif tag == 'sharedInfoLinks':
-                key_in_dict = 'infoLink'
-            elif tag == 'sharedProfiles':
-                key_in_dict = 'profile'
-            elif tag == 'sharedRules':
-                key_in_dict = 'rule'
-            elif tag == 'categoryEntries' and clean_parent_tag != 'catalogue':
-                # categoryEntries -> categoryEntry
-                key_in_dict = 'categoryEntry'
-            elif tag == 'categoryLinks':
-                key_in_dict = 'categoryLink'
-            elif tag == 'forceEntryLinks':
-                key_in_dict = 'forceEntryLink'
-            elif tag == 'catalogueLinks':
-                key_in_dict = 'catalogueLink'
-            elif tag == 'entryLinks':
-                key_in_dict = 'entryLink'
-            elif tag == 'selectionEntries':
-                key_in_dict = 'selectionEntry'
-            elif tag == 'selectionEntryGroups':
-                key_in_dict = 'selectionEntryGroup'
-            elif tag == 'infoLinks':
-                key_in_dict = 'infoLink'
-            elif tag == 'costs':
-                key_in_dict = 'cost'
-            elif tag == 'rules':
-                key_in_dict = 'rule'
-            elif tag == 'profiles':
-                key_in_dict = 'profile'
-            elif tag == 'constraints':
-                key_in_dict = 'constraint'
-            elif tag == 'modifiers':
-                key_in_dict = 'modifier'
-            elif tag == 'modifierGroups':
-                key_in_dict = 'modifierGroup'
-            elif tag == 'characteristics':
-                key_in_dict = 'characteristic'
-            elif tag == 'conditions':
-                key_in_dict = 'condition'
-            elif tag == 'conditionGroups':
-                key_in_dict = 'conditionGroup'
-            elif tag == 'repeats':
-                key_in_dict = 'repeat'
-            else:
-                key_in_dict = singular_form
-            
-            # Special case for shared containers in catalogue: preserve the container tag as key
-            if clean_parent_tag == 'catalogue' and tag.startswith('shared'):
-                # But wait, sharedSelectionEntries -> selectionEntry in some JSONs?
-                # Let's check the original Alpha Legion.json again.
-                # Actually, Alpha Legion.json HAS sharedSelectionEntries as a key.
-                key_in_dict = tag
+            key_in_dict = tag  # Keep the plural tag as key
 
             # Extract the children as a list
             items = []
             for grand_child in child:
                 items.append(_element_to_dict_recursive(grand_child))
-            
-            if not items:
-                # If there are no items, we still want the key in the dict to represent an empty list
-                if key_in_dict not in res:
-                    res[key_in_dict] = []
-                continue
 
             if key_in_dict in res:
                 if not isinstance(res[key_in_dict], list):
@@ -426,12 +346,14 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
                 res[key_in_dict] = items
             continue
 
-        if tag in res:
-            if not isinstance(res[tag], list):
-                res[tag] = [res[tag]]
-            res[tag].append(child_res)
+        # Regular child, pluralize the key
+        p_tag, _ = get_plural_and_singular(tag)
+        if p_tag in res:
+            if not isinstance(res[p_tag], list):
+                res[p_tag] = [res[p_tag]]
+            res[p_tag].append(child_res)
         else:
-            res[tag] = child_res
+            res[p_tag] = child_res
 
     # 2. Text
     if element.text and element.text.strip():
@@ -440,7 +362,6 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     # 3. Attributes
     for key, value in element.attrib.items():
         res[key] = value
-
 
     return res
 
