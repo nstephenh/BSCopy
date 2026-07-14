@@ -155,17 +155,12 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
                 element.text = str(value)
                 continue
             
-            if key == "alias" and clean_tag == 'categoryEntry':
-                # GST often has category aliases as a child element or attribute?
-                # The fail said: Text mismatch in rule: '' != '['Command']'
-                # Wait, it was clean_tag == 'rule' that failed? No, 'alias' under 'categoryEntry'?
-                # The traceback said: Text mismatch in rule: '' != '['Command']'
-                # But my previous run had: Text mismatch in alias: 'Command' != ''
+            if key == "alias":
                 if isinstance(value, list):
                     for item in value:
                         element.append(_dict_to_element_recursive('alias', item))
                 else:
-                    element.append(_dict_to_element_recursive('alias', value))
+                    raise (ValueError("Expected list for alias, got: {}, of type {}".format(value, type(value))))
                 continue
 
             if key == "comment":
