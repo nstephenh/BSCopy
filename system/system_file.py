@@ -139,6 +139,35 @@ def dict_to_element(data: dict) -> ET.Element:
     return _dict_to_element_recursive(tag, data[tag])
 
 
+def get_plural_and_singular(word: str) -> (str, str):
+    """
+    Given a word in either its singular or plural form, return a tuple of
+    (plural, singular) forms for that word, using simple English pluralization
+    rules (trailing "y" -> "ies", otherwise append/strip a trailing "s").
+    """
+    if word.endswith('ies'):
+        return word, word[:-3] + 'y'
+    if word.endswith('y'):
+        return word[:-1] + 'ies', word
+    if word.endswith('s'):
+        return word, word[:-1]
+    return word + 's', word
+
+
+# Singular forms of elements that are nested inside a pluralized "container" element,
+# e.g. <rules><rule/></rules>.
+_PLURAL_CONTAINER_SINGULARS = {
+    'forceEntry', 'costType', 'selectionEntry', 'selectionEntryGroup', 'rule', 'profile',
+    'infoLink', 'forceEntryLink', 'catalogueLink', 'entryLink', 'cost', 'constraint',
+    'modifier', 'modifierGroup', 'characteristic', 'condition', 'conditionGroup', 'repeat',
+    'categoryLink', 'categoryEntry', 'publication', 'profileType', 'characteristicType'
+}
+
+# Singular forms which, when found directly under a catalogue, are wrapped in a "shared"
+# container (e.g. sharedRules) instead of their regular plural container (e.g. rules).
+_CATALOGUE_SHARED_SINGULARS = {'selectionEntry', 'selectionEntryGroup', 'rule', 'profile'}
+
+
 def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Element:
     # Use simple tag for comparison
     clean_tag = tag.split('}')[-1] if '}' in tag else tag
@@ -181,72 +210,19 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
             # Key is a child element or list of children
             plural_container_tag = None
             singular_tag = key
-            
+
             # 1. Determine if this key belongs in a plural container
-            if key == 'forceEntries' or key == 'forceEntry':
-                plural_container_tag = 'forceEntries'
-                singular_tag = 'forceEntry'
-            elif key == 'costTypes' or key == 'costType':
-                plural_container_tag = 'costTypes'
-                singular_tag = 'costType'
-            elif key == 'selectionEntries':
-                plural_container_tag = 'selectionEntries'
-                singular_tag = 'selectionEntry'
-            elif key == 'selectionEntry':
-                if clean_tag == 'catalogue': plural_container_tag = 'sharedSelectionEntries'
-                else: plural_container_tag = 'selectionEntries'
-                singular_tag = 'selectionEntry'
-            elif key == 'selectionEntryGroups':
-                plural_container_tag = 'selectionEntryGroups'
-                singular_tag = 'selectionEntryGroup'
-            elif key == 'selectionEntryGroup':
-                if clean_tag == 'catalogue': plural_container_tag = 'sharedSelectionEntryGroups'
-                else: plural_container_tag = 'selectionEntryGroups'
-                singular_tag = 'selectionEntryGroup'
-            elif key == 'rules':
-                plural_container_tag = 'rules'
-                singular_tag = 'rule'
-            elif key == 'rule':
-                if clean_tag == 'catalogue': plural_container_tag = 'sharedRules'
-                else: plural_container_tag = 'rules'
-                singular_tag = 'rule'
-            elif key == 'profiles':
-                plural_container_tag = 'profiles'
-                singular_tag = 'profile'
-            elif key == 'profile':
-                if clean_tag == 'catalogue': plural_container_tag = 'sharedProfiles'
-                else: plural_container_tag = 'profiles'
-                singular_tag = 'profile'
-            elif key == 'infoLinks' or key == 'infoLink': plural_container_tag = 'infoLinks'; singular_tag = 'infoLink'
-            elif key == 'forceEntryLinks' or key == 'forceEntryLink': plural_container_tag = 'forceEntryLinks'; singular_tag = 'forceEntryLink'
-            elif key == 'catalogueLinks' or key == 'catalogueLink': plural_container_tag = 'catalogueLinks'; singular_tag = 'catalogueLink'
-            elif key == 'entryLinks' or key == 'entryLink': plural_container_tag = 'entryLinks'; singular_tag = 'entryLink'
-            elif key == 'sharedSelectionEntries' or key == 'sharedSelectionEntry': 
-                plural_container_tag = 'sharedSelectionEntries'
-                singular_tag = 'selectionEntry'
-            elif key == 'sharedSelectionEntryGroups' or key == 'sharedSelectionEntryGroup':
-                plural_container_tag = 'sharedSelectionEntryGroups'
-                singular_tag = 'selectionEntryGroup'
-            elif key == 'sharedInfoLinks' or key == 'sharedInfoLink':
-                plural_container_tag = 'sharedInfoLinks'
-                singular_tag = 'infoLink'
-            elif key == 'sharedProfiles' or key == 'sharedProfile':
-                plural_container_tag = 'sharedProfiles'
-                singular_tag = 'profile'
-            elif key == 'sharedRules' or key == 'sharedRule':
-                plural_container_tag = 'sharedRules'
-                singular_tag = 'rule'
-            elif key == 'costs' or key == 'cost': plural_container_tag = 'costs'; singular_tag = 'cost'
-            elif key == 'constraints' or key == 'constraint': plural_container_tag = 'constraints'; singular_tag = 'constraint'
-            elif key == 'modifiers' or key == 'modifier': plural_container_tag = 'modifiers'; singular_tag = 'modifier'
-            elif key == 'modifierGroups' or key == 'modifierGroup': plural_container_tag = 'modifierGroups'; singular_tag = 'modifierGroup'
-            elif key == 'characteristics' or key == 'characteristic': plural_container_tag = 'characteristics'; singular_tag = 'characteristic'
-            elif key == 'conditions' or key == 'condition': plural_container_tag = 'conditions'; singular_tag = 'condition'
-            elif key == 'conditionGroups' or key == 'conditionGroup': plural_container_tag = 'conditionGroups'; singular_tag = 'conditionGroup'
-            elif key == 'repeats' or key == 'repeat': plural_container_tag = 'repeats'; singular_tag = 'repeat'
-            elif key == 'categoryLinks' or key == 'categoryLink': plural_container_tag = 'categoryLinks'; singular_tag = 'categoryLink'
-            elif key == 'categoryEntries' or key == 'categoryEntry': plural_container_tag = 'categoryEntries'; singular_tag = 'categoryEntry'
-            elif key == 'publications' or key == 'publication': plural_container_tag = 'publications'; singular_tag = 'publication'
+            is_shared_key = key.startswith('shared') and len(key) > 6 and key[6].isupper()
+            base_key = key[6].lower() + key[7:] if is_shared_key else key
+            plural_form, singular_form = get_plural_and_singular(base_key)
+
+            if singular_form in _PLURAL_CONTAINER_SINGULARS:
+                singular_tag = singular_form
+                if is_shared_key or (clean_tag == 'catalogue' and key == singular_form
+                                      and singular_form in _CATALOGUE_SHARED_SINGULARS):
+                    plural_container_tag = 'shared' + plural_form[0].upper() + plural_form[1:]
+                else:
+                    plural_container_tag = plural_form
 
             if plural_container_tag:
                 if plural_container_tag not in wrapped_items:
