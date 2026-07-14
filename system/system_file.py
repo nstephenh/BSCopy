@@ -159,6 +159,29 @@ def get_plural_and_singular(word: str) -> (str, str):
     return word + 's', word
 
 
+def try_convert(value: str):
+    if value.lower() == 'true':
+        return True
+    if value.lower() == 'false':
+        return False
+    try:
+        if value.startswith('+'):
+            return value
+        if value.startswith('0') and len(value) > 1 and value[1].isdigit():
+            return value
+        if '.' in value:
+            return float(value)
+        return int(value)
+    except ValueError:
+        return value
+
+
+def to_string(value):
+    if isinstance(value, bool):
+        return str(value).lower()
+    return str(value)
+
+
 # No longer using hardcoded lists for plural containers
 
 
@@ -172,7 +195,7 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
 
         for key, value in data.items():
             if key == "_text" or key == "$text":
-                element.text = str(value)
+                element.text = to_string(value)
                 continue
 
             if key == "alias" or key == "aliases":
@@ -186,7 +209,9 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
                     alias_el.text = value
                     element.append(alias_el)
                 else:
-                    raise (ValueError("Expected list, dict or str for alias, got: {}, of type {}".format(value, type(value))))
+                    alias_el = ET.Element('alias')
+                    alias_el.text = to_string(value)
+                    element.append(alias_el)
                 continue
 
             if key == "comment":
@@ -201,7 +226,7 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
             if not isinstance(value, (dict, list)):
                 # Attribute
                 if key != 'xmlns' and not key.startswith('xmlns:'):
-                    element.set(key, str(value))
+                    element.set(key, to_string(value))
                 continue
 
             # Key is a child element or list of children
@@ -286,8 +311,8 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
         for item in data:
             element.append(_dict_to_element_recursive(child_tag, item))
     else:
-        element.text = str(data)
-                
+        element.text = to_string(data)
+
     return element
 
 
@@ -361,7 +386,7 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
 
     # 3. Attributes
     for key, value in element.attrib.items():
-        res[key] = value
+        res[key] = try_convert(value)
 
     return res
 
