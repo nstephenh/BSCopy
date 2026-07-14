@@ -220,7 +220,10 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
 
             if key == "comment":
                 # JSON has it as an attribute, but XML had it as a child.
-                pass
+                comment_element = ET.Element('comment')
+                comment_element.text = to_string(value)
+                element.append(comment_element)
+                continue
 
             if key == 'description':
                 # Rule description is a child in BS XML, but an attribute in JSON.
