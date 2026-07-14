@@ -384,7 +384,7 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
 
     # 2. Text
     if element.text and element.text.strip():
-        res["$text"] = element.text.strip()
+        res["$text"] = str(element.text.strip())
 
     # 3. Attributes
     for key, value in element.attrib.items():
