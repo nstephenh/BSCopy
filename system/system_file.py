@@ -218,6 +218,7 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
                 else: plural_container_tag = 'profiles'
                 singular_tag = 'profile'
             elif key == 'infoLinks' or key == 'infoLink': plural_container_tag = 'infoLinks'; singular_tag = 'infoLink'
+            elif key == 'forceEntryLinks' or key == 'forceEntryLink': plural_container_tag = 'forceEntryLinks'; singular_tag = 'forceEntryLink'
             elif key == 'catalogueLinks' or key == 'catalogueLink': plural_container_tag = 'catalogueLinks'; singular_tag = 'catalogueLink'
             elif key == 'entryLinks' or key == 'entryLink': plural_container_tag = 'entryLinks'; singular_tag = 'entryLink'
             elif key == 'sharedSelectionEntries' or key == 'sharedSelectionEntry': 
@@ -292,6 +293,7 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
         elif tag == 'selectionEntries': child_tag = 'selectionEntry'
         elif tag == 'selectionEntryGroups': child_tag = 'selectionEntryGroup'
         elif tag == 'infoLinks': child_tag = 'infoLink'
+        elif tag == 'forceEntryLinks': child_tag = 'forceEntryLink'
         elif tag == 'catalogueLinks': child_tag = 'catalogueLink'
         elif tag == 'entryLinks': child_tag = 'entryLink'
         elif tag == 'sharedSelectionEntries': child_tag = 'selectionEntry'
