@@ -188,8 +188,14 @@ def _dict_to_element_recursive(tag: str, data: dict or list or str) -> ET.Elemen
                 if isinstance(value, list):
                     for item in value:
                         element.append(_dict_to_element_recursive('alias', item))
+                elif isinstance(value, dict):
+                    element.append(_dict_to_element_recursive('alias', value))
+                elif isinstance(value, str):
+                    alias_el = ET.Element('alias')
+                    alias_el.text = value
+                    element.append(alias_el)
                 else:
-                    raise (ValueError("Expected list for alias, got: {}, of type {}".format(value, type(value))))
+                    raise (ValueError("Expected list, dict or str for alias, got: {}, of type {}".format(value, type(value))))
                 continue
 
             if key == "comment":
@@ -308,10 +314,17 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     res = {}
 
     # 1. Attributes
-    # BS often has name and id first in its JSON.
-    for attr in ["name", "id", "targetId", "typeName", "type"]:
+    # We want to preserve the order of attributes as they appear in the XML if possible,
+    # but ET.Element.attrib is a dict and its order might not match the source.
+    # BattleScribe often has name and id first.
+    
+    # Define a priority list for attribute ordering to match BS common output.
+    priority_attrs = ["name", "id", "targetId", "typeName", "type", "hidden", "import", "publicationId", "page"]
+    for attr in priority_attrs:
         if attr in element.attrib:
             res[attr] = element.attrib[attr]
+    
+    # Add any remaining attributes in sorted order (for consistency)
     for key, value in sorted(element.attrib.items()):
         if key not in res:
             res[key] = value

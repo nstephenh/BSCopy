@@ -11,8 +11,13 @@ class MockSystem:
         self.all_nodes = NodeCollection([])
         self.nodes_with_ids = NodeCollection([])
 
-def reproduce():
-    json_path = os.path.expanduser("~/BattleScribe/data/horus-heresy-3rd-edition/Alpha Legion.json")
+def reproduce(filename="Alpha Legion.json"):
+    json_path = os.path.expanduser(f"~/BattleScribe/data/horus-heresy-3rd-edition/{filename}")
+    if not os.path.exists(json_path):
+        print(f"File not found: {json_path}")
+        return
+    
+    print(f"\nChecking {filename}...")
     with open(json_path, 'r', encoding='utf-8') as f:
         original_data = json.load(f)
     
@@ -35,8 +40,29 @@ def reproduce():
         print("Root keys match.")
 
     # Compare names or IDs if they exist to see if order changed
-    orig_entries = original_data['catalogue']['sharedSelectionEntries']
-    new_entries = new_data['catalogue']['sharedSelectionEntries'] 
+    orig_cat = original_data['catalogue']
+    new_cat = new_data['catalogue']
+    
+    # Compare the top-level keys order of the catalogue
+    orig_cat_keys = list(orig_cat.keys())
+    new_cat_keys = list(new_cat.keys())
+    
+    print(f"Original catalogue keys: {orig_cat_keys}")
+    print(f"New catalogue keys:      {new_cat_keys}")
+
+    if orig_cat_keys != new_cat_keys:
+        print(f"Catalogue keys differ in order or presence!")
+        # Find which ones are different
+        for i in range(max(len(orig_cat_keys), len(new_cat_keys))):
+            o = orig_cat_keys[i] if i < len(orig_cat_keys) else "MISSING"
+            n = new_cat_keys[i] if i < len(new_cat_keys) else "MISSING"
+            if o != n:
+                 print(f"  {i}: {o} vs {n}")
+    else:
+        print("Catalogue keys match in order.")
+
+    orig_entries = orig_cat['sharedSelectionEntries']
+    new_entries = new_cat['sharedSelectionEntries']
     
     orig_names = [i.get('name', i.get('id', 'unknown')) for i in orig_entries if isinstance(i, dict)]
     new_names = [i.get('name', i.get('id', 'unknown')) for i in new_entries if isinstance(i, dict)]
@@ -62,10 +88,23 @@ def reproduce():
             print(f"Extra in new:   {set(new_names) - set(orig_names)}")
     else:
         print("sharedSelectionEntries order matches.")
+
+    # Check order of keys in the first entry of sharedSelectionEntries
+    if orig_entries and new_entries:
+        o_keys = list(orig_entries[0].keys())
+        n_keys = list(new_entries[0].keys())
+        print(f"Original keys in first entry: {o_keys}")
+        print(f"New keys in first entry:      {n_keys}")
+        if o_keys != n_keys:
+            print("Keys in first entry differ in order!")
+        else:
+            print("Keys in first entry match in order.")
     
     # Save a temporary copy to see the difference
     with open("repro_output.json", 'w', encoding='utf-8') as f:
         json.dump(new_data, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
-    reproduce()
+    reproduce("Alpha Legion.json")
+    reproduce("Legiones Astartes.json")
+    reproduce("Weapons.json")
