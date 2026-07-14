@@ -61,6 +61,10 @@ def reproduce(filename="Alpha Legion.json"):
     else:
         print("Catalogue keys match in order.")
 
+    # Specific check for sharedSelectionEntries being first
+    # (Removed enforce check as per new requirement to remove priority lists)
+    print(f"First key in catalogue: {new_cat_keys[0]}")
+
     orig_entries = orig_cat['sharedSelectionEntries']
     new_entries = new_cat['sharedSelectionEntries']
     

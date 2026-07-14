@@ -313,29 +313,10 @@ def element_to_dict(element: ET.Element) -> dict:
 def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     res = {}
 
-    # 1. Attributes
-    # We want to preserve the order of attributes as they appear in the XML if possible,
-    # but ET.Element.attrib is a dict and its order might not match the source.
-    # BattleScribe often has name and id first.
-    
-    # Define a priority list for attribute ordering to match BS common output.
-    priority_attrs = ["name", "id", "targetId", "typeName", "type", "hidden", "import", "publicationId", "page"]
-    for attr in priority_attrs:
-        if attr in element.attrib:
-            res[attr] = element.attrib[attr]
-    
-    # Add any remaining attributes in sorted order (for consistency)
-    for key, value in sorted(element.attrib.items()):
-        if key not in res:
-            res[key] = value
 
-    # 2. Text
-    if element.text and element.text.strip():
-        res["$text"] = element.text.strip()
 
-    # 3. Children
+    # 1. Children
     clean_parent_tag = get_tag(element)
-
     for child in element:
         tag = get_tag(child)
         child_res = _element_to_dict_recursive(child)
@@ -451,6 +432,16 @@ def _element_to_dict_recursive(element: ET.Element) -> dict or str:
             res[tag].append(child_res)
         else:
             res[tag] = child_res
+
+    # 2. Text
+    if element.text and element.text.strip():
+        res["$text"] = element.text.strip()
+
+    # 3. Attributes
+    for key, value in element.attrib.items():
+        res[key] = value
+
+
     return res
 
 
