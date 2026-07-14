@@ -61,7 +61,7 @@ class System:
         temp_file_list = []  # List so we can get a count for progress bar
         for file_name in game_files:
             filepath = os.path.join(self.game_system_location, file_name)
-            if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst']:
+            if os.path.isdir(filepath) or os.path.splitext(file_name)[1] not in ['.cat', '.gst', '.json']:
                 continue  # Skip this iteration
             temp_file_list.append(filepath)
         count = len(temp_file_list)
@@ -105,7 +105,8 @@ class System:
             if ssegs is None:
                 continue
             for node in ssegs.children:
-                self.wargear_lists_by_name[node.name.lower()] = node
+                if node.name:
+                    self.wargear_lists_by_name[node.name.lower()] = node
 
         categories = {node.name: node for node in
                       self.nodes_with_ids.filter(lambda node: node.tag == 'categoryEntry')}
