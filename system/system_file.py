@@ -306,45 +306,135 @@ def element_to_dict(element: ET.Element) -> dict:
 
 def _element_to_dict_recursive(element: ET.Element) -> dict or str:
     res = {}
-    for key, value in element.attrib.items():
-        res[key] = value
-    if element.text and element.text.strip():
-        res["_text"] = element.text.strip()
 
-    parent_tag = get_tag(element)
+    # 1. Attributes
+    # BS often has name and id first.
+    for attr in ["name", "id", "targetId", "typeName", "type"]:
+        if attr in element.attrib:
+            res[attr] = element.attrib[attr]
+    for key, value in sorted(element.attrib.items()):
+        if key not in res:
+            res[key] = value
+
+    # 2. Text
+    if element.text and element.text.strip():
+        res["$text"] = element.text.strip()
+
+    # 3. Children
+    clean_parent_tag = get_tag(element)
+
     for child in element:
         tag = get_tag(child)
         child_res = _element_to_dict_recursive(child)
 
         # Check if we should collapse this child into a list on the parent
         is_plural_container = False
-        if parent_tag.endswith('s'):
-            if parent_tag.endswith('ies') and tag.endswith('y'):
-                is_plural_container = True
-            elif parent_tag.endswith('Entries') and tag == parent_tag[:-7] + 'Entry':
-                is_plural_container = True
-            elif parent_tag.endswith('Groups') and tag == parent_tag[:-6] + 'Group':
-                is_plural_container = True
-            elif parent_tag.endswith('Links') and tag == parent_tag[:-5] + 'Link':
-                is_plural_container = True
-            elif parent_tag == 'costs' and tag == 'cost':
-                is_plural_container = True
-            elif parent_tag == 'rules' and tag == 'rule':
-                is_plural_container = True
-            elif parent_tag == 'profiles' and tag == 'profile':
-                is_plural_container = True
-            elif parent_tag == 'constraints' and tag == 'constraint':
-                is_plural_container = True
-            elif parent_tag == 'modifiers' and tag == 'modifier':
+        plural_form, singular_form = get_plural_and_singular(tag)
+        if singular_form in _PLURAL_CONTAINER_SINGULARS:
+            # Check if this tag is indeed a plural container (e.g. "rules" containing "rule")
+            # We can check if all children of this child have the singular tag.
+            # But the requirement is to copy logic from _dict_to_element_recursive.
+            # In _dict_to_element_recursive, it wraps singular items into plural containers.
+            # So here we should unwrap them.
+            all_children_are_singular = True
+            for grand_child in child:
+                if get_tag(grand_child) != singular_form:
+                    all_children_are_singular = False
+                    break
+            if all_children_are_singular:
                 is_plural_container = True
 
         if is_plural_container:
-            # We use a special key '_items' or just put them in a list?
-            # If we put them in a list directly under the parent's tag in the grandparent, 
-            # that doesn't work because the parent exists.
-            # We should put them in a list under a special key or just use the tag.
-            # The current implementation uses the tag.
-            pass
+            # Key is plural_form (e.g. "rules"), we want to store it as singular items (e.g. "rule": [...])
+            # Wait, _dict_to_element_recursive expects the key in the dict to be the singular tag
+            # if it's a plural container, unless it's a shared container.
+            
+            # Re-evaluating based on _dict_to_element_recursive:
+            # If we have <rules><rule/><rule/></rules>, _dict_to_element_recursive wants
+            # data = { "rule": [ {...}, {...} ] }
+            # If we have <sharedRules><rule/></sharedRules>, it wants
+            # data = { "sharedRule": [ {...} ] } or maybe { "sharedRules": [ {...} ] }?
+            # Let's look at _dict_to_element_recursive lines 215-226.
+            
+            key_in_dict = tag # default
+            is_shared_key = tag.startswith('shared') and len(tag) > 6 and tag[6].isupper()
+            if is_shared_key:
+                # sharedRules -> sharedRule
+                base_plural = tag[6].lower() + tag[7:] # "Rules" -> "rules"
+                _, base_singular = get_plural_and_singular(base_plural)
+                key_in_dict = 'shared' + base_singular[0].upper() + base_singular[1:]
+            elif tag == 'sharedSelectionEntries':
+                key_in_dict = 'selectionEntry'
+            elif tag == 'sharedSelectionEntryGroups':
+                key_in_dict = 'selectionEntryGroup'
+            elif tag == 'sharedInfoLinks':
+                key_in_dict = 'infoLink'
+            elif tag == 'sharedProfiles':
+                key_in_dict = 'profile'
+            elif tag == 'sharedRules':
+                key_in_dict = 'rule'
+            elif tag == 'categoryEntries' and clean_parent_tag != 'catalogue':
+                # categoryEntries -> categoryEntry
+                key_in_dict = 'categoryEntry'
+            elif tag == 'categoryLinks':
+                key_in_dict = 'categoryLink'
+            elif tag == 'forceEntryLinks':
+                key_in_dict = 'forceEntryLink'
+            elif tag == 'catalogueLinks':
+                key_in_dict = 'catalogueLink'
+            elif tag == 'entryLinks':
+                key_in_dict = 'entryLink'
+            elif tag == 'selectionEntries':
+                key_in_dict = 'selectionEntry'
+            elif tag == 'selectionEntryGroups':
+                key_in_dict = 'selectionEntryGroup'
+            elif tag == 'infoLinks':
+                key_in_dict = 'infoLink'
+            elif tag == 'costs':
+                key_in_dict = 'cost'
+            elif tag == 'rules':
+                key_in_dict = 'rule'
+            elif tag == 'profiles':
+                key_in_dict = 'profile'
+            elif tag == 'constraints':
+                key_in_dict = 'constraint'
+            elif tag == 'modifiers':
+                key_in_dict = 'modifier'
+            elif tag == 'modifierGroups':
+                key_in_dict = 'modifierGroup'
+            elif tag == 'characteristics':
+                key_in_dict = 'characteristic'
+            elif tag == 'conditions':
+                key_in_dict = 'condition'
+            elif tag == 'conditionGroups':
+                key_in_dict = 'conditionGroup'
+            elif tag == 'repeats':
+                key_in_dict = 'repeat'
+            else:
+                key_in_dict = singular_form
+
+            # Extract the children as a list
+            items = []
+            for grand_child in child:
+                items.append(_element_to_dict_recursive(grand_child))
+            
+            if not items:
+                # If there are no items, we still want the key in the dict to represent an empty list
+                # but only if it's supposed to be a plural container.
+                # In _dict_to_element_recursive, an empty list would result in no container being added
+                # unless something else adds it.
+                # However, for round-trip consistency, let's keep it.
+                if key_in_dict not in res:
+                    res[key_in_dict] = []
+                continue
+
+            if key_in_dict in res:
+                if not isinstance(res[key_in_dict], list):
+                    res[key_in_dict] = [res[key_in_dict]]
+                res[key_in_dict].extend(items)
+            else:
+                res[key_in_dict] = items
+            continue
 
         if tag in res:
             if not isinstance(res[tag], list):
