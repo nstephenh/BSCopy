@@ -33,6 +33,8 @@ class SystemFile:
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             self._source_tree = ET.ElementTree(dict_to_element(data))
+            if list(data.keys())[0] == "gameSystem":
+                self.is_gst = True
         elif self.system.settings.get("diff"):
             self._source_tree = ET.parse(path, parser=LineNumberingParser())
         else:
